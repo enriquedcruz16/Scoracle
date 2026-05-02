@@ -142,7 +142,7 @@ function Auth({onLogin}){
     <div style={S.authWrap}>
       <div style={S.authBg}>
         <svg style={{position:"absolute",inset:0,width:"100%",height:"100%"}} viewBox="0 0 800 900" preserveAspectRatio="xMidYMid slice">
-          <style>{`@keyframes pp{0%,100%{opacity:0.14}50%{opacity:0.24}} @keyframes sc{0%{transform:translateY(-100%)}100%{transform:translateY(2000%)}} @keyframes ballFloat{0%,100%{transform:translateY(0px)}50%{transform:translateY(-5px)}} @keyframes glowP{0%,100%{opacity:0.25}50%{opacity:0.55}} .pp{animation:pp 3s ease-in-out infinite}`}</style>
+
           <defs><linearGradient id="scan" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#f59e0b" stopOpacity="0"/><stop offset="50%" stopColor="#f59e0b" stopOpacity="0.07"/><stop offset="100%" stopColor="#f59e0b" stopOpacity="0"/></linearGradient></defs>
           <g className="pp" fill="none" stroke="#f59e0b" strokeWidth="1.6">
             <rect x="40" y="30" width="720" height="840"/>
@@ -162,14 +162,14 @@ function Auth({onLogin}){
             <path d="M 40 838 A 32 32 0 0 0 72 870"/>
             <path d="M 728 870 A 32 32 0 0 0 760 838"/>
           </g>
-          <rect x="0" y="0" width="800" height="80" fill="url(#scan)" style={{animation:"sc 5s linear infinite"}}/>
+          <rect x="0" y="0" width="800" height="80" fill="url(#scan)" className="scanline"/>
         </svg>
         <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at center,rgba(0,0,0,0.3) 0%,rgba(0,0,0,0.82) 100%)"}}/>
       </div>
       <div style={S.authCard}>
         <div style={{textAlign:"center",marginBottom:24}}>
-          <div style={{position:"relative",display:"inline-block",marginBottom:10,animation:"ballFloat 3s ease-in-out infinite"}}>
-            <div style={{position:"absolute",inset:-10,background:"radial-gradient(circle,rgba(245,158,11,0.22) 0%,transparent 70%)",borderRadius:"50%",animation:"glowP 3s ease-in-out infinite"}}/>
+          <div className="ballf" style={{position:"relative",display:"inline-block",marginBottom:10}}>
+            <div className="glowp" style={{position:"absolute",inset:-10,background:"radial-gradient(circle,rgba(245,158,11,0.22) 0%,transparent 70%)",borderRadius:"50%"}}/>
             <svg width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <clipPath id="bc2"><circle cx="50" cy="50" r="46"/></clipPath>
@@ -561,6 +561,14 @@ const S={
 
 const CSS=`
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+@keyframes pp{0%,100%{opacity:0.14}50%{opacity:0.24}}
+@keyframes sc{0%{transform:translateY(-100%)}100%{transform:translateY(2000%)}}
+@keyframes ballFloat{0%,100%{transform:translateY(0px)}50%{transform:translateY(-5px)}}
+@keyframes glowP{0%,100%{opacity:0.25}50%{opacity:0.55}}
+.pp{animation:pp 3s ease-in-out infinite}
+.scanline{animation:sc 5s linear infinite}
+.ballf{animation:ballFloat 3s ease-in-out infinite}
+.glowp{animation:glowP 3s ease-in-out infinite}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#000;-webkit-tap-highlight-color:transparent;}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;}
