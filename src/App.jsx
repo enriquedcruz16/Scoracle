@@ -141,52 +141,93 @@ function Auth({onLogin}){
   return(
     <div style={S.authWrap}>
       <div style={S.authBg}>
-        <svg style={{position:"absolute",inset:0,width:"100%",height:"100%",opacity:0.06}} viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
-          <ellipse cx="400" cy="300" rx="380" ry="260" fill="none" stroke="#f59e0b" strokeWidth="2"/>
-          <ellipse cx="400" cy="300" rx="300" ry="200" fill="none" stroke="#f59e0b" strokeWidth="1.5"/>
-          <ellipse cx="400" cy="300" rx="220" ry="140" fill="none" stroke="#f59e0b" strokeWidth="1"/>
-          <line x1="400" y1="40" x2="400" y2="560" stroke="#f59e0b" strokeWidth="1.5"/>
-          <circle cx="400" cy="300" r="60" fill="none" stroke="#f59e0b" strokeWidth="1.5"/>
-          <circle cx="400" cy="300" r="8" fill="#f59e0b" opacity="0.4"/>
-          <rect x="20" y="220" width="80" height="160" fill="none" stroke="#f59e0b" strokeWidth="1.5"/>
-          <rect x="700" y="220" width="80" height="160" fill="none" stroke="#f59e0b" strokeWidth="1.5"/>
-          <rect x="20" y="260" width="40" height="80" fill="none" stroke="#f59e0b" strokeWidth="1"/>
-          <rect x="740" y="260" width="40" height="80" fill="none" stroke="#f59e0b" strokeWidth="1"/>
-          <path d="M 160 300 Q 400 180 640 300" fill="none" stroke="#f59e0b" strokeWidth="0.8" opacity="0.5"/>
-          <path d="M 160 300 Q 400 420 640 300" fill="none" stroke="#f59e0b" strokeWidth="0.8" opacity="0.5"/>
+        <svg style={{position:"absolute",inset:0,width:"100%",height:"100%"}} viewBox="0 0 800 900" preserveAspectRatio="xMidYMid slice">
+          <style>{`@keyframes pp{0%,100%{opacity:0.14}50%{opacity:0.24}} @keyframes sc{0%{transform:translateY(-100%)}100%{transform:translateY(2000%)}} @keyframes ballFloat{0%,100%{transform:translateY(0px)}50%{transform:translateY(-5px)}} @keyframes glowP{0%,100%{opacity:0.25}50%{opacity:0.55}} .pp{animation:pp 3s ease-in-out infinite}`}</style>
+          <defs><linearGradient id="scan" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#f59e0b" stopOpacity="0"/><stop offset="50%" stopColor="#f59e0b" stopOpacity="0.07"/><stop offset="100%" stopColor="#f59e0b" stopOpacity="0"/></linearGradient></defs>
+          <g className="pp" fill="none" stroke="#f59e0b" strokeWidth="1.6">
+            <rect x="40" y="30" width="720" height="840"/>
+            <line x1="40" y1="450" x2="760" y2="450"/>
+            <circle cx="400" cy="450" r="90"/>
+            <circle cx="400" cy="450" r="5" fill="#f59e0b"/>
+            <rect x="190" y="30" width="420" height="145"/>
+            <rect x="295" y="30" width="210" height="65"/>
+            <circle cx="400" cy="148" r="5" fill="#f59e0b"/>
+            <path d="M 310 175 A 90 90 0 0 1 490 175"/>
+            <rect x="190" y="725" width="420" height="145"/>
+            <rect x="295" y="805" width="210" height="65"/>
+            <circle cx="400" cy="752" r="5" fill="#f59e0b"/>
+            <path d="M 310 725 A 90 90 0 0 0 490 725"/>
+            <path d="M 40 62 A 32 32 0 0 1 72 30"/>
+            <path d="M 728 30 A 32 32 0 0 1 760 62"/>
+            <path d="M 40 838 A 32 32 0 0 0 72 870"/>
+            <path d="M 728 870 A 32 32 0 0 0 760 838"/>
+          </g>
+          <rect x="0" y="0" width="800" height="80" fill="url(#scan)" style={{animation:"sc 5s linear infinite"}}/>
         </svg>
-        <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at center,#0a0a0a88 0%,#000000dd 100%)"}}/>
+        <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at center,rgba(0,0,0,0.3) 0%,rgba(0,0,0,0.82) 100%)"}}/>
       </div>
       <div style={S.authCard}>
-        <div style={{textAlign:"center",marginBottom:28}}>
-          <div style={{position:"relative",display:"inline-block",marginBottom:8}}>
-            <span style={{fontSize:48,filter:"drop-shadow(0 0 20px #f59e0baa)",display:"block"}}>⚽</span>
-            <div style={{position:"absolute",inset:-10,background:"radial-gradient(circle,#f59e0b22 0%,transparent 70%)",borderRadius:"50%"}}/>
+        <div style={{textAlign:"center",marginBottom:24}}>
+          <div style={{position:"relative",display:"inline-block",marginBottom:10,animation:"ballFloat 3s ease-in-out infinite"}}>
+            <div style={{position:"absolute",inset:-10,background:"radial-gradient(circle,rgba(245,158,11,0.22) 0%,transparent 70%)",borderRadius:"50%",animation:"glowP 3s ease-in-out infinite"}}/>
+            <svg width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <clipPath id="bc2"><circle cx="50" cy="50" r="46"/></clipPath>
+                <radialGradient id="bg3" cx="35%" cy="30%" r="65%"><stop offset="0%" stopColor="#ffffff"/><stop offset="100%" stopColor="#cccccc"/></radialGradient>
+                <radialGradient id="bg4" cx="35%" cy="30%" r="65%"><stop offset="0%" stopColor="#444"/><stop offset="100%" stopColor="#111"/></radialGradient>
+              </defs>
+              <circle cx="50" cy="50" r="46" fill="url(#bg3)"/>
+              <g clipPath="url(#bc2)">
+                <path d="M50 4 L63 20 L57 35 L43 35 L37 20 Z" fill="url(#bg4)"/>
+                <path d="M50 96 L63 80 L57 65 L43 65 L37 80 Z" fill="url(#bg4)"/>
+                <path d="M13 25 L28 18 L37 20 L43 35 L30 45 L15 38 Z" fill="url(#bg4)"/>
+                <path d="M87 25 L72 18 L63 20 L57 35 L70 45 L85 38 Z" fill="url(#bg4)"/>
+                <path d="M4 52 L15 38 L30 45 L28 60 L14 64 Z" fill="url(#bg4)"/>
+                <path d="M96 52 L85 38 L70 45 L72 60 L86 64 Z" fill="url(#bg4)"/>
+                <path d="M13 75 L15 62 L28 60 L37 65 L30 80 Z" fill="url(#bg4)"/>
+                <path d="M87 75 L85 62 L72 60 L63 65 L70 80 Z" fill="url(#bg4)"/>
+              </g>
+              <g clipPath="url(#bc2)" fill="none" stroke="#888" strokeWidth="0.6" opacity="0.4">
+                <path d="M50 4 L63 20 L57 35 L43 35 L37 20 Z"/>
+                <path d="M50 96 L63 80 L57 65 L43 65 L37 80 Z"/>
+                <path d="M13 25 L28 18 L37 20 L43 35 L30 45 L15 38 Z"/>
+                <path d="M87 25 L72 18 L63 20 L57 35 L70 45 L85 38 Z"/>
+                <path d="M4 52 L15 38 L30 45 L28 60 L14 64 Z"/>
+                <path d="M96 52 L85 38 L70 45 L72 60 L86 64 Z"/>
+                <path d="M13 75 L15 62 L28 60 L37 65 L30 80 Z"/>
+                <path d="M87 75 L85 62 L72 60 L63 65 L70 80 Z"/>
+              </g>
+              <ellipse cx="36" cy="30" rx="10" ry="7" fill="white" opacity="0.45" transform="rotate(-30 36 30)"/>
+              <circle cx="50" cy="50" r="46" fill="none" stroke="#aaa" strokeWidth="1"/>
+            </svg>
           </div>
-          <div style={{fontSize:32,fontWeight:800,letterSpacing:5,color:G,marginBottom:6}}>SCORACLE</div>
-          <div style={{fontSize:11,color:"#6b7280",letterSpacing:1,marginBottom:16}}>FIFA World Cup 2026 · Prediction Game</div>
-          <div style={{display:"flex",justifyContent:"center",background:"#111",borderRadius:12,padding:"10px 0",border:"1px solid #1f1f1f"}}>
-            {[["48","Teams"],["12","Groups"],["104","Matches"]].map(([n,l],i)=><>
-              {i>0&&<div style={{width:1,background:"#1f1f1f",margin:"0 4px"}}/>}
-              <div style={{textAlign:"center",padding:"0 16px"}} key={l}><div style={{fontSize:20,fontWeight:800,color:G}}>{n}</div><div style={{fontSize:9,color:"#6b7280",letterSpacing:1}}>{l}</div></div>
-            </>)}
+          <div style={{fontSize:32,fontWeight:800,letterSpacing:5,color:G,marginBottom:5}}>SCORACLE</div>
+          <div style={{fontSize:11,color:"#555",letterSpacing:1,marginBottom:16}}>FIFA World Cup 2026 · Prediction Game</div>
+          <div style={{display:"flex",justifyContent:"center",alignItems:"center",background:"#111",borderRadius:12,padding:"10px 0",border:"1px solid #1f1f1f"}}>
+            {[["48","TEAMS"],["12","GROUPS"],["104","MATCHES"]].map(([n,l],i)=>(
+              <div key={l} style={{display:"flex",alignItems:"center"}}>
+                {i>0&&<div style={{width:1,height:28,background:"#222",margin:"0 4px"}}/>}
+                <div style={{textAlign:"center",padding:"0 14px"}}><div style={{fontSize:19,fontWeight:800,color:G}}>{n}</div><div style={{fontSize:9,color:"#555",letterSpacing:1}}>{l}</div></div>
+              </div>
+            ))}
           </div>
         </div>
-        <div style={{display:"flex",background:"#111",borderRadius:12,padding:4,marginBottom:20,gap:4,border:"1px solid #1f1f1f"}}>
-          <button onClick={()=>setMode("login")} style={{flex:1,background:mode==="login"?"#1a1a1a":"none",border:"none",color:mode==="login"?G:"#6b7280",padding:"10px",borderRadius:9,cursor:"pointer",fontSize:13,fontWeight:600}}>Sign In</button>
-          <button onClick={()=>setMode("signup")} style={{flex:1,background:mode==="signup"?"#1a1a1a":"none",border:"none",color:mode==="signup"?G:"#6b7280",padding:"10px",borderRadius:9,cursor:"pointer",fontSize:13,fontWeight:600}}>Create Account</button>
+        <div style={{display:"flex",background:"#111",borderRadius:12,padding:4,marginBottom:18,gap:4,border:"1px solid #1f1f1f"}}>
+          <button onClick={()=>setMode("login")} style={{flex:1,background:mode==="login"?"#1a1a1a":"none",border:"none",color:mode==="login"?G:"#6b7280",padding:"10px",borderRadius:9,cursor:"pointer",fontSize:13,fontWeight:600,outline:"none"}}>Sign In</button>
+          <button onClick={()=>setMode("signup")} style={{flex:1,background:mode==="signup"?"#1a1a1a":"none",border:"none",color:mode==="signup"?G:"#6b7280",padding:"10px",borderRadius:9,cursor:"pointer",fontSize:13,fontWeight:600,outline:"none"}}>Create Account</button>
         </div>
-        {mode==="signup"&&<div style={{marginBottom:16}}><label style={S.lbl}>Your Name</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. John Smith" style={S.inp}/></div>}
-        <div style={{marginBottom:16}}><label style={S.lbl}>Email Address</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" style={S.inp} onKeyDown={e=>e.key==="Enter"&&go()}/></div>
-        <div style={{marginBottom:16}}><label style={S.lbl}>Password</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="••••••••" style={S.inp} onKeyDown={e=>e.key==="Enter"&&go()}/></div>
+        {mode==="signup"&&<div style={{marginBottom:14}}><label style={S.lbl}>Your Name</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. John Smith" style={S.inp}/></div>}
+        <div style={{marginBottom:14}}><label style={S.lbl}>Email Address</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" style={S.inp} onKeyDown={e=>e.key==="Enter"&&go()}/></div>
+        <div style={{marginBottom:14}}><label style={S.lbl}>Password</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="••••••••" style={S.inp} onKeyDown={e=>e.key==="Enter"&&go()}/></div>
         {err&&<div style={{fontSize:12,color:"#ef4444",marginBottom:12,padding:"10px 12px",background:"#1f0000",borderRadius:8,border:"1px solid #ef444433"}}>{err}</div>}
-        <button onClick={go} disabled={load} style={{width:"100%",background:`linear-gradient(90deg,${G},#f97316)`,border:"none",borderRadius:12,color:"#000",fontWeight:800,fontSize:15,padding:"14px",cursor:"pointer",marginTop:4,opacity:load?0.6:1,boxShadow:`0 4px 20px ${G}44`}}>{load?"Please wait...":(mode==="login"?"Sign In to Scoracle →":"Join Scoracle →")}</button>
-        <div style={{fontSize:11,color:"#374151",textAlign:"center",marginTop:14,lineHeight:1.6}}>🔒 Predictions saved · Leaderboard live · Free to play</div>
-        <div style={{fontSize:12,color:G,textAlign:"center",marginTop:8,fontWeight:600}}>⚽ Tournament starts June 11, 2026</div>
+        <button onClick={go} disabled={load} style={{width:"100%",background:`linear-gradient(90deg,${G},#f97316)`,border:"none",borderRadius:12,color:"#000",fontWeight:800,fontSize:15,padding:"14px",cursor:"pointer",marginTop:4,opacity:load?0.6:1,boxShadow:`0 4px 20px ${G}44`,outline:"none"}}>{load?"Please wait...":(mode==="login"?"Sign In to Scoracle →":"Join Scoracle →")}</button>
+        <div style={{fontSize:10,color:"#333",textAlign:"center",marginTop:14}}>🔒 Predictions Saved · Live Leaderboard</div>
+        <div style={{fontSize:11,color:G,textAlign:"center",marginTop:6,fontWeight:600}}>⚽ Competition starts June 11, 2026</div>
       </div>
     </div>
   );
 }
+
 
 export default function App(){
   const[user,setUser]=useState(null);const[authLoad,setAuthLoad]=useState(true);
