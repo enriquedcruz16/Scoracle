@@ -1,20 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { supabase } from "./supabase";
 
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
 const API_KEY = "b08f6877d56ad565b8dbb49558b764eb";
 const API_BASE = "https://v3.football.api-sports.io";
 const LEAGUE_ID = 1;
 const SEASON = 2026;
 const LOCK_MINUTES_BEFORE = 15;
-
-// ─── SCORING ──────────────────────────────────────────────────────────────────
 const PTS_EXACT = 10;
 const PTS_RESULT = 5;
-const PTS_WRONG = 0;
 const PTS_WINNER = 50;
 const PTS_BONUS = 10;
 
-// ─── GROUPS & TEAMS ───────────────────────────────────────────────────────────
 const GROUPS_TEAMS = {
   A:["Mexico","South Korea","South Africa","Czechia"],
   B:["Canada","Switzerland","Qatar","Bosnia-Herzegovina"],
@@ -47,7 +43,6 @@ const FLAGS = {
   England:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",Croatia:"🇭🇷",Ghana:"🇬🇭",Panama:"🇵🇦",
 };
 
-// ─── FIXTURES ─────────────────────────────────────────────────────────────────
 const STATIC_MATCHDAYS = [
   { day:1, label:"Matchday 1", dates:"Jun 11–17", fixtures:[
     {id:"s_A1",group:"A",home:"Mexico",away:"South Africa",date:"Jun 11",time:"21:00",venue:"Estadio Azteca, Mexico City",kickoffISO:"2026-06-11T21:00:00-05:00"},
@@ -129,16 +124,6 @@ const STATIC_MATCHDAYS = [
   ]},
 ];
 
-const LEADERBOARD_MOCK = [
-  {name:"Carlos M.",avatar:"🧑",pts:142,correct:31,streak:5},
-  {name:"Priya S.",avatar:"👩",pts:138,correct:29,streak:3},
-  {name:"James T.",avatar:"🧔",pts:125,correct:27,streak:1},
-  {name:"Sofia R.",avatar:"👩‍🦰",pts:119,correct:25,streak:4},
-  {name:"Amir K.",avatar:"🧑‍🦱",pts:104,correct:22,streak:0},
-  {name:"Yuki N.",avatar:"👩‍🦳",pts:98,correct:20,streak:2},
-  {name:"Marco D.",avatar:"🧑‍🦲",pts:87,correct:18,streak:1},
-];
-
 const PLAYERS = [
   "Lionel Messi","Kylian Mbappé","Erling Haaland","Vinicius Jr","Jude Bellingham",
   "Harry Kane","Cristiano Ronaldo","Neymar Jr","Mohamed Salah","Kevin De Bruyne",
@@ -155,41 +140,31 @@ const NAV_ITEMS = [
   {id:"rules",icon:"📖",label:"Rules"},
 ];
 
-// ─── SCORING LOGIC ────────────────────────────────────────────────────────────
 function calcPoints(pred, result) {
   if (!pred || !result) return null;
-  const {homeGoals:ph,awayGoals:pa} = pred;
-  const {homeGoals:rh,awayGoals:ra} = result;
+  const {homeGoals:ph,awayGoals:pa}=pred, {homeGoals:rh,awayGoals:ra}=result;
   if ([ph,pa,rh,ra].some(v=>v==null)) return null;
   if (Number(ph)===Number(rh)&&Number(pa)===Number(ra)) return PTS_EXACT;
   const po=ph>pa?"H":ph<pa?"A":"D", ro=rh>ra?"H":rh<ra?"A":"D";
-  return po===ro ? PTS_RESULT : PTS_WRONG;
+  return po===ro?PTS_RESULT:0;
 }
 
 function isLocked(kickoffISO) {
   if (!kickoffISO) return false;
-  const kickoff = new Date(kickoffISO);
-  const lockTime = new Date(kickoff.getTime() - LOCK_MINUTES_BEFORE * 60 * 1000);
-  return new Date() >= lockTime;
+  return new Date() >= new Date(new Date(kickoffISO).getTime()-LOCK_MINUTES_BEFORE*60000);
 }
 
 function timeUntilLock(kickoffISO) {
   if (!kickoffISO) return null;
-  const kickoff = new Date(kickoffISO);
-  const lockTime = new Date(kickoff.getTime() - LOCK_MINUTES_BEFORE * 60 * 1000);
-  const diff = lockTime - new Date();
-  if (diff <= 0) return null;
-  const h = Math.floor(diff / 3600000);
-  const m = Math.floor((diff % 3600000) / 60000);
-  if (h > 24) return null;
-  if (h > 0) return `Locks in ${h}h ${m}m`;
-  return `Locks in ${m}m`;
+  const diff = new Date(new Date(kickoffISO).getTime()-LOCK_MINUTES_BEFORE*60000) - new Date();
+  if (diff<=0||diff>86400000) return null;
+  const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000);
+  return h>0?`Locks in ${h}h ${m}m`:`Locks in ${m}m`;
 }
 
-// ─── API ──────────────────────────────────────────────────────────────────────
 async function apiFetch(path) {
-  const r = await fetch(`${API_BASE}${path}`,{headers:{"x-apisports-key":API_KEY}});
-  if (!r.ok) throw new Error(`API ${r.status}`);
+  const r=await fetch(`${API_BASE}${path}`,{headers:{"x-apisports-key":API_KEY}});
+  if(!r.ok) throw new Error(`${r.status}`);
   return r.json();
 }
 
@@ -201,17 +176,15 @@ function parseFixtures(data) {
     const dt=new Date(f.fixture.date);
     const roundNum=parseInt(((f.league.round||"").match(/(\d+)/)||[0,1])[1]);
     return {
-      id:String(f.fixture.id), apiId:f.fixture.id, roundNum,
+      id:String(f.fixture.id),roundNum,
       group:(f.league.round||"").replace(/Group Stage - /i,"").trim(),
-      home:f.teams.home.name, away:f.teams.away.name,
-      homeLogo:f.teams.home.logo, awayLogo:f.teams.away.logo,
+      home:f.teams.home.name,away:f.teams.away.name,
+      homeLogo:f.teams.home.logo,awayLogo:f.teams.away.logo,
       date:dt.toLocaleDateString("en-GB",{month:"short",day:"numeric"}),
       time:dt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}),
-      kickoffISO:f.fixture.date,
-      status:s, elapsed:f.fixture.status.elapsed,
-      venue:f.fixture.venue?.name,
-      isLive, isDone,
-      homeGoals:f.goals.home, awayGoals:f.goals.away,
+      kickoffISO:f.fixture.date,status:s,elapsed:f.fixture.status.elapsed,
+      venue:f.fixture.venue?.name,isLive,isDone,
+      homeGoals:f.goals.home,awayGoals:f.goals.away,
     };
   });
 }
@@ -226,8 +199,7 @@ function buildMatchdays(fixtures) {
 }
 
 function calcGroupStandings(gKey,allFixtures,liveResults,predictions) {
-  const teams=GROUPS_TEAMS[gKey]||[];
-  const table={};
+  const teams=GROUPS_TEAMS[gKey]||[], table={};
   teams.forEach(t=>{table[t]={team:t,mp:0,w:0,d:0,l:0,gf:0,ga:0,pts:0};});
   allFixtures.filter(f=>(f.group||"").toUpperCase().replace(/GROUP\s*/,"").trim()===gKey).forEach(fix=>{
     const src=liveResults[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null)||predictions[fix.id];
@@ -247,22 +219,40 @@ function StatusPill({status,elapsed}) {
   return null;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════
 // AUTH SCREEN
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════
 function AuthScreen({onLogin}) {
   const [mode,setMode]=useState("login");
   const [name,setName]=useState("");
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
   const [error,setError]=useState("");
+  const [loading,setLoading]=useState(false);
 
-  function handle() {
+  async function handle() {
     if(mode==="signup"&&!name.trim()){setError("Please enter your name.");return;}
     if(!email.includes("@")){setError("Please enter a valid email.");return;}
     if(password.length<6){setError("Password must be at least 6 characters.");return;}
-    setError("");
-    onLogin({name:name||email.split("@")[0], email, avatar:"👤"});
+    setError(""); setLoading(true);
+    try {
+      if(mode==="signup") {
+        const {data,error:e}=await supabase.auth.signUp({
+          email, password,
+          options:{data:{name:name.trim()}}
+        });
+        if(e) throw e;
+        if(data.user) onLogin({id:data.user.id,name:name.trim(),email,avatar:"👤"});
+      } else {
+        const {data,error:e}=await supabase.auth.signInWithPassword({email,password});
+        if(e) throw e;
+        const {data:profile}=await supabase.from("profiles").select("*").eq("id",data.user.id).single();
+        onLogin({id:data.user.id,name:profile?.name||email.split("@")[0],email,avatar:"👤"});
+      }
+    } catch(e) {
+      setError(e.message||"Something went wrong. Please try again.");
+    }
+    setLoading(false);
   }
 
   return (
@@ -273,12 +263,10 @@ function AuthScreen({onLogin}) {
           <div style={S.authBrand}>SCORACLE</div>
           <div style={S.authTagline}>FIFA World Cup 2026 · Prediction Game</div>
         </div>
-
         <div style={S.authToggleRow}>
           <button onClick={()=>setMode("login")} style={{...S.authToggle,...(mode==="login"?S.authToggleOn:{})}}>Sign In</button>
           <button onClick={()=>setMode("signup")} style={{...S.authToggle,...(mode==="signup"?S.authToggleOn:{})}}>Create Account</button>
         </div>
-
         {mode==="signup"&&(
           <div style={S.authField}>
             <label style={S.authLabel}>Your Name</label>
@@ -287,32 +275,30 @@ function AuthScreen({onLogin}) {
         )}
         <div style={S.authField}>
           <label style={S.authLabel}>Email Address</label>
-          <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" style={S.authInput}/>
+          <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" style={S.authInput}
+            onKeyDown={e=>e.key==="Enter"&&handle()}/>
         </div>
         <div style={S.authField}>
           <label style={S.authLabel}>Password</label>
-          <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" style={S.authInput}/>
+          <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" style={S.authInput}
+            onKeyDown={e=>e.key==="Enter"&&handle()}/>
         </div>
-
         {error&&<div style={S.authError}>{error}</div>}
-
-        <button onClick={handle} style={S.authBtn}>
-          {mode==="login"?"Sign In to Scoracle":"Join Scoracle"}
+        <button onClick={handle} disabled={loading} style={{...S.authBtn,...(loading?{opacity:0.6}:{})}}>
+          {loading?"Please wait...":(mode==="login"?"Sign In to Scoracle":"Join Scoracle")}
         </button>
-
-        <div style={S.authNote}>
-          🔒 Your predictions are saved to your account and visible on the leaderboard.
-        </div>
+        <div style={S.authNote}>🔒 Your predictions are saved and visible on the leaderboard.</div>
       </div>
     </div>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════
 // MAIN APP
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════
 export default function App() {
   const [user,setUser]=useState(null);
+  const [authLoading,setAuthLoading]=useState(true);
   const [tab,setTab]=useState("predict");
   const [menuOpen,setMenuOpen]=useState(false);
   const [matchdays,setMatchdays]=useState(STATIC_MATCHDAYS);
@@ -323,10 +309,58 @@ export default function App() {
   const [champion,setChampion]=useState("");
   const [savedId,setSavedId]=useState(null);
   const [confetti,setConfetti]=useState(false);
-  const [apiStatus,setApiStatus]=useState("loading");
-  const [lastUpdated,setLastUpdated]=useState(null);
+  const [apiStatus,setApiStatus]=useState("fallback");
+  const [leaderboardData,setLeaderboardData]=useState([]);
   const pollRef=useRef(null);
 
+  // ── Check existing session on load ──
+  useEffect(()=>{
+    supabase.auth.getSession().then(async({data:{session}})=>{
+      if(session?.user) {
+        const {data:profile}=await supabase.from("profiles").select("*").eq("id",session.user.id).single();
+        setUser({id:session.user.id,name:profile?.name||session.user.email.split("@")[0],email:session.user.email,avatar:"👤"});
+      }
+      setAuthLoading(false);
+    });
+  },[]);
+
+  // ── Load predictions from Supabase ──
+  useEffect(()=>{
+    if(!user) return;
+    supabase.from("predictions").select("*").eq("user_id",user.id).then(({data})=>{
+      if(!data) return;
+      const preds={};
+      data.forEach(p=>{preds[p.fixture_id]={homeGoals:p.home_goals,awayGoals:p.away_goals};});
+      setPredictions(preds);
+    });
+    supabase.from("bonus_answers").select("*").eq("user_id",user.id).then(({data})=>{
+      if(!data) return;
+      const ans={};
+      data.forEach(b=>{ans[b.question_id]=b.answer;});
+      setBonusAnswers(ans);
+    });
+  },[user]);
+
+  // ── Load leaderboard ──
+  useEffect(()=>{
+    if(!user) return;
+    supabase.from("profiles").select("id, name").then(async({data:profiles})=>{
+      if(!profiles) return;
+      const {data:allPreds}=await supabase.from("predictions").select("*");
+      const board=profiles.map(p=>{
+        const myPreds=allPreds?.filter(x=>x.user_id===p.id)||[];
+        const pts=myPreds.reduce((s,pred)=>{
+          const result=liveResults[pred.fixture_id];
+          if(!result) return s;
+          return s+(calcPoints({homeGoals:pred.home_goals,awayGoals:pred.away_goals},result)||0);
+        },0);
+        return {name:p.name,id:p.id,pts,avatar:"👤",correct:0,streak:0};
+      });
+      setLeaderboardData(board.sort((a,b)=>b.pts-a.pts));
+    });
+  },[user,liveResults]);
+
+  // ── Fetch API fixtures ──
   const fetchData=useCallback(async()=>{
     try {
       const data=await apiFetch(`/fixtures?league=${LEAGUE_ID}&season=${SEASON}`);
@@ -341,7 +375,6 @@ export default function App() {
       });
       setLiveResults(newLive);
       setApiStatus("live");
-      setLastUpdated(new Date());
     } catch { setApiStatus("fallback"); }
   },[]);
 
@@ -363,15 +396,40 @@ export default function App() {
     return calcPoints(predictions[fix.id],r)===PTS_EXACT;
   }).length;
 
-  function savePred(id,h,a){
+  async function savePred(id,h,a) {
     const hg=parseInt(h),ag=parseInt(a);
     if(isNaN(hg)||isNaN(ag)) return;
-    setPredictions(p=>({...p,[id]:{homeGoals:hg,awayGoals:ag}}));
+    const newPred={homeGoals:hg,awayGoals:ag};
+    setPredictions(p=>({...p,[id]:newPred}));
     setSavedId(id);setConfetti(true);
     setTimeout(()=>setConfetti(false),1400);
     setTimeout(()=>setSavedId(null),2200);
+    await supabase.from("predictions").upsert({
+      user_id:user.id, fixture_id:id, home_goals:hg, away_goals:ag
+    },{onConflict:"user_id,fixture_id"});
   }
+
+  async function saveBonus(id,val) {
+    setBonusAnswers(p=>({...p,[id]:val}));
+    await supabase.from("bonus_answers").upsert({
+      user_id:user.id, question_id:id, answer:val
+    },{onConflict:"user_id,question_id"});
+  }
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    setUser(null);setPredictions({});setBonusAnswers({});setChampion("");
+  }
+
   function go(t){setTab(t);setMenuOpen(false);}
+
+  if(authLoading) return (
+    <div style={{minHeight:"100vh",background:"#000",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
+      <span style={{fontSize:48,filter:"drop-shadow(0 0 12px #f59e0b88)"}}>⚽</span>
+      <div style={{fontSize:24,fontWeight:800,letterSpacing:4,color:"#f59e0b"}}>SCORACLE</div>
+      <div style={{fontSize:12,color:"#374151"}}>Loading...</div>
+    </div>
+  );
 
   if(!user) return <AuthScreen onLogin={setUser}/>;
 
@@ -380,28 +438,20 @@ export default function App() {
       <style>{CSS}</style>
       {confetti&&<Confetti/>}
 
-      {/* ── Side Menu ── */}
       {menuOpen&&(
         <div style={S.overlay} onClick={()=>setMenuOpen(false)}>
           <nav style={S.menuPanel} onClick={e=>e.stopPropagation()}>
             <div style={S.menuTop}>
-              <div>
-                <div style={S.menuBrand}>⚽ SCORACLE</div>
-                <div style={S.menuSubBrand}>FIFA World Cup 2026</div>
-              </div>
+              <div><div style={S.menuBrand}>⚽ SCORACLE</div><div style={S.menuSubBrand}>FIFA World Cup 2026</div></div>
               <button style={S.closeBtn} onClick={()=>setMenuOpen(false)}>✕</button>
             </div>
             <div style={S.menuUser}>
-              <div style={S.menuUserAv}>{user.avatar}</div>
-              <div>
-                <div style={S.menuUserName}>{user.name}</div>
-                <div style={S.menuUserEmail}>{user.email}</div>
-              </div>
+              <div style={{fontSize:28}}>{user.avatar}</div>
+              <div><div style={S.menuUserName}>{user.name}</div><div style={S.menuUserEmail}>{user.email}</div></div>
             </div>
             <div style={S.divider}/>
             {NAV_ITEMS.map(n=>(
-              <button key={n.id} onClick={()=>go(n.id)}
-                style={{...S.menuItem,...(tab===n.id?S.menuItemOn:{})}}>
+              <button key={n.id} onClick={()=>go(n.id)} style={{...S.menuItem,...(tab===n.id?S.menuItemOn:{})}}>
                 <span style={S.menuIcon}>{n.icon}</span><span>{n.label}</span>
                 {tab===n.id&&<span style={S.menuDot}>●</span>}
               </button>
@@ -409,18 +459,17 @@ export default function App() {
             <div style={S.divider}/>
             <div style={S.menuFooter}>
               <div style={S.statusRow}>
-                <span style={{...S.dot,background:apiStatus==="live"?"#22c55e":apiStatus==="fallback"?"#f59e0b":"#374151"}}/>
+                <span style={{...S.dot,background:apiStatus==="live"?"#22c55e":"#f59e0b"}}/>
                 <span style={S.statusTxt}>{apiStatus==="live"?"Live data connected":"Static data (pre-tournament)"}</span>
               </div>
-              {lastUpdated&&<div style={S.updTxt}>Updated {lastUpdated.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}</div>}
               <div style={S.menuHint}>48 teams · 12 groups · 104 matches</div>
-              <button onClick={()=>setUser(null)} style={S.signOutBtn}>Sign Out</button>
+              <div style={S.menuHint}>Jun 11 – Jul 19, 2026</div>
+              <button onClick={signOut} style={S.signOutBtn}>Sign Out</button>
             </div>
           </nav>
         </div>
       )}
 
-      {/* ── Header ── */}
       <header style={S.header}>
         <div style={S.headerRow}>
           <button style={S.burger} onClick={()=>setMenuOpen(true)}>
@@ -428,23 +477,18 @@ export default function App() {
           </button>
           <div style={S.brand}>
             <span style={S.brandIcon}>⚽</span>
-            <div>
-              <div style={S.brandName}>SCORACLE</div>
-              <div style={S.brandSub}>World Cup 2026 · {user.name}</div>
-            </div>
+            <div><div style={S.brandName}>SCORACLE</div><div style={S.brandSub}>World Cup 2026 · {user.name}</div></div>
           </div>
           <div style={S.headerRight}>
             <div style={S.ptsBubble}>
-              <span style={S.ptsNum}>{totalPts}</span>
-              <span style={S.ptsLbl}>PTS</span>
+              <span style={S.ptsNum}>{totalPts}</span><span style={S.ptsLbl}>PTS</span>
             </div>
-            <span style={{...S.dot,width:8,height:8,flexShrink:0,background:apiStatus==="live"?"#22c55e":apiStatus==="fallback"?"#f59e0b":"#374151"}}/>
+            <span style={{...S.dot,width:8,height:8,flexShrink:0,background:apiStatus==="live"?"#22c55e":"#f59e0b"}}/>
           </div>
         </div>
         <div style={S.prog}><div style={{...S.progFill,width:`${totalFixtures?(predictedCount/totalFixtures)*100:0}%`}}/></div>
       </header>
 
-      {/* ── Bottom Nav ── */}
       <nav style={S.botNav}>
         {[
           {id:"predict",icon:"🎯",label:"Predict"},
@@ -455,22 +499,18 @@ export default function App() {
         ].map(n=>(
           <button key={n.id} onClick={()=>go(n.id)} style={{...S.navBtn,...(tab===n.id?S.navBtnOn:{})}}>
             {tab===n.id&&<div style={S.navBar}/>}
-            <span style={S.navIco}>{n.icon}</span>
-            <span style={S.navLbl}>{n.label}</span>
+            <span style={S.navIco}>{n.icon}</span><span style={S.navLbl}>{n.label}</span>
           </button>
         ))}
       </nav>
 
-      {/* ── Pages ── */}
       <main style={S.main}>
         {tab==="predict"&&<PredictTab matchdays={matchdays} selDay={selDay} setSelDay={setSelDay}
           predictions={predictions} liveResults={liveResults} onSave={savePred} savedId={savedId}/>}
         {tab==="standings"&&<StandingsTab allFixtures={allFixtures} liveResults={liveResults} predictions={predictions}/>}
-        {tab==="leaderboard"&&<LeaderboardTab userPts={totalPts} userCorrect={correctExact} userName={user.name}/>}
-        {tab==="bonus"&&<BonusTab answers={bonusAnswers} setAnswers={setBonusAnswers}
-          champion={champion} setChampion={setChampion} players={PLAYERS} teams={ALL_TEAMS}/>}
-        {tab==="stats"&&<StatsTab allFixtures={allFixtures} predictions={predictions} liveResults={liveResults}
-          totalPts={totalPts} predictedCount={predictedCount} totalFixtures={totalFixtures}/>}
+        {tab==="leaderboard"&&<LeaderboardTab leaderboardData={leaderboardData} userName={user.name} userPts={totalPts} userCorrect={correctExact}/>}
+        {tab==="bonus"&&<BonusTab answers={bonusAnswers} onSave={saveBonus} champion={champion} setChampion={c=>{setChampion(c);saveBonus("champion",c);}} players={PLAYERS} teams={ALL_TEAMS}/>}
+        {tab==="stats"&&<StatsTab allFixtures={allFixtures} predictions={predictions} liveResults={liveResults} totalPts={totalPts} predictedCount={predictedCount} totalFixtures={totalFixtures}/>}
         {tab==="rules"&&<RulesTab/>}
       </main>
     </div>
@@ -482,8 +522,6 @@ function PredictTab({matchdays,selDay,setSelDay,predictions,liveResults,onSave,s
   const [drafts,setDrafts]=useState({});
   const md=matchdays.find(m=>m.day===selDay)||matchdays[0];
   const fixes=md?.fixtures||[];
-
-  function inp(id,side,v){setDrafts(p=>({...p,[id]:{...p[id],[side]:v}}));}
   function val(id,side){
     const d=drafts[id],pr=predictions[id];
     if(d?.[side]!==undefined) return d[side];
@@ -491,14 +529,12 @@ function PredictTab({matchdays,selDay,setSelDay,predictions,liveResults,onSave,s
     if(side==="away"&&pr?.awayGoals!==undefined) return String(pr.awayGoals);
     return "";
   }
-
   return (
     <div>
       <div style={S.mdWrap}>
         {matchdays.map(m=>(
           <button key={m.day} onClick={()=>setSelDay(m.day)} style={{...S.mdTab,...(selDay===m.day?S.mdTabOn:{})}}>
-            <div style={S.mdLabel}>{m.label}</div>
-            <div style={S.mdDates}>{m.dates}</div>
+            <div style={S.mdLabel}>{m.label}</div><div style={S.mdDates}>{m.dates}</div>
           </button>
         ))}
       </div>
@@ -510,9 +546,8 @@ function PredictTab({matchdays,selDay,setSelDay,predictions,liveResults,onSave,s
           const pts=calcPoints(pred,result);
           const locked=isLocked(fix.kickoffISO)||fix.isLive||fix.isDone;
           const isSaved=savedId===fix.id;
-          const hv=val(fix.id,"home"), av=val(fix.id,"away");
+          const hv=val(fix.id,"home"),av=val(fix.id,"away");
           const lockMsg=timeUntilLock(fix.kickoffISO);
-
           return (
             <div key={fix.id} style={{...S.card,...(isSaved?S.cardSaved:{}),...(fix.isLive?S.cardLive:{})}}>
               <div style={S.cardMeta}>
@@ -524,33 +559,28 @@ function PredictTab({matchdays,selDay,setSelDay,predictions,liveResults,onSave,s
                 </div>
                 <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}>
                   <StatusPill status={fix.status} elapsed={fix.elapsed}/>
-                  {pts!==null&&(
-                    <span style={{...S.ptsPill,background:pts===PTS_EXACT?"#22c55e":pts===PTS_RESULT?"#f59e0b":"#ef4444"}}>
-                      {pts===PTS_EXACT?`✓ +${PTS_EXACT}`:pts===PTS_RESULT?`~ +${PTS_RESULT}`:`✗ +0`}
-                    </span>
-                  )}
+                  {pts!==null&&<span style={{...S.ptsPill,background:pts===PTS_EXACT?"#22c55e":pts===PTS_RESULT?"#f59e0b":"#ef4444"}}>
+                    {pts===PTS_EXACT?`✓ +${PTS_EXACT}`:pts===PTS_RESULT?`~ +${PTS_RESULT}`:`✗ +0`}
+                  </span>}
                 </div>
               </div>
-
               <div style={S.matchRow}>
                 <div style={S.team}>
                   {fix.homeLogo?<img src={fix.homeLogo} alt="" style={S.logo}/>:<span style={S.flag}>{FLAGS[fix.home]||"🏳️"}</span>}
                   <span style={S.teamName}>{fix.home}</span>
                 </div>
                 <div style={S.scoreZone}>
-                  {result!=null&&(
-                    <div style={{textAlign:"center"}}>
-                      <span style={{...S.liveNum,color:fix.isLive?"#ef4444":"#f59e0b"}}>{result.homeGoals} – {result.awayGoals}</span>
-                      <div style={S.livMin}>{fix.isLive?`${fix.elapsed}'`:"FT"}</div>
-                    </div>
-                  )}
+                  {result!=null&&<div style={{textAlign:"center"}}>
+                    <span style={{...S.liveNum,color:fix.isLive?"#ef4444":"#f59e0b"}}>{result.homeGoals} – {result.awayGoals}</span>
+                    <div style={S.livMin}>{fix.isLive?`${fix.elapsed}'`:"FT"}</div>
+                  </div>}
                   <div style={S.inputRow}>
                     <input type="number" min="0" max="20" value={hv}
-                      onChange={e=>inp(fix.id,"home",e.target.value)}
+                      onChange={e=>setDrafts(p=>({...p,[fix.id]:{...p[fix.id],home:e.target.value}}))}
                       style={{...S.sInput,...(locked?S.sInputLocked:{})}} disabled={locked} placeholder="–"/>
                     <span style={S.colon}>:</span>
                     <input type="number" min="0" max="20" value={av}
-                      onChange={e=>inp(fix.id,"away",e.target.value)}
+                      onChange={e=>setDrafts(p=>({...p,[fix.id]:{...p[fix.id],away:e.target.value}}))}
                       style={{...S.sInput,...(locked?S.sInputLocked:{})}} disabled={locked} placeholder="–"/>
                   </div>
                   {pred&&!locked&&<div style={S.hint}>Pick: {pred.homeGoals}–{pred.awayGoals}</div>}
@@ -560,7 +590,6 @@ function PredictTab({matchdays,selDay,setSelDay,predictions,liveResults,onSave,s
                   {fix.awayLogo?<img src={fix.awayLogo} alt="" style={S.logo}/>:<span style={S.flag}>{FLAGS[fix.away]||"🏳️"}</span>}
                 </div>
               </div>
-
               <button onClick={()=>onSave(fix.id,hv,av)} disabled={locked}
                 style={{...S.saveBtn,...(locked?S.saveLocked:{}),...(isSaved?S.saveDone:{})}}>
                 {isSaved?"✓ Saved!":locked?(fix.isLive?"🔴 Live — Locked":fix.isDone?"✓ Final Result":"🔒 Locked"):pred?"Update Pick":"Save Pick"}
@@ -581,14 +610,10 @@ function StandingsTab({allFixtures,liveResults,predictions}) {
     <div style={S.sec}>
       <div style={S.pageTitle}>Group Standings</div>
       <div style={S.pillRow}>
-        {GROUPS_LIST.map(g=>(
-          <button key={g} onClick={()=>setSelG(g)} style={{...S.gpill,...(selG===g?S.gpillOn:{})}}>Grp {g}</button>
-        ))}
+        {GROUPS_LIST.map(g=><button key={g} onClick={()=>setSelG(g)} style={{...S.gpill,...(selG===g?S.gpillOn:{})}}>Grp {g}</button>)}
       </div>
       <div style={S.teamChips}>
-        {GROUPS_TEAMS[selG].map(t=>(
-          <div key={t} style={S.teamChip}><span>{FLAGS[t]||"🏳️"}</span><span style={{fontSize:12}}>{t}</span></div>
-        ))}
+        {GROUPS_TEAMS[selG].map(t=><div key={t} style={S.teamChip}><span>{FLAGS[t]||"🏳️"}</span><span style={{fontSize:12}}>{t}</span></div>)}
       </div>
       <div style={S.tblWrap}>
         <table style={S.tbl}>
@@ -618,10 +643,10 @@ function StandingsTab({allFixtures,liveResults,predictions}) {
 }
 
 // ══════════════════ LEADERBOARD TAB ══════════════════════════════════
-function LeaderboardTab({userPts,userCorrect,userName}) {
-  const board=[{name:userName||"You",avatar:"👤",pts:userPts,correct:userCorrect,streak:0},...LEADERBOARD_MOCK]
-    .sort((a,b)=>b.pts-a.pts).map((p,i)=>({...p,rank:i+1}));
+function LeaderboardTab({leaderboardData,userName,userPts,userCorrect}) {
   const medals=["🥇","🥈","🥉"];
+  const board=leaderboardData.length>0 ? leaderboardData.map((p,i)=>({...p,rank:i+1})) :
+    [{name:userName,avatar:"👤",pts:userPts,correct:userCorrect,rank:1}];
   const top3=[board[1],board[0],board[2]].filter(Boolean);
   const heights=["82px","104px","68px"],ord=[1,0,2];
   return (
@@ -630,7 +655,7 @@ function LeaderboardTab({userPts,userCorrect,userName}) {
       <div style={S.podium}>
         {top3.map((p,i)=>(
           <div key={p.name} style={S.podSlot}>
-            <div style={{fontSize:30,marginBottom:4}}>{p.avatar}</div>
+            <div style={{fontSize:30,marginBottom:4}}>{p.avatar||"👤"}</div>
             <div style={S.podName}>{p.name}</div>
             <div style={S.podPts}>{p.pts}<span style={{fontSize:10,color:"#6b7280"}}> pts</span></div>
             <div style={{...S.podBase,height:heights[i]}}><span style={{fontSize:24}}>{medals[ord[i]]}</span></div>
@@ -639,12 +664,12 @@ function LeaderboardTab({userPts,userCorrect,userName}) {
       </div>
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
         {board.map(p=>(
-          <div key={p.name} style={{...S.lRow,...(p.name===userName||p.name==="You"?S.lRowYou:{})}}>
+          <div key={p.name} style={{...S.lRow,...(p.name===userName?S.lRowYou:{})}}>
             <div style={S.lRank}>{p.rank<=3?medals[p.rank-1]:`#${p.rank}`}</div>
-            <div style={{fontSize:24}}>{p.avatar}</div>
+            <div style={{fontSize:24}}>{p.avatar||"👤"}</div>
             <div style={{flex:1}}>
-              <div style={S.lName}>{p.name}{(p.name===userName||p.name==="You")&&" (You)"}</div>
-              <div style={S.lSub}>{p.correct} exact{p.streak>0?` · 🔥${p.streak}`:""}</div>
+              <div style={S.lName}>{p.name}{p.name===userName&&" (You)"}</div>
+              <div style={S.lSub}>{p.correct||0} exact</div>
             </div>
             <div style={S.lPts}>{p.pts}<span style={{fontSize:11,color:"#6b7280"}}> pts</span></div>
           </div>
@@ -655,26 +680,21 @@ function LeaderboardTab({userPts,userCorrect,userName}) {
 }
 
 // ══════════════════ BONUS TAB ═════════════════════════════════════════
-function BonusTab({answers,setAnswers,champion,setChampion,players,teams}) {
-  const set=(id,v)=>setAnswers(p=>({...p,[id]:v}));
+function BonusTab({answers,onSave,champion,setChampion,players,teams}) {
   const [advTab,setAdvTab]=useState("r32");
-
   const advRounds=[
-    {id:"r32",label:"Round of 32",count:32,desc:"Pick all 32 teams you think will advance from the group stage"},
-    {id:"qf",label:"Quarter-Finals",count:8,desc:"Pick the 8 teams you think will reach the QFs"},
+    {id:"r32",label:"Round of 32",count:32,desc:"Pick 32 teams you think advance from the groups"},
+    {id:"qf",label:"Quarter-Finals",count:8,desc:"Pick your 8 quarter-finalists"},
     {id:"sf",label:"Semi-Finals",count:4,desc:"Pick your 4 semi-finalists"},
-    {id:"final",label:"The Final",count:2,desc:"Pick the 2 teams that will contest the Final"},
+    {id:"final",label:"The Final",count:2,desc:"Pick the 2 teams in the Final"},
   ];
-
   return (
     <div style={S.sec}>
       <div style={S.pageTitle}>Bonus Questions</div>
-      <div style={{fontSize:12,color:"#6b7280",marginBottom:20}}>Lock in all answers before Jun 11 · Each correct answer = {PTS_BONUS} pts</div>
-
-      {/* Tournament Winner */}
+      <div style={{fontSize:12,color:"#6b7280",marginBottom:20}}>Lock in all answers before Jun 11 · Each correct = {PTS_BONUS} pts</div>
       <div style={S.champCard}>
         <div style={S.champTitle}>🏆 Who will WIN the World Cup?</div>
-        <div style={S.champSub}>Worth {PTS_WINNER} points · The biggest call of the competition</div>
+        <div style={S.champSub}>Worth {PTS_WINNER} points · The biggest call</div>
         <div style={S.champGrid}>
           {teams.map(t=>(
             <button key={t} onClick={()=>setChampion(t)} style={{...S.champBtn,...(champion===t?S.champBtnOn:{})}}>
@@ -685,56 +705,46 @@ function BonusTab({answers,setAnswers,champion,setChampion,players,teams}) {
         </div>
         {champion&&<div style={S.bonusLocked}>✓ Your pick: {FLAGS[champion]} {champion}</div>}
       </div>
-
-      {/* Individual Bonus Questions */}
       <div style={S.bonusSectionTitle}>🌟 Individual Awards</div>
       {[
-        {id:"topscorer",q:"Who will win the Golden Boot (Top Scorer)?",type:"player"},
-        {id:"glove",q:"Who will win the Golden Glove (Best Goalkeeper)?",type:"player"},
-        {id:"surprise",q:"Which team will be the biggest surprise of the tournament?",type:"team"},
-        {id:"mostgoals",q:"Which team will score the most goals in the group stage?",type:"team"},
-        {id:"finalgoals",q:"How many total goals will be scored in the Final?",type:"number"},
+        {id:"topscorer",q:"Who will win the Golden Boot?",type:"player"},
+        {id:"glove",q:"Who will win the Golden Glove?",type:"player"},
+        {id:"surprise",q:"Biggest surprise team of the tournament?",type:"team"},
+        {id:"mostgoals",q:"Which team scores most group stage goals?",type:"team"},
+        {id:"finalgoals",q:"How many total goals in the Final?",type:"number"},
       ].map(q=>(
         <div key={q.id} style={S.bonusCard}>
           <div style={S.bonusQ}>⭐ {q.q}</div>
-          {q.type==="number"&&<input type="number" min="0" value={answers[q.id]||""} onChange={e=>set(q.id,e.target.value)} placeholder="Enter a number" style={S.bonusInp}/>}
-          {q.type==="player"&&(<select value={answers[q.id]||""} onChange={e=>set(q.id,e.target.value)} style={S.bonusSel}>
+          {q.type==="number"&&<input type="number" min="0" value={answers[q.id]||""} onChange={e=>onSave(q.id,e.target.value)} placeholder="Enter a number" style={S.bonusInp}/>}
+          {q.type==="player"&&<select value={answers[q.id]||""} onChange={e=>onSave(q.id,e.target.value)} style={S.bonusSel}>
             <option value="">Choose a player…</option>
             {players.map(p=><option key={p} value={p}>{p}</option>)}
-          </select>)}
-          {q.type==="team"&&(<select value={answers[q.id]||""} onChange={e=>set(q.id,e.target.value)} style={S.bonusSel}>
+          </select>}
+          {q.type==="team"&&<select value={answers[q.id]||""} onChange={e=>onSave(q.id,e.target.value)} style={S.bonusSel}>
             <option value="">Choose a team…</option>
             {teams.map(t=><option key={t} value={t}>{FLAGS[t]} {t}</option>)}
-          </select>)}
+          </select>}
           {answers[q.id]&&<div style={S.bonusLocked}>✓ Locked: {answers[q.id]}</div>}
         </div>
       ))}
-
-      {/* Advancement Picks */}
       <div style={S.bonusSectionTitle}>🗓 Pick Teams to Advance</div>
-      <div style={{fontSize:12,color:"#6b7280",marginBottom:12}}>Select teams before Jun 11 — {PTS_BONUS} pts for each correct pick</div>
+      <div style={{fontSize:12,color:"#6b7280",marginBottom:12}}>{PTS_BONUS} pts for each correct pick</div>
       <div style={S.advTabRow}>
-        {advRounds.map(r=>(
-          <button key={r.id} onClick={()=>setAdvTab(r.id)} style={{...S.advTab,...(advTab===r.id?S.advTabOn:{})}}>
-            {r.label}
-          </button>
-        ))}
+        {advRounds.map(r=><button key={r.id} onClick={()=>setAdvTab(r.id)} style={{...S.advTab,...(advTab===r.id?S.advTabOn:{})}}>{r.label}</button>)}
       </div>
       {advRounds.filter(r=>r.id===advTab).map(round=>{
         const key=`adv_${round.id}`;
-        const selected=answers[key]||[];
+        const selected=answers[key]?JSON.parse(answers[key]):[];
         const max=round.count;
         function toggle(t){
-          const curr=answers[key]||[];
-          if(curr.includes(t)) set(key,curr.filter(x=>x!==t));
-          else if(curr.length<max) set(key,[...curr,t]);
+          const curr=answers[key]?JSON.parse(answers[key]):[];
+          const next=curr.includes(t)?curr.filter(x=>x!==t):(curr.length<max?[...curr,t]:curr);
+          onSave(key,JSON.stringify(next));
         }
         return (
           <div key={round.id}>
             <div style={S.advDesc}>{round.desc}</div>
-            <div style={S.advProgress}>
-              <div style={{...S.advProgressFill,width:`${(selected.length/max)*100}%`}}/>
-            </div>
+            <div style={S.advProgress}><div style={{...S.advProgressFill,width:`${(selected.length/max)*100}%`}}/></div>
             <div style={{fontSize:11,color:"#6b7280",marginBottom:12,textAlign:"right"}}>{selected.length}/{max} selected</div>
             <div style={S.champGrid}>
               {teams.map(t=>(
@@ -762,7 +772,6 @@ function StatsTab({allFixtures,predictions,liveResults,totalPts,predictedCount,t
   const exact=Object.keys(predictions).filter(id=>calcPoints(predictions[id],resMap[id])===PTS_EXACT).length;
   const correct=Object.keys(predictions).filter(id=>(calcPoints(predictions[id],resMap[id])||0)>=PTS_RESULT).length;
   const acc=predictedCount>0?Math.round((exact/Math.min(predictedCount,played||1))*100):0;
-
   return (
     <div style={S.sec}>
       <div style={S.pageTitle}>My Stats</div>
@@ -791,24 +800,14 @@ function RulesTab() {
   return (
     <div style={S.sec}>
       <div style={S.pageTitle}>📖 How to Play</div>
-
-      {/* Intro */}
-      <div style={S.rulesIntro}>
-        Welcome to <strong style={{color:"#f59e0b"}}>Scoracle</strong> — the official prediction game for the FIFA World Cup 2026. 
-        Predict scores, rack up points, and climb the leaderboard. Good luck! ⚽
-      </div>
-
-      {/* Section: Predicting */}
+      <div style={S.rulesIntro}>Welcome to <strong style={{color:"#f59e0b"}}>Scoracle</strong> — the official prediction game for FIFA World Cup 2026. Predict scores, rack up points, and climb the leaderboard. Good luck! ⚽</div>
       <div style={S.rulesSectionTitle}>🎯 How Predictions Work</div>
       <div style={S.rulesCard}>
-        <p style={S.rulesPara}>For every match, simply predict the final score. Enter your scoreline before the deadline and earn points based on how accurate you are.</p>
-        <p style={S.rulesPara}>Predictions lock <strong style={{color:"#f59e0b"}}>15 minutes before kick-off</strong> — so don't leave it too late!</p>
-        <p style={S.rulesPara}>For knockout games that go to penalties, enter the score <strong style={{color:"#f59e0b"}}>including penalty shootout goals</strong>.</p>
+        <p style={S.rulesPara}>For every match, predict the final score. Earn points based on accuracy.</p>
+        <p style={S.rulesPara}>Predictions lock <strong style={{color:"#f59e0b"}}>15 minutes before kick-off</strong> — don't leave it too late!</p>
+        <p style={S.rulesPara}>For knockout games going to penalties, enter the score <strong style={{color:"#f59e0b"}}>including all goals</strong>.</p>
       </div>
-
-      {/* Section: Scoring */}
       <div style={S.rulesSectionTitle}>⚡ Scoring System</div>
-
       <div style={S.rulesExample}>
         <div style={S.rulesExampleTitle}>Example: Mexico vs South Africa — Final score <span style={{color:"#f59e0b"}}>2–1</span></div>
         {[
@@ -819,20 +818,16 @@ function RulesTab() {
         ].map(e=>(
           <div key={e.pred} style={S.rulesExRow}>
             <div style={S.rulesExPred}>{e.pred}</div>
-            <div style={{flex:1}}>
-              <div style={{fontSize:13,fontWeight:600,color:e.color}}>{e.label}</div>
-              <div style={{fontSize:11,color:"#6b7280",marginTop:2}}>{e.breakdown}</div>
-            </div>
+            <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:e.color}}>{e.label}</div><div style={{fontSize:11,color:"#6b7280",marginTop:2}}>{e.breakdown}</div></div>
             <div style={{...S.rulesExPts,color:e.color}}>+{e.pts}</div>
           </div>
         ))}
       </div>
-
       <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:12}}>
         {[
-          {pts:10,label:"Exact Scoreline",desc:"You predicted the exact final score",color:"#22c55e"},
-          {pts:5,label:"Correct Result",desc:"Right outcome (win/draw/loss) but wrong score",color:"#f59e0b"},
-          {pts:0,label:"Wrong Result",desc:"Incorrect outcome — no points awarded",color:"#ef4444"},
+          {pts:10,label:"Exact Scoreline",desc:"Predicted the exact final score",color:"#22c55e"},
+          {pts:5,label:"Correct Result",desc:"Right outcome but wrong score",color:"#f59e0b"},
+          {pts:0,label:"Wrong Result",desc:"Incorrect outcome — no points",color:"#ef4444"},
         ].map(r=>(
           <div key={r.pts} style={S.ruleRow}>
             <div style={{...S.rulePts,color:r.color}}>+{r.pts}</div>
@@ -840,23 +835,18 @@ function RulesTab() {
           </div>
         ))}
       </div>
-
-      {/* Section: Knockout */}
       <div style={S.rulesSectionTitle}>🏟 Knockout Stages</div>
       <div style={S.rulesCard}>
-        <p style={S.rulesPara}>The same scoring system applies in all knockout rounds (Round of 32, Round of 16, Quarter-Finals, Semi-Finals, Final).</p>
-        <p style={S.rulesPara}>If a match goes to extra time or penalties, enter the <strong style={{color:"#f59e0b"}}>total score including all goals</strong> — penalty shootout goals count.</p>
+        <p style={S.rulesPara}>Same scoring applies in all knockout rounds. If a match goes to extra time or penalties, enter the <strong style={{color:"#f59e0b"}}>total score including all goals</strong>.</p>
       </div>
-
-      {/* Section: Bonus */}
       <div style={S.rulesSectionTitle}>⭐ Bonus Points</div>
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
         {[
           {pts:50,label:"Tournament Winner",desc:"Correctly predict the World Cup champion",color:"#f59e0b"},
-          {pts:10,label:"Advancement Picks",desc:"Each team correctly picked to advance per round (R32, QF, SF, Final)",color:"#a855f7"},
-          {pts:10,label:"Golden Boot",desc:"Correctly predict the tournament top scorer",color:"#22c55e"},
+          {pts:10,label:"Advancement Picks",desc:"Each team correctly picked to advance per round",color:"#a855f7"},
+          {pts:10,label:"Golden Boot",desc:"Correctly predict the top scorer",color:"#22c55e"},
           {pts:10,label:"Golden Glove",desc:"Correctly predict the best goalkeeper",color:"#22c55e"},
-          {pts:10,label:"Other Bonus Questions",desc:"Biggest surprise team, most group stage goals, Final total goals",color:"#06b6d4"},
+          {pts:10,label:"Other Bonus Questions",desc:"Surprise team, most goals, Final total goals",color:"#06b6d4"},
         ].map(r=>(
           <div key={r.label} style={S.ruleRow}>
             <div style={{...S.rulePts,color:r.color}}>+{r.pts}</div>
@@ -864,18 +854,13 @@ function RulesTab() {
           </div>
         ))}
       </div>
-
-      {/* Section: Deadline */}
       <div style={S.rulesSectionTitle}>🔒 Deadlines</div>
       <div style={S.rulesCard}>
-        <p style={S.rulesPara}><strong style={{color:"#f59e0b"}}>Match predictions</strong> lock 15 minutes before each individual kick-off.</p>
-        <p style={S.rulesPara}><strong style={{color:"#f59e0b"}}>All bonus questions</strong> (including advancement picks and tournament winner) must be submitted before the opening match on <strong>June 11, 2026</strong>.</p>
-        <p style={S.rulesPara}>Once locked, predictions cannot be changed. Make sure yours are in!</p>
+        <p style={S.rulesPara}><strong style={{color:"#f59e0b"}}>Match predictions</strong> lock 15 minutes before each kick-off.</p>
+        <p style={S.rulesPara}><strong style={{color:"#f59e0b"}}>All bonus questions</strong> must be submitted before June 11, 2026.</p>
+        <p style={S.rulesPara}>Once locked, predictions cannot be changed!</p>
       </div>
-
-      <div style={{...S.rulesCard,marginTop:16,textAlign:"center",fontSize:16}}>
-        Good luck everyone! ⚽🏆
-      </div>
+      <div style={{...S.rulesCard,marginTop:16,textAlign:"center",fontSize:16}}>Good luck everyone! ⚽🏆</div>
     </div>
   );
 }
@@ -893,11 +878,9 @@ function Confetti() {
   );
 }
 
-// ══════════════════ STYLES ════════════════════════════════════════════
 const G="#f59e0b";
 const S={
   root:{minHeight:"100vh",background:"#000",color:"#f9fafb",fontFamily:"'DM Sans','Segoe UI',sans-serif",maxWidth:960,margin:"0 auto",paddingBottom:72},
-  // Auth
   authWrap:{minHeight:"100vh",background:"#000",display:"flex",alignItems:"center",justifyContent:"center",padding:20},
   authCard:{background:"#0a0a0a",border:"1px solid #1f1f1f",borderRadius:24,padding:32,width:"100%",maxWidth:420},
   authLogo:{textAlign:"center",marginBottom:28},
@@ -913,7 +896,6 @@ const S={
   authError:{fontSize:12,color:"#ef4444",marginBottom:12,padding:"10px 12px",background:"#1f0000",borderRadius:8,border:"1px solid #ef444433"},
   authBtn:{width:"100%",background:`linear-gradient(90deg,${G},#f97316)`,border:"none",borderRadius:12,color:"#000",fontWeight:800,fontSize:15,padding:"14px",cursor:"pointer",marginTop:4,letterSpacing:0.5},
   authNote:{fontSize:11,color:"#374151",textAlign:"center",marginTop:16,lineHeight:1.5},
-  // Header
   header:{background:"#000",borderBottom:"1px solid #141414",padding:"14px 16px 0",position:"sticky",top:0,zIndex:100},
   headerRow:{display:"flex",alignItems:"center",gap:12,marginBottom:12},
   burger:{background:"none",border:"none",cursor:"pointer",padding:"5px 6px",display:"flex",flexDirection:"column",gap:5,borderRadius:6,flexShrink:0},
@@ -929,15 +911,13 @@ const S={
   dot:{borderRadius:"50%",display:"inline-block"},
   prog:{height:2,background:"#0f0f0f"},
   progFill:{height:"100%",background:`linear-gradient(90deg,${G},#22c55e)`,transition:"width 0.6s ease",borderRadius:2},
-  // Menu
   overlay:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:500,backdropFilter:"blur(6px)"},
   menuPanel:{position:"fixed",top:0,left:0,bottom:0,width:290,background:"#080808",borderRight:"1px solid #1a1a1a",display:"flex",flexDirection:"column",zIndex:501,overflowY:"auto"},
   menuTop:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",padding:"24px 20px 16px"},
   menuBrand:{fontSize:18,fontWeight:800,letterSpacing:3,color:G},
   menuSubBrand:{fontSize:10,color:"#374151",letterSpacing:1,marginTop:2},
   closeBtn:{background:"none",border:"1px solid #222",color:"#6b7280",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:14,flexShrink:0},
-  menuUser:{display:"flex",alignItems:"center",gap:10,padding:"12px 20px",background:"#0f0f0f",margin:"0 0 0"},
-  menuUserAv:{fontSize:28},
+  menuUser:{display:"flex",alignItems:"center",gap:10,padding:"12px 20px",background:"#0f0f0f"},
   menuUserName:{fontWeight:700,fontSize:14,color:"#f9fafb"},
   menuUserEmail:{fontSize:11,color:"#6b7280"},
   divider:{height:1,background:"#141414"},
@@ -948,70 +928,54 @@ const S={
   menuFooter:{padding:"20px",marginTop:"auto"},
   statusRow:{display:"flex",alignItems:"center",gap:8,marginBottom:6},
   statusTxt:{fontSize:12,color:"#6b7280"},
-  updTxt:{fontSize:11,color:"#374151",marginBottom:4},
   menuHint:{fontSize:10,color:"#1f2937",marginTop:2},
   signOutBtn:{marginTop:16,width:"100%",background:"none",border:"1px solid #1f1f1f",color:"#6b7280",borderRadius:8,padding:"10px",cursor:"pointer",fontSize:13,fontWeight:600},
-  // Nav
   botNav:{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:960,background:"#040404",borderTop:"1px solid #141414",display:"flex",zIndex:200},
   navBtn:{flex:1,background:"none",border:"none",color:"#374151",padding:"10px 4px 8px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,position:"relative",transition:"color 0.2s"},
   navBtnOn:{color:G},
   navBar:{position:"absolute",top:0,left:"12%",width:"76%",height:2,background:G,borderRadius:"0 0 3px 3px"},
   navIco:{fontSize:19},
   navLbl:{fontSize:9,fontWeight:600,letterSpacing:0.5},
-  main:{},
-  sec:{padding:"16px"},
+  main:{},sec:{padding:"16px"},
   pageTitle:{fontSize:20,fontWeight:800,marginBottom:16,letterSpacing:0.3},
-  // Matchday
   mdWrap:{overflowX:"auto",padding:"14px 16px 0",display:"flex",gap:8,borderBottom:"1px solid #0f0f0f",paddingBottom:14},
   mdTab:{background:"#0a0a0a",border:"1px solid #1a1a1a",color:"#6b7280",borderRadius:12,padding:"9px 16px",cursor:"pointer",transition:"all 0.2s",textAlign:"left",flexShrink:0,minWidth:120},
   mdTabOn:{background:`${G}12`,border:`1px solid ${G}`,color:G},
-  mdLabel:{fontSize:13,fontWeight:700},
-  mdDates:{fontSize:10,marginTop:3,opacity:0.6},
-  // Cards
+  mdLabel:{fontSize:13,fontWeight:700},mdDates:{fontSize:10,marginTop:3,opacity:0.6},
   card:{background:"#080808",border:"1px solid #141414",borderRadius:16,padding:16,marginBottom:12,transition:"border-color 0.3s,box-shadow 0.3s"},
   cardSaved:{borderColor:"#22c55e",boxShadow:"0 0 18px #22c55e2a"},
   cardLive:{borderColor:"#ef444440",boxShadow:"0 0 18px #ef44441a"},
   cardMeta:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,gap:8},
   grpTag:{fontSize:10,fontWeight:800,color:G,letterSpacing:1},
-  dateTxt:{fontSize:11,color:"#4b5563"},
-  venueTxt:{fontSize:10,color:"#374151",marginTop:2},
+  dateTxt:{fontSize:11,color:"#4b5563"},venueTxt:{fontSize:10,color:"#374151",marginTop:2},
   lockWarn:{fontSize:10,color:"#f59e0b",marginTop:3,fontWeight:600},
   pill:{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:20,color:"#fff"},
   ptsPill:{fontSize:11,fontWeight:700,color:"#fff",padding:"3px 8px",borderRadius:20},
   matchRow:{display:"flex",alignItems:"center",gap:8,marginBottom:12},
-  team:{flex:1,display:"flex",alignItems:"center",gap:8},
-  teamR:{justifyContent:"flex-end"},
-  logo:{width:32,height:32,objectFit:"contain",borderRadius:4},
-  flag:{fontSize:26},
+  team:{flex:1,display:"flex",alignItems:"center",gap:8},teamR:{justifyContent:"flex-end"},
+  logo:{width:32,height:32,objectFit:"contain",borderRadius:4},flag:{fontSize:26},
   teamName:{fontSize:12,fontWeight:600,lineHeight:1.3},
   scoreZone:{display:"flex",flexDirection:"column",alignItems:"center",gap:4,minWidth:110},
-  liveNum:{fontSize:22,fontWeight:800},
-  livMin:{fontSize:10,color:"#6b7280",fontWeight:700,textAlign:"center"},
+  liveNum:{fontSize:22,fontWeight:800},livMin:{fontSize:10,color:"#6b7280",fontWeight:700,textAlign:"center"},
   inputRow:{display:"flex",alignItems:"center",gap:6},
   sInput:{width:44,height:44,background:"#111",border:"1px solid #1f1f1f",borderRadius:10,color:"#f9fafb",fontSize:20,fontWeight:700,textAlign:"center",outline:"none",WebkitAppearance:"none"},
-  sInputLocked:{opacity:0.35,cursor:"not-allowed"},
-  colon:{fontSize:20,fontWeight:700,color:"#374151"},
-  hint:{fontSize:10,color:"#374151"},
+  sInputLocked:{opacity:0.35,cursor:"not-allowed"},colon:{fontSize:20,fontWeight:700,color:"#374151"},hint:{fontSize:10,color:"#374151"},
   saveBtn:{width:"100%",background:`linear-gradient(90deg,${G},#f97316)`,border:"none",borderRadius:10,color:"#000",fontWeight:800,fontSize:13,padding:"11px",cursor:"pointer",letterSpacing:0.5,transition:"all 0.2s"},
   saveLocked:{background:"#0f0f0f",color:"#374151",cursor:"not-allowed",border:"1px solid #1a1a1a"},
   saveDone:{background:"linear-gradient(90deg,#22c55e,#16a34a)"},
-  // Standings
   pillRow:{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14},
   gpill:{background:"#0a0a0a",border:"1px solid #1a1a1a",color:"#6b7280",borderRadius:20,padding:"6px 12px",fontSize:12,fontWeight:700,cursor:"pointer",transition:"all 0.2s"},
   gpillOn:{background:`${G}15`,border:`1px solid ${G}`,color:G},
   teamChips:{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14},
   teamChip:{display:"flex",alignItems:"center",gap:5,background:"#0a0a0a",border:"1px solid #1a1a1a",borderRadius:20,padding:"5px 12px",fontSize:12},
   tblWrap:{background:"#080808",border:"1px solid #141414",borderRadius:16,overflow:"hidden",marginBottom:10},
-  tbl:{width:"100%",borderCollapse:"collapse"},
-  thead:{background:"#0f0f0f"},
+  tbl:{width:"100%",borderCollapse:"collapse"},thead:{background:"#0f0f0f"},
   th:{padding:"10px 8px",fontSize:11,fontWeight:700,color:"#4b5563",letterSpacing:0.5,textAlign:"center"},
-  tr:{borderTop:"1px solid #0f0f0f"},
-  trQ:{borderLeft:"3px solid #22c55e"},
+  tr:{borderTop:"1px solid #0f0f0f"},trQ:{borderLeft:"3px solid #22c55e"},
   td:{padding:"12px 8px",fontSize:13,textAlign:"center",color:"#d1d5db"},
   legend:{display:"flex",alignItems:"center",gap:8,fontSize:11,color:"#6b7280",marginBottom:6},
   legendDot:{width:10,height:10,background:"#22c55e",borderRadius:2,flexShrink:0},
   note:{fontSize:11,color:"#374151",fontStyle:"italic"},
-  // Leaderboard
   podium:{display:"flex",justifyContent:"center",alignItems:"flex-end",gap:6,marginBottom:20,padding:"12px 0"},
   podSlot:{display:"flex",flexDirection:"column",alignItems:"center",flex:1},
   podName:{fontSize:11,fontWeight:700,textAlign:"center",marginBottom:2,color:"#d1d5db"},
@@ -1020,10 +984,8 @@ const S={
   lRow:{display:"flex",alignItems:"center",gap:12,background:"#080808",border:"1px solid #141414",borderRadius:12,padding:"12px 14px"},
   lRowYou:{border:`1px solid ${G}`,background:`${G}0a`},
   lRank:{fontSize:16,width:28,textAlign:"center",fontWeight:700},
-  lName:{fontWeight:700,fontSize:14},
-  lSub:{fontSize:11,color:"#6b7280",marginTop:2},
+  lName:{fontWeight:700,fontSize:14},lSub:{fontSize:11,color:"#6b7280",marginTop:2},
   lPts:{fontSize:20,fontWeight:800,color:G},
-  // Bonus
   bonusSectionTitle:{fontSize:15,fontWeight:800,color:"#f9fafb",marginBottom:12,marginTop:24,letterSpacing:0.3},
   bonusCard:{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:16,marginBottom:12},
   bonusQ:{fontWeight:600,fontSize:14,marginBottom:10,lineHeight:1.4},
@@ -1043,13 +1005,10 @@ const S={
   advDesc:{fontSize:12,color:"#6b7280",marginBottom:10},
   advProgress:{height:3,background:"#1a1a1a",borderRadius:2,marginBottom:6},
   advProgressFill:{height:"100%",background:`linear-gradient(90deg,${G},#22c55e)`,borderRadius:2,transition:"width 0.4s"},
-  // Stats
   statsGrid:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10},
   statCard:{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:16,textAlign:"center"},
   statIco:{width:36,height:36,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,margin:"0 auto 10px"},
-  statVal:{fontSize:26,fontWeight:800,marginBottom:4},
-  statLbl:{fontSize:11,color:"#6b7280"},
-  // Rules
+  statVal:{fontSize:26,fontWeight:800,marginBottom:4},statLbl:{fontSize:11,color:"#6b7280"},
   rulesIntro:{background:"#0a0a0a",border:"1px solid #1a1a1a",borderRadius:14,padding:16,fontSize:13,color:"#9ca3af",lineHeight:1.7,marginBottom:20},
   rulesSectionTitle:{fontSize:14,fontWeight:800,color:G,letterSpacing:1,textTransform:"uppercase",marginTop:24,marginBottom:12},
   rulesCard:{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:16,marginBottom:12},
@@ -1061,8 +1020,7 @@ const S={
   rulesExPts:{fontSize:20,fontWeight:800,flexShrink:0,width:36,textAlign:"right"},
   ruleRow:{display:"flex",alignItems:"flex-start",gap:14,background:"#080808",border:"1px solid #141414",borderRadius:12,padding:16,marginBottom:8},
   rulePts:{fontSize:22,fontWeight:800,width:40,flexShrink:0,textAlign:"center"},
-  ruleTitle:{fontWeight:700,fontSize:14,marginBottom:4},
-  ruleSub:{fontSize:12,color:"#6b7280"},
+  ruleTitle:{fontWeight:700,fontSize:14,marginBottom:4},ruleSub:{fontSize:12,color:"#6b7280"},
 };
 
 const CSS=`
