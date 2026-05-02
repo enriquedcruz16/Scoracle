@@ -279,7 +279,7 @@ export default function App(){
               <div><div style={{fontWeight:700,fontSize:14,color:"#f9fafb",display:"flex",alignItems:"center",gap:6}}>{user.name}{isAdmin&&<span style={{fontSize:9,fontWeight:800,color:"#000",background:G,borderRadius:4,padding:"2px 6px"}}>ADMIN</span>}</div><div style={{fontSize:11,color:"#6b7280"}}>{user.email}</div></div>
             </div>
             <div style={{height:1,background:"#141414"}}/>
-            {[...NAV,{id:"rules",icon:"📖",label:"Rules"}].map(n=>(<button key={n.id} onClick={()=>go(n.id)} style={{display:"flex",alignItems:"center",gap:14,padding:"15px 20px",background:"none",border:"none",color:tab===n.id?G:"#6b7280",cursor:"pointer",fontSize:14,fontWeight:500,width:"100%",textAlign:"left",borderLeft:tab===n.id?`3px solid ${G}`:"3px solid transparent",background:tab===n.id?"#0d0d0d":"none"}}><span style={{fontSize:18,width:24,textAlign:"center"}}>{n.icon}</span><span>{n.label}</span>{tab===n.id&&<span style={{marginLeft:"auto",color:G,fontSize:8}}>●</span>}</button>))}
+            {[...NAV,{id:"rules",icon:"📖",label:"Rules"}].map(n=>(<button key={n.id} onClick={()=>go(n.id)} style={{display:"flex",alignItems:"center",gap:14,padding:"15px 20px",background:tab===n.id?"#0d0d0d":"none",border:"none",color:tab===n.id?G:"#6b7280",cursor:"pointer",fontSize:14,fontWeight:500,width:"100%",textAlign:"left",borderLeft:tab===n.id?`3px solid ${G}`:"3px solid transparent"}}><span style={{fontSize:18,width:24,textAlign:"center"}}>{n.icon}</span><span>{n.label}</span>{tab===n.id&&<span style={{marginLeft:"auto",color:G,fontSize:8}}>●</span>}</button>))}
             {isAdmin&&<button onClick={()=>go("admin")} style={{display:"flex",alignItems:"center",gap:14,padding:"15px 20px",background:tab==="admin"?"#0d0d0d":"none",border:"none",borderTop:"1px solid #1a1a1a",color:tab==="admin"?G:"#6b7280",cursor:"pointer",fontSize:14,fontWeight:500,width:"100%",textAlign:"left",borderLeft:tab==="admin"?`3px solid ${G}`:"3px solid transparent"}}><span style={{fontSize:18,width:24,textAlign:"center"}}>⚙️</span><span>Admin Dashboard</span></button>}
             <div style={{height:1,background:"#141414"}}/>
             <div style={{padding:"20px",marginTop:"auto"}}>
@@ -404,7 +404,7 @@ function RankTab({allFix,live,allPreds,profiles,currentUser}){
       </div>
     )}
     <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:28}}>
-      {userTotals.map((p,i)=>(<div key={p.id} style={{display:"flex",alignItems:"center",gap:12,background:"#080808",border:p.id===currentUser.id?`1px solid ${G}`:"1px solid #141414",borderRadius:12,padding:"12px 14px",background:p.id===currentUser.id?`${G}0a`:"#080808"}}>
+      {userTotals.map((p,i)=>(<div key={p.id} style={{display:"flex",alignItems:"center",gap:12,background:p.id===currentUser.id?`${G}0a`:"#080808",border:p.id===currentUser.id?`1px solid ${G}`:"1px solid #141414",borderRadius:12,padding:"12px 14px"}}>
         <div style={{fontSize:16,width:28,textAlign:"center",fontWeight:700}}>{i<3?medals[i]:`#${i+1}`}</div>
         <div style={{fontSize:22}}>👤</div>
         <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14}}>{p.name}{p.id===currentUser.id&&" (You)"}</div><div style={{fontSize:11,color:"#6b7280",marginTop:2}}>{p.exact} exact · {p.correct} result</div></div>
