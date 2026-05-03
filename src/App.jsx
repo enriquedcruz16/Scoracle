@@ -140,8 +140,8 @@ function Auth({onLogin}){
   async function go(){if(mode==="signup"&&!name.trim()){setErr("Please enter your name.");return;}if(!email.includes("@")){setErr("Invalid email.");return;}if(pw.length<6){setErr("Password min 6 characters.");return;}setErr("");setLoad(true);try{if(mode==="signup"){const{data,error:e}=await supabase.auth.signUp({email,password:pw,options:{data:{name:name.trim()}}});if(e)throw e;if(data.user)onLogin({id:data.user.id,name:name.trim(),email});}else{const{data,error:e}=await supabase.auth.signInWithPassword({email,password:pw});if(e)throw e;const{data:pr}=await supabase.from("profiles").select("*").eq("id",data.user.id).single();onLogin({id:data.user.id,name:pr?.name||email.split("@")[0],email});}}catch(e){setErr(e.message||"Something went wrong.");}setLoad(false);}
   return(
     <div style={{minHeight:"100vh",background:"#000",display:"flex",alignItems:"center",justifyContent:"center",padding:20,position:"relative",overflow:"hidden"}}>
-      <svg style={{position:"absolute",inset:0,width:"100%",height:"100%",opacity:0.14}} viewBox="0 0 800 900" preserveAspectRatio="xMidYMid slice">
-        <g fill="none" stroke="#f59e0b" strokeWidth="1.6">
+      <svg style={{position:"absolute",inset:0,width:"100%",height:"100%"}} viewBox="0 0 800 900" preserveAspectRatio="xMidYMid slice" className="pitch-svg">
+        <g fill="none" stroke="#f59e0b" strokeWidth="1.6" className="pitch-lines">
           <rect x="40" y="30" width="720" height="840"/>
           <line x1="40" y1="450" x2="760" y2="450"/>
           <circle cx="400" cy="450" r="90"/>
@@ -159,6 +159,14 @@ function Auth({onLogin}){
           <path d="M 40 838 A 32 32 0 0 0 72 870"/>
           <path d="M 728 870 A 32 32 0 0 0 760 838"/>
         </g>
+        <rect className="scan-line" x="0" y="0" width="800" height="70" fill="url(#scanGrad)"/>
+        <defs>
+          <linearGradient id="scanGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#f59e0b" stopOpacity="0"/>
+            <stop offset="50%" stopColor="#f59e0b" stopOpacity="0.08"/>
+            <stop offset="100%" stopColor="#f59e0b" stopOpacity="0"/>
+          </linearGradient>
+        </defs>
       </svg>
       <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at center,rgba(0,0,0,0.3) 0%,rgba(0,0,0,0.82) 100%)"}}/>
       <div style={{position:"relative",zIndex:1,background:"rgba(8,8,8,0.93)",border:"1px solid #252525",borderRadius:20,padding:"28px 24px",width:"100%",maxWidth:400,textAlign:"center"}}>
@@ -539,10 +547,14 @@ const CSS=`
 body{background:#000;-webkit-tap-highlight-color:transparent;}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;}
 input[type=number]{-moz-appearance:textfield;}
-input:focus,select:focus{border-color:#f59e0b!important;box-shadow:0 0 0 2px #f59e0b18!important;outline:none!important;}
+input:focus,select:focus{border-color:#1f1f1f!important;box-shadow:none!important;outline:none!important;}
 button:active{transform:scale(0.97);}
 tr:hover td{background:#0c0c0c;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+@keyframes pitchPulse{0%,100%{opacity:0.13;}50%{opacity:0.22;}}
+@keyframes scanMove{0%{transform:translateY(-100px);}100%{transform:translateY(1000px);}}
+.pitch-lines{animation:pitchPulse 3s ease-in-out infinite;}
+.scan-line{animation:scanMove 5s linear infinite;}
 .cp{animation:fall 1.4s ease-in forwards;}
 @keyframes fall{0%{transform:translateY(0) rotate(0);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
 `;
