@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Email Confirmed — Scoracle</title>
+  <link rel="icon" href="/apple-touch-icon.png"/>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&display=swap');
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{min-height:100vh;background:#000;color:#f9fafb;font-family:'DM Sans','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden;}
+    /* Pitch watermark */
+    .pitch{position:absolute;inset:0;opacity:0.1;}
+    .overlay{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0.3) 0%,rgba(0,0,0,0.85) 100%);}
+    .card{position:relative;z-index:1;background:rgba(8,8,8,0.95);border:1px solid #222;border-radius:24px;padding:40px 32px;width:100%;max-width:420px;text-align:center;}
+    .icon{font-size:56px;margin-bottom:16px;display:block;}
+    .brand{font-size:13px;font-weight:800;letter-spacing:4px;color:#f59e0b;margin-bottom:24px;}
+    .tick{width:72px;height:72px;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px;}
+    h1{font-size:22px;font-weight:800;margin-bottom:10px;}
+    p{font-size:14px;color:#6b7280;line-height:1.7;margin-bottom:28px;}
+    .btn{display:block;background:linear-gradient(90deg,#f59e0b,#f97316);border:none;border-radius:12px;color:#000;font-weight:800;font-size:15px;padding:15px;cursor:pointer;text-decoration:none;letter-spacing:0.5px;transition:opacity 0.2s;}
+    .btn:hover{opacity:0.9;}
+    .footer{font-size:11px;color:#374151;margin-top:20px;}
+  </style>
+</head>
+<body>
+  <!-- Pitch watermark -->
+  <svg class="pitch" viewBox="0 0 800 900" preserveAspectRatio="xMidYMid slice">
+    <g fill="none" stroke="#f59e0b" stroke-width="1.4">
+      <rect x="40" y="30" width="720" height="840"/>
+      <line x1="40" y1="450" x2="760" y2="450"/>
+      <circle cx="400" cy="450" r="90"/>
+      <circle cx="400" cy="450" r="5" fill="#f59e0b"/>
+      <rect x="190" y="30" width="420" height="145"/>
+      <rect x="295" y="30" width="210" height="65"/>
+      <circle cx="400" cy="148" r="5" fill="#f59e0b"/>
+      <path d="M 310 175 A 90 90 0 0 1 490 175"/>
+      <rect x="190" y="725" width="420" height="145"/>
+      <rect x="295" y="805" width="210" height="65"/>
+      <circle cx="400" cy="752" r="5" fill="#f59e0b"/>
+      <path d="M 310 725 A 90 90 0 0 0 490 725"/>
+      <path d="M 40 62 A 32 32 0 0 1 72 30"/>
+      <path d="M 728 30 A 32 32 0 0 1 760 62"/>
+      <path d="M 40 838 A 32 32 0 0 0 72 870"/>
+      <path d="M 728 870 A 32 32 0 0 0 760 838"/>
+    </g>
+  </svg>
+  <div class="overlay"></div>
+
+  <div class="card">
+    <div class="brand">⚽ SCORACLE</div>
+    <div class="tick">✓</div>
+    <h1>You're all set!</h1>
+    <p>Your email has been confirmed. You can now sign in to Scoracle and start making your World Cup 2026 predictions.</p>
+    <a href="https://scoracle.live" class="btn">Start Predicting →</a>
+    <div class="footer">FIFA World Cup 2026 · June 11 – July 19</div>
+  </div>
+</body>
+</html>
