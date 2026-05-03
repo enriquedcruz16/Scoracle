@@ -163,26 +163,10 @@ function Auth({onLogin}){
       <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at center,rgba(0,0,0,0.3) 0%,rgba(0,0,0,0.82) 100%)"}}/>
       <div style={{position:"relative",zIndex:1,background:"rgba(8,8,8,0.93)",border:"1px solid #252525",borderRadius:20,padding:"28px 24px",width:"100%",maxWidth:400,textAlign:"center"}}>
         <div style={{marginBottom:12}}>
-          <svg width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{display:"block",margin:"0 auto 10px"}}>
-            <defs>
-              <clipPath id="bc2"><circle cx="50" cy="50" r="46"/></clipPath>
-              <radialGradient id="bg3" cx="35%" cy="30%" r="65%"><stop offset="0%" stopColor="#ffffff"/><stop offset="100%" stopColor="#cccccc"/></radialGradient>
-              <radialGradient id="bg4" cx="35%" cy="30%" r="65%"><stop offset="0%" stopColor="#444"/><stop offset="100%" stopColor="#111"/></radialGradient>
-            </defs>
-            <circle cx="50" cy="50" r="46" fill="url(#bg3)"/>
-            <g clipPath="url(#bc2)">
-              <path d="M50 4 L63 20 L57 35 L43 35 L37 20 Z" fill="url(#bg4)"/>
-              <path d="M50 96 L63 80 L57 65 L43 65 L37 80 Z" fill="url(#bg4)"/>
-              <path d="M13 25 L28 18 L37 20 L43 35 L30 45 L15 38 Z" fill="url(#bg4)"/>
-              <path d="M87 25 L72 18 L63 20 L57 35 L70 45 L85 38 Z" fill="url(#bg4)"/>
-              <path d="M4 52 L15 38 L30 45 L28 60 L14 64 Z" fill="url(#bg4)"/>
-              <path d="M96 52 L85 38 L70 45 L72 60 L86 64 Z" fill="url(#bg4)"/>
-              <path d="M13 75 L15 62 L28 60 L37 65 L30 80 Z" fill="url(#bg4)"/>
-              <path d="M87 75 L85 62 L72 60 L63 65 L70 80 Z" fill="url(#bg4)"/>
-            </g>
-            <ellipse cx="36" cy="30" rx="10" ry="7" fill="white" opacity="0.45" transform="rotate(-30 36 30)"/>
-            <circle cx="50" cy="50" r="46" fill="none" stroke="#aaa" strokeWidth="1"/>
-          </svg>
+          <div style={{position:"relative",display:"inline-block",marginBottom:10}}>
+            <div style={{position:"absolute",inset:-12,background:"radial-gradient(circle,rgba(245,158,11,0.3) 0%,transparent 70%)",borderRadius:"50%"}}/>
+            <span style={{fontSize:56,filter:"drop-shadow(0 0 16px rgba(245,158,11,0.6))",display:"block",lineHeight:1}}>⚽</span>
+          </div>
           <div style={{fontSize:30,fontWeight:800,letterSpacing:5,color:"#f59e0b",marginBottom:4}}>SCORACLE</div>
           <div style={{fontSize:11,color:"#555",letterSpacing:1,marginBottom:16}}>FIFA World Cup 2026 · Prediction Game</div>
           <div style={{display:"flex",justifyContent:"center",alignItems:"center",background:"#111",borderRadius:12,padding:"10px 0",border:"1px solid #1f1f1f",marginBottom:18}}>
@@ -555,7 +539,7 @@ const CSS=`
 body{background:#000;-webkit-tap-highlight-color:transparent;}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;}
 input[type=number]{-moz-appearance:textfield;}
-input:focus,select:focus{border-color:#f59e0b!important;box-shadow:0 0 0 2px #f59e0b18!important;}
+input:focus,select:focus{border-color:#f59e0b!important;box-shadow:0 0 0 2px #f59e0b18!important;outline:none!important;}
 button:active{transform:scale(0.97);}
 tr:hover td{background:#0c0c0c;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
