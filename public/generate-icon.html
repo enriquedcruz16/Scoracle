@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body>
+<canvas id="c" width="512" height="512"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+// Dark rounded background
+const r = 112;
+ctx.beginPath();
+ctx.moveTo(r, 0);
+ctx.lineTo(512-r, 0);
+ctx.quadraticCurveTo(512, 0, 512, r);
+ctx.lineTo(512, 512-r);
+ctx.quadraticCurveTo(512, 512, 512-r, 512);
+ctx.lineTo(r, 512);
+ctx.quadraticCurveTo(0, 512, 0, 512-r);
+ctx.lineTo(0, r);
+ctx.quadraticCurveTo(0, 0, r, 0);
+ctx.closePath();
+ctx.fillStyle = '#0d0d0d';
+ctx.fill();
+
+// Gold glow
+const glow = ctx.createRadialGradient(256, 210, 0, 256, 210, 160);
+glow.addColorStop(0, 'rgba(245,158,11,0.35)');
+glow.addColorStop(1, 'rgba(245,158,11,0)');
+ctx.fillStyle = glow;
+ctx.fillRect(0, 0, 512, 512);
+
+// Football emoji
+ctx.font = '240px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji"';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText('⚽', 256, 220);
+
+// Gold divider
+ctx.strokeStyle = 'rgba(245,158,11,0.5)';
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(80, 375);
+ctx.lineTo(432, 375);
+ctx.stroke();
+
+// SCORACLE text
+ctx.font = 'bold 52px "Arial","Helvetica",sans-serif';
+ctx.fillStyle = '#f59e0b';
+ctx.letterSpacing = '8px';
+ctx.fillText('SCORACLE', 256, 430);
+
+// Download
+const link = document.createElement('a');
+link.download = 'apple-touch-icon.png';
+link.href = canvas.toDataURL('image/png');
+link.textContent = 'Download Icon PNG';
+document.body.appendChild(link);
+link.click();
+</script>
+</body>
+</html>
