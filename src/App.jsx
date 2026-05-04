@@ -120,6 +120,51 @@ const STATIC_MATCHDAYS = [
   {day:3,label:"Matchday 3",dates:"Jun 24–28",fixtures:MD3},
 ];
 
+// ── Knockout bracket placeholder (used before API has data) ──
+const KNOCKOUT_BRACKET = [
+  {day:4,label:"Round of 32",dates:"Jun 29 – Jul 2",fixtures:[
+    {id:"k_r32_1",group:"R32",home:"1A",away:"2B",date:"Jun 29",time:"TBD",venue:"TBD",kickoffISO:"2026-06-29T20:00:00-05:00",isKnockout:true},
+    {id:"k_r32_2",group:"R32",home:"1C",away:"2D",date:"Jun 29",time:"TBD",venue:"TBD",kickoffISO:"2026-06-29T23:00:00-05:00",isKnockout:true},
+    {id:"k_r32_3",group:"R32",home:"1E",away:"2F",date:"Jun 30",time:"TBD",venue:"TBD",kickoffISO:"2026-06-30T20:00:00-05:00",isKnockout:true},
+    {id:"k_r32_4",group:"R32",home:"1G",away:"2H",date:"Jun 30",time:"TBD",venue:"TBD",kickoffISO:"2026-06-30T23:00:00-05:00",isKnockout:true},
+    {id:"k_r32_5",group:"R32",home:"1B",away:"2A",date:"Jul 1",time:"TBD",venue:"TBD",kickoffISO:"2026-07-01T20:00:00-05:00",isKnockout:true},
+    {id:"k_r32_6",group:"R32",home:"1D",away:"2C",date:"Jul 1",time:"TBD",venue:"TBD",kickoffISO:"2026-07-01T23:00:00-05:00",isKnockout:true},
+    {id:"k_r32_7",group:"R32",home:"1F",away:"2E",date:"Jul 2",time:"TBD",venue:"TBD",kickoffISO:"2026-07-02T20:00:00-05:00",isKnockout:true},
+    {id:"k_r32_8",group:"R32",home:"1H",away:"2G",date:"Jul 2",time:"TBD",venue:"TBD",kickoffISO:"2026-07-02T23:00:00-05:00",isKnockout:true},
+    {id:"k_r32_9",group:"R32",home:"1I",away:"2J",date:"Jul 3",time:"TBD",venue:"TBD",kickoffISO:"2026-07-03T20:00:00-05:00",isKnockout:true},
+    {id:"k_r32_10",group:"R32",home:"1K",away:"2L",date:"Jul 3",time:"TBD",venue:"TBD",kickoffISO:"2026-07-03T23:00:00-05:00",isKnockout:true},
+    {id:"k_r32_11",group:"R32",home:"1J",away:"2I",date:"Jul 4",time:"TBD",venue:"TBD",kickoffISO:"2026-07-04T20:00:00-05:00",isKnockout:true},
+    {id:"k_r32_12",group:"R32",home:"1L",away:"2K",date:"Jul 4",time:"TBD",venue:"TBD",kickoffISO:"2026-07-04T23:00:00-05:00",isKnockout:true},
+    {id:"k_r32_13",group:"R32",home:"3rd-1",away:"3rd-2",date:"Jul 5",time:"TBD",venue:"TBD",kickoffISO:"2026-07-05T20:00:00-05:00",isKnockout:true},
+    {id:"k_r32_14",group:"R32",home:"3rd-3",away:"3rd-4",date:"Jul 5",time:"TBD",venue:"TBD",kickoffISO:"2026-07-05T23:00:00-05:00",isKnockout:true},
+    {id:"k_r32_15",group:"R32",home:"3rd-5",away:"3rd-6",date:"Jul 6",time:"TBD",venue:"TBD",kickoffISO:"2026-07-06T20:00:00-05:00",isKnockout:true},
+    {id:"k_r32_16",group:"R32",home:"3rd-7",away:"3rd-8",date:"Jul 6",time:"TBD",venue:"TBD",kickoffISO:"2026-07-06T23:00:00-05:00",isKnockout:true},
+  ]},
+  {day:5,label:"Round of 16",dates:"Jul 8–10",fixtures:[
+    {id:"k_r16_1",group:"R16",home:"W R32-1",away:"W R32-2",date:"Jul 8",time:"TBD",venue:"TBD",kickoffISO:"2026-07-08T20:00:00-05:00",isKnockout:true},
+    {id:"k_r16_2",group:"R16",home:"W R32-3",away:"W R32-4",date:"Jul 8",time:"TBD",venue:"TBD",kickoffISO:"2026-07-08T23:00:00-05:00",isKnockout:true},
+    {id:"k_r16_3",group:"R16",home:"W R32-5",away:"W R32-6",date:"Jul 9",time:"TBD",venue:"TBD",kickoffISO:"2026-07-09T20:00:00-05:00",isKnockout:true},
+    {id:"k_r16_4",group:"R16",home:"W R32-7",away:"W R32-8",date:"Jul 9",time:"TBD",venue:"TBD",kickoffISO:"2026-07-09T23:00:00-05:00",isKnockout:true},
+    {id:"k_r16_5",group:"R16",home:"W R32-9",away:"W R32-10",date:"Jul 10",time:"TBD",venue:"TBD",kickoffISO:"2026-07-10T20:00:00-05:00",isKnockout:true},
+    {id:"k_r16_6",group:"R16",home:"W R32-11",away:"W R32-12",date:"Jul 10",time:"TBD",venue:"TBD",kickoffISO:"2026-07-10T23:00:00-05:00",isKnockout:true},
+    {id:"k_r16_7",group:"R16",home:"W R32-13",away:"W R32-14",date:"Jul 11",time:"TBD",venue:"TBD",kickoffISO:"2026-07-11T20:00:00-05:00",isKnockout:true},
+    {id:"k_r16_8",group:"R16",home:"W R32-15",away:"W R32-16",date:"Jul 11",time:"TBD",venue:"TBD",kickoffISO:"2026-07-11T23:00:00-05:00",isKnockout:true},
+  ]},
+  {day:6,label:"Quarter-Finals",dates:"Jul 12–13",fixtures:[
+    {id:"k_qf_1",group:"QF",home:"W R16-1",away:"W R16-2",date:"Jul 12",time:"TBD",venue:"TBD",kickoffISO:"2026-07-12T20:00:00-05:00",isKnockout:true},
+    {id:"k_qf_2",group:"QF",home:"W R16-3",away:"W R16-4",date:"Jul 12",time:"TBD",venue:"TBD",kickoffISO:"2026-07-12T23:00:00-05:00",isKnockout:true},
+    {id:"k_qf_3",group:"QF",home:"W R16-5",away:"W R16-6",date:"Jul 13",time:"TBD",venue:"TBD",kickoffISO:"2026-07-13T20:00:00-05:00",isKnockout:true},
+    {id:"k_qf_4",group:"QF",home:"W R16-7",away:"W R16-8",date:"Jul 13",time:"TBD",venue:"TBD",kickoffISO:"2026-07-13T23:00:00-05:00",isKnockout:true},
+  ]},
+  {day:7,label:"Semi-Finals",dates:"Jul 15–16",fixtures:[
+    {id:"k_sf_1",group:"SF",home:"W QF-1",away:"W QF-2",date:"Jul 15",time:"TBD",venue:"TBD",kickoffISO:"2026-07-15T20:00:00-05:00",isKnockout:true},
+    {id:"k_sf_2",group:"SF",home:"W QF-3",away:"W QF-4",date:"Jul 16",time:"TBD",venue:"TBD",kickoffISO:"2026-07-16T20:00:00-05:00",isKnockout:true},
+  ]},
+  {day:8,label:"The Final",dates:"Jul 19",fixtures:[
+    {id:"k_final",group:"Final",home:"W SF-1",away:"W SF-2",date:"Jul 19",time:"TBD",venue:"MetLife Stadium, New Jersey",kickoffISO:"2026-07-19T20:00:00-05:00",isKnockout:true},
+  ]},
+];
+
 const PLAYERS = ["Lionel Messi","Kylian Mbappé","Erling Haaland","Vinicius Jr","Jude Bellingham","Harry Kane","Cristiano Ronaldo","Neymar Jr","Mohamed Salah","Kevin De Bruyne","Lamine Yamal","Pedri","Bukayo Saka","Phil Foden","Rodri","Antoine Griezmann","Bernardo Silva","Bruno Fernandes","Raphinha","Leroy Sané"];
 const NAV = [{id:"predict",icon:"🎯",label:"Predict"},{id:"standings",icon:"📋",label:"Standings"},{id:"leaderboard",icon:"🏆",label:"Rankings"},{id:"bonus",icon:"⭐",label:"Bonus"},{id:"stats",icon:"📊",label:"Stats"}];
 
@@ -218,7 +263,7 @@ function Auth({onLogin}){
 export default function App(){
   const[user,setUser]=useState(null);const[authLoad,setAuthLoad]=useState(true);
   const[tab,setTab]=useState("predict");const[menuOpen,setMenuOpen]=useState(false);
-  const[matchdays,setMatchdays]=useState(STATIC_MATCHDAYS);const[selDay,setSelDay]=useState(1);
+  const[matchdays,setMatchdays]=useState([...STATIC_MATCHDAYS,...KNOCKOUT_BRACKET]);const[selDay,setSelDay]=useState(1);
   const[predictions,setPredictions]=useState({});const[live,setLive]=useState({});
   const[bonus,setBonus]=useState({});const[champion,setChampion]=useState("");
   const[savedId,setSavedId]=useState(null);const[confetti,setConfetti]=useState(false);
@@ -230,7 +275,22 @@ export default function App(){
   useEffect(()=>{if(!user)return;supabase.from("predictions").select("*").eq("user_id",user.id).then(({data})=>{if(!data)return;const p={};data.forEach(x=>{p[x.fixture_id]={homeGoals:x.home_goals,awayGoals:x.away_goals};});setPredictions(p);});supabase.from("bonus_answers").select("*").eq("user_id",user.id).then(({data})=>{if(!data)return;const a={};data.forEach(x=>{a[x.question_id]=x.answer;});setBonus(a);});loadAll();},[user]);
   async function loadAll(){const{data:pr}=await supabase.from("profiles").select("id,name");const{data:ap}=await supabase.from("predictions").select("*");setProfiles(pr||[]);setAllPreds(ap||[]);}
 
-  const fetchLive=useCallback(async()=>{try{const d=await apiFetch(`/fixtures?league=${LEAGUE_ID}&season=${SEASON}`);if(!d.response?.length){setApiStatus("fallback");return;}const parsed=parseFix(d.response);const mds=buildMD(parsed);if(mds.length)setMatchdays(mds);const nl={};parsed.forEach(f=>{if((f.isLive||f.isDone)&&f.homeGoals!=null)nl[f.id]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};});setLive(nl);setApiStatus("live");}catch{setApiStatus("fallback");}},[]);
+  const fetchLive=useCallback(async()=>{try{const d=await apiFetch(`/fixtures?league=${LEAGUE_ID}&season=${SEASON}`);if(!d.response?.length){setApiStatus("fallback");return;}const parsed=parseFix(d.response);
+    // Split group stage and knockout fixtures
+    const groupFix=parsed.filter(f=>f.rn<=3);
+    const knockoutFix=parsed.filter(f=>f.rn>3);
+    // Build matchdays from group stage
+    const mds=buildMD(groupFix);
+    // Add knockout rounds - use API data if available, otherwise use static bracket
+    if(knockoutFix.length>0){
+      const knockoutMDs=buildMD(knockoutFix);
+      knockoutMDs.forEach((md,i)=>{md.day=mds.length+i+1;mds.push(md);});
+    } else {
+      // Merge static knockout bracket
+      KNOCKOUT_BRACKET.forEach(kb=>{kb.day=mds.length+(kb.day-3);mds.push(kb);});
+    }
+    if(mds.length)setMatchdays(mds);
+    const nl={};parsed.forEach(f=>{if((f.isLive||f.isDone)&&f.homeGoals!=null)nl[f.id]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};});setLive(nl);setApiStatus("live");}catch{setApiStatus("fallback");}},[]);
   useEffect(()=>{fetchLive();poll.current=setInterval(fetchLive,30000);return()=>clearInterval(poll.current);},[fetchLive]);
 
   const allFix=matchdays.flatMap(m=>m.fixtures);
@@ -321,7 +381,7 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId}){
       const lv=live[fix.id],result=lv||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null),pred=predictions[fix.id],p=pts(pred,result),lk=locked(fix.kickoffISO)||fix.isLive||fix.isDone,isSaved=savedId===fix.id,hv=val(fix.id,"home"),av=val(fix.id,"away"),lm=lockMsg(fix.kickoffISO);
       return(<div key={fix.id} style={{...S.card,...(isSaved?{borderColor:"#22c55e",boxShadow:"0 0 18px #22c55e2a"}:{}),...(fix.isLive?{borderColor:"#ef444440",boxShadow:"0 0 18px #ef44441a"}:{})}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,gap:8}}>
-          <div><span style={{fontSize:10,fontWeight:800,color:G,letterSpacing:1}}>Group {fix.group}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {fix.time}</span>{fix.venue&&<div style={{fontSize:10,color:"#374151",marginTop:2}}>📍 {fix.venue}</div>}{lm&&<div style={{fontSize:10,color:"#f59e0b",marginTop:3,fontWeight:600}}>⏱ {lm}</div>}</div>
+          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?fix.group:`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {fix.time}</span>{fix.venue&&<div style={{fontSize:10,color:"#374151",marginTop:2}}>📍 {fix.venue}</div>}{lm&&<div style={{fontSize:10,color:"#f59e0b",marginTop:3,fontWeight:600}}>⏱ {lm}</div>}</div>
           <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}><SPill status={fix.status} elapsed={fix.elapsed}/>{p!==null&&<span style={{fontSize:11,fontWeight:700,color:"#fff",padding:"3px 8px",borderRadius:20,background:p===PTS_EXACT?"#22c55e":p===PTS_RESULT?"#f59e0b":"#ef4444"}}>{p===PTS_EXACT?`✓ +${PTS_EXACT}`:p===PTS_RESULT?`~ +${PTS_RESULT}`:`✗ +0`}</span>}</div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
@@ -370,7 +430,7 @@ function RankTab({allFix,live,allPreds,profiles,currentUser}){
     const myP=allPreds.filter(p=>p.user_id===pr.id);let tp=0,exact=0,correct=0;
     allFix.forEach(fix=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);if(!r)return;const p=myP.find(x=>x.fixture_id===fix.id);if(!p)return;const sc=pts({homeGoals:p.home_goals,awayGoals:p.away_goals},r);if(sc===PTS_EXACT){tp+=sc;exact++;}else if(sc===PTS_RESULT){tp+=sc;correct++;}});
     return{id:pr.id,name:pr.name,pts:tp,exact,correct,preds:myP};
-  }).sort((a,b)=>b.pts-a.pts);
+  }).sort((a,b)=>b.pts-a.pts||b.exact-a.exact||b.correct-a.correct||a.name.localeCompare(b.name));
 
   const lockedFix=allFix.filter(fix=>locked(fix.kickoffISO)||fix.isLive||fix.isDone);
   const upcomingFix=allFix.filter(fix=>!locked(fix.kickoffISO)&&!fix.isLive&&!fix.isDone);
@@ -400,7 +460,7 @@ function RankTab({allFix,live,allPreds,profiles,currentUser}){
     </div>
 
     <div style={{fontSize:18,fontWeight:800,marginBottom:8,letterSpacing:0.3}}>Match Breakdown</div>
-    <div style={{fontSize:12,color:"#6b7280",marginBottom:16}}>Predictions revealed after each deadline · 🟢 exact · 🟡 result · 🔴 wrong</div>
+    <div style={{fontSize:12,color:"#6b7280",marginBottom:16}}>Predictions revealed after each deadline · 🟢 perfect · 🟡 result · 🔴 wrong</div>
 
     {lockedFix.length===0&&(
       <div style={{background:"#080808",border:"1px solid #141414",borderRadius:16,padding:32,textAlign:"center",marginBottom:16}}>
@@ -414,7 +474,7 @@ function RankTab({allFix,live,allPreds,profiles,currentUser}){
       const result=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);
       return(<div key={fix.id} style={{background:"#080808",border:"1px solid #141414",borderRadius:16,padding:16,marginBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-          <div><span style={{fontSize:10,fontWeight:800,color:G,letterSpacing:1}}>Group {fix.group}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {fix.time}</span></div>
+          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?fix.group:`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {fix.time}</span></div>
           <SPill status={fix.status} elapsed={fix.elapsed}/>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
@@ -462,7 +522,7 @@ function RankTab({allFix,live,allPreds,profiles,currentUser}){
       <div style={{fontSize:16,fontWeight:800,marginTop:24,marginBottom:8}}>Upcoming Matches</div>
       <div style={{fontSize:12,color:"#6b7280",marginBottom:12}}>Predictions hidden until 15 mins before kick-off</div>
       {upcomingFix.slice(0,6).map(fix=>(<div key={fix.id} style={{background:"#080808",border:"1px solid #141414",borderRadius:16,padding:16,marginBottom:12,opacity:0.55}}>
-        <div style={{marginBottom:10}}><span style={{fontSize:10,fontWeight:800,color:G,letterSpacing:1}}>Group {fix.group}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {fix.time}</span></div>
+        <div style={{marginBottom:10}}><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?fix.group:`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {fix.time}</span></div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <div style={{flex:1,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18}}>{FLAGS[fix.home]||"🏳️"}</span><span style={{fontSize:13,fontWeight:600}}>{fix.home}</span></div>
           <div style={{textAlign:"center",minWidth:60}}><span style={{fontSize:14,fontWeight:700,color:"#374151"}}>vs</span></div>
@@ -476,7 +536,7 @@ function RankTab({allFix,live,allPreds,profiles,currentUser}){
 
 function BonusTab({bonus,onSave,champion,setChampion,teams}){
   const[advTab,setAdvTab]=useState("r32");
-  const rounds=[{id:"r32",label:"Round of 32",count:32,desc:"Pick 32 teams to advance from groups"},{id:"qf",label:"Quarter-Finals",count:8,desc:"Pick your 8 quarter-finalists"},{id:"sf",label:"Semi-Finals",count:4,desc:"Pick your 4 semi-finalists"},{id:"final",label:"The Final",count:2,desc:"Pick the 2 teams in the Final"}];
+  const rounds=[{id:"r32",label:"Round of 32",count:32,desc:"Pick 32 teams to advance from the group stage"},{id:"r16",label:"Round of 16",count:16,desc:"Pick your 16 teams to reach the Round of 16"},{id:"qf",label:"Quarter-Finals",count:8,desc:"Pick your 8 quarter-finalists"},{id:"sf",label:"Semi-Finals",count:4,desc:"Pick your 4 semi-finalists"},{id:"final",label:"The Final",count:2,desc:"Pick the 2 teams in the Final"}];
   return(<div style={{padding:16}}>
     <div style={S.pageTitle}>Bonus Questions</div>
     <div style={{fontSize:12,color:"#6b7280",marginBottom:20}}>Lock in all answers before Jun 11 · Each correct = {PTS_BONUS} pts</div>
@@ -523,7 +583,7 @@ function RulesTab(){
       {[{pred:"2 – 1",p:15,label:"Exact score + correct result",color:"#22c55e"},{pred:"1 – 0",p:5,label:"Correct result, wrong score",color:"#f59e0b"},{pred:"1 – 2",p:0,label:"Wrong result",color:"#ef4444"},{pred:"1 – 1",p:0,label:"Wrong result (draw predicted)",color:"#ef4444"}].map(e=>(<div key={e.pred} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid #111"}}><div style={{fontSize:18,fontWeight:800,color:"#f9fafb",width:60,textAlign:"center",flexShrink:0}}>{e.pred}</div><div style={{flex:1,fontSize:13,fontWeight:600,color:e.color}}>{e.label}</div><div style={{fontSize:20,fontWeight:800,color:e.color,flexShrink:0,width:36,textAlign:"right"}}>+{e.p}</div></div>))}
     </div>
     <div style={{display:"flex",flexDirection:"column",gap:8}}>
-      {[{pts:50,label:"Tournament Winner",desc:"Correctly predict the World Cup champion",color:"#f59e0b"},{pts:10,label:"Advancement Picks",desc:"Each team correctly picked per round (R32, QF, SF, Final)",color:"#a855f7"},{pts:10,label:"Golden Boot",desc:"Correctly predict the tournament top scorer",color:"#22c55e"},{pts:10,label:"Most Group Stage Goals",desc:"Which team scores the most goals in the group stage",color:"#06b6d4"}].map(r=>(<div key={r.label} style={{display:"flex",alignItems:"flex-start",gap:14,background:"#080808",border:"1px solid #141414",borderRadius:12,padding:16}}><div style={{fontSize:22,fontWeight:800,color:r.color,width:40,flexShrink:0,textAlign:"center"}}>+{r.pts}</div><div><div style={{fontWeight:700,fontSize:14,marginBottom:4}}>{r.label}</div><div style={{fontSize:12,color:"#6b7280"}}>{r.desc}</div></div></div>))}
+      {[{pts:50,label:"Tournament Winner",desc:"Correctly predict the World Cup champion",color:"#f59e0b"},{pts:10,label:"Advancement Picks",desc:"Each team correctly picked per round (R32, R16, QF, SF, Final)",color:"#a855f7"},{pts:10,label:"Golden Boot",desc:"Correctly predict the tournament top scorer",color:"#22c55e"},{pts:10,label:"Most Group Stage Goals",desc:"Which team scores the most goals in the group stage",color:"#06b6d4"}].map(r=>(<div key={r.label} style={{display:"flex",alignItems:"flex-start",gap:14,background:"#080808",border:"1px solid #141414",borderRadius:12,padding:16}}><div style={{fontSize:22,fontWeight:800,color:r.color,width:40,flexShrink:0,textAlign:"center"}}>+{r.pts}</div><div><div style={{fontWeight:700,fontSize:14,marginBottom:4}}>{r.label}</div><div style={{fontSize:12,color:"#6b7280"}}>{r.desc}</div></div></div>))}
     </div>
     <div style={{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:16,marginTop:16,textAlign:"center",fontSize:16}}>Good luck everyone! ⚽🏆</div>
   </div>);
@@ -531,7 +591,7 @@ function RulesTab(){
 
 function AdminTab({profiles,allPreds,allFix,live,matchdays}){
   const[view,setView]=useState("overview");const totalFix=allFix.length,totalUsers=profiles.length,totalPreds=allPreds.length;
-  const stats=profiles.map(p=>{const my=allPreds.filter(x=>x.user_id===p.id);let tp=0,exact=0;allFix.forEach(fix=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);if(!r)return;const pred=my.find(x=>x.fixture_id===fix.id);if(!pred)return;const sc=pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals},r);if(sc)tp+=sc;if(sc===PTS_EXACT)exact++;});return{...p,predCount:my.length,pts:tp,exact,missing:totalFix-my.length};}).sort((a,b)=>b.pts-a.pts);
+  const stats=profiles.map(p=>{const my=allPreds.filter(x=>x.user_id===p.id);let tp=0,exact=0;allFix.forEach(fix=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);if(!r)return;const pred=my.find(x=>x.fixture_id===fix.id);if(!pred)return;const sc=pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals},r);if(sc)tp+=sc;if(sc===PTS_EXACT)exact++;});return{...p,predCount:my.length,pts:tp,exact,missing:totalFix-my.length};}).sort((a,b)=>b.pts-a.pts||b.exact-a.exact||b.correct-a.correct||a.name.localeCompare(b.name));
   return(<div style={{padding:16}}>
     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20}}><div style={S.pageTitle}>⚙️ Admin Dashboard</div><span style={{fontSize:9,fontWeight:800,color:"#000",background:G,borderRadius:4,padding:"2px 6px"}}>ADMIN</span></div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:24}}>{[{label:"Players",value:totalUsers,icon:"👥",color:"#3b82f6"},{label:"Predictions",value:totalPreds,icon:"✍️",color:"#22c55e"},{label:"Avg Picks",value:totalUsers>0?(totalPreds/totalUsers).toFixed(1):0,icon:"📊",color:"#f59e0b"}].map(c=>(<div key={c.label} style={{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:12,textAlign:"center"}}><div style={{fontSize:20,marginBottom:4}}>{c.icon}</div><div style={{fontSize:22,fontWeight:800,color:c.color}}>{c.value}</div><div style={{fontSize:10,color:"#6b7280"}}>{c.label}</div></div>))}</div>
