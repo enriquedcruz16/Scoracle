@@ -160,7 +160,8 @@ const KNOCKOUT_BRACKET = [
     {id:"k_sf_1",group:"SF",home:"W QF-1",away:"W QF-2",date:"Jul 15",time:"TBD",venue:"TBD",kickoffISO:"2026-07-15T20:00:00-05:00",isKnockout:true},
     {id:"k_sf_2",group:"SF",home:"W QF-3",away:"W QF-4",date:"Jul 16",time:"TBD",venue:"TBD",kickoffISO:"2026-07-16T20:00:00-05:00",isKnockout:true},
   ]},
-  {day:8,label:"The Final",dates:"Jul 19",fixtures:[
+  {day:8,label:"3rd Place & Final",dates:"Jul 18–19",fixtures:[
+    {id:"k_3rd",group:"3rd Place",home:"L SF-1",away:"L SF-2",date:"Jul 18",time:"TBD",venue:"TBD",kickoffISO:"2026-07-18T20:00:00-05:00",isKnockout:true},
     {id:"k_final",group:"Final",home:"W SF-1",away:"W SF-2",date:"Jul 19",time:"TBD",venue:"MetLife Stadium, New Jersey",kickoffISO:"2026-07-19T20:00:00-05:00",isKnockout:true},
   ]},
 ];
@@ -703,6 +704,11 @@ button:active{transform:scale(0.97);}
 tr:hover td{background:#0c0c0c;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
 @keyframes pitchPulse{0%,100%{opacity:0.13;}50%{opacity:0.22;}}
+::-webkit-scrollbar{height:4px;width:4px;background:#0a0a0a;}
+::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:#3a3a3a;}
+::-webkit-scrollbar-track{background:#0a0a0a;}
+*{scrollbar-width:thin;scrollbar-color:#2a2a2a #0a0a0a;}
 @keyframes scanMove{0%{transform:translateY(-100px);}100%{transform:translateY(1000px);}}
 .pitch-lines{animation:pitchPulse 3s ease-in-out infinite;}
 .scan-line{animation:scanMove 5s linear infinite;}
