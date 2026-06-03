@@ -166,7 +166,53 @@ const KNOCKOUT_BRACKET = [
   ]},
 ];
 
-const PLAYERS = ["Lionel Messi","Kylian Mbappé","Erling Haaland","Vinicius Jr","Jude Bellingham","Harry Kane","Cristiano Ronaldo","Neymar Jr","Mohamed Salah","Kevin De Bruyne","Lamine Yamal","Pedri","Bukayo Saka","Phil Foden","Rodri","Antoine Griezmann","Bernardo Silva","Bruno Fernandes","Raphinha","Leroy Sané"];
+const PLAYERS = [
+  // Argentina
+  "Lionel Messi","Lautaro Martínez","Julián Álvarez","Nicolás González","Giuliano Simeone",
+  // Brazil
+  "Vinicius Jr","Neymar","Matheus Cunha","Gabriel Martinelli","Endrick","Rayan",
+  // France
+  "Kylian Mbappé","Ousmane Dembélé","Marcus Thuram","Bradley Barcola","Désiré Doué",
+  "Rayan Cherki","Jean-Philippe Mateta","Michael Olise","Maghnes Akliouche",
+  // England
+  "Harry Kane","Bukayo Saka","Phil Foden","Cole Palmer","Anthony Gordon","Dominic Solanke","Ollie Watkins",
+  // Spain
+  "Lamine Yamal","Nico Williams","Álvaro Morata","Mikel Oyarzabal","Ferran Torres","Ayoze Pérez",
+  // Portugal
+  "Cristiano Ronaldo","Rafael Leão","Gonçalo Ramos","Diogo Jota","Bruno Fernandes",
+  // Germany
+  "Leroy Sané","Serge Gnabry","Niclas Füllkrug","Florian Wirtz","Jamal Musiala","Thomas Müller",
+  // Netherlands
+  "Cody Gakpo","Memphis Depay","Wout Weghorst","Donyell Malen","Brian Brobbey",
+  // Norway
+  "Erling Haaland","Alexander Sørloth","Antonio Nusa","Oscar Bobb",
+  // Belgium
+  "Romelu Lukaku","Jeremy Doku","Leandro Trossard","Dodi Lukebakio","Charles De Ketelaere",
+  // Morocco
+  "Ayoub El Kaabi","Soufiane Rahimi","Brahim Díaz","Abde Ezzalzouli",
+  // Senegal
+  "Sadio Mané","Nicolas Jackson","Ismaïla Sarr","Iliman Ndiaye",
+  // Mexico
+  "Raúl Jiménez","Santiago Giménez","Hirving Lozano","Julián Quiñones",
+  // USA
+  "Folarin Balogun","Ricardo Pepi","Haji Wright","Christian Pulisic",
+  // Uruguay
+  "Darwin Núñez","Facundo Pellistri","Federico Viñas",
+  // Japan
+  "Kaoru Mitoma","Takumi Minamino","Ayase Ueda",
+  // South Korea
+  "Heung-min Son","Hwang Hee-chan","Oh Hyeon-gyu",
+  // Colombia
+  "Luis Díaz","Jhon Córdoba","Radamel Falcao",
+  // Ecuador
+  "Enner Valencia","Jordy Caicedo",
+  // Egypt
+  "Omar Marmoush","Mostafa Mohamed",
+  // Scotland
+  "Che Adams","Lyndon Dykes","Callum McGregor",
+  // Croatia
+  "Andrej Kramarić","Marko Livaja","Ivan Perišić",
+].sort();
 const NAV = [{id:"predict",icon:"🎯",label:"Predict"},{id:"standings",icon:"📋",label:"Standings"},{id:"leaderboard",icon:"🏆",label:"Rankings"},{id:"bonus",icon:"⭐",label:"Bonus"},{id:"stats",icon:"📊",label:"Stats"}];
 
 function pts(pred,res){if(!pred||!res)return null;const{homeGoals:ph,awayGoals:pa}=pred,{homeGoals:rh,awayGoals:ra}=res;if([ph,pa,rh,ra].some(v=>v==null))return null;if(+ph===+rh&&+pa===+ra)return PTS_EXACT;const po=ph>pa?"H":ph<pa?"A":"D",ro=rh>ra?"H":rh<ra?"A":"D";return po===ro?PTS_RESULT:0;}
