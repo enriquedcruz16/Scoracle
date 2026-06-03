@@ -166,7 +166,29 @@ const KNOCKOUT_BRACKET = [
   ]},
 ];
 
-const PLAYERS = ["Lionel Messi","Kylian Mbappé","Erling Haaland","Vinicius Jr","Jude Bellingham","Harry Kane","Cristiano Ronaldo","Neymar Jr","Mohamed Salah","Kevin De Bruyne","Lamine Yamal","Pedri","Bukayo Saka","Phil Foden","Rodri","Antoine Griezmann","Bernardo Silva","Bruno Fernandes","Raphinha","Leroy Sané"];
+const PLAYERS = [
+  "Achraf Hakimi","Alexander Isak","Alexis Mac Allister","Álvaro Morata","Andrej Kramarić",
+  "Antoine Griezmann","Ayoub El Kaabi","Ayoze Pérez","Bradley Barcola","Brian Brobbey",
+  "Bruno Fernandes","Bukayo Saka","Callum McGregor","Charles De Ketelaere","Che Adams",
+  "Christian Pulisic","Cody Gakpo","Cole Palmer","Cristiano Ronaldo","Darwin Núñez",
+  "Désiré Doué","Diogo Jota","Dodi Lukebakio","Dominic Solanke","Donyell Malen",
+  "Endrick","Erling Haaland","Facundo Pellistri","Federico Viñas","Ferran Torres",
+  "Folarin Balogun","Gabriel Martinelli","Gonçalo Ramos","Haji Wright","Harry Kane",
+  "Heung-min Son","Hirving Lozano","Hwang Hee-chan","Igor Thiago","Iliman Ndiaye",
+  "Iñaki Williams","Ismaïla Sarr","Ivan Perišić","Jean-Philippe Mateta","Jeremy Doku",
+  "Jhon Córdoba","Jordy Caicedo","Jude Bellingham","Julián Álvarez","Julián Quiñones",
+  "Kaoru Mitoma","Kingsley Coman","Kylian Mbappé","Lamine Yamal","Lautaro Martínez",
+  "Leandro Trossard","Leroy Sané","Lionel Messi","Luis Díaz","Luiz Henrique",
+  "Lyndon Dykes","Maghnes Akliouche","Marcus Rashford","Marcus Thuram","Marko Livaja",
+  "Martin Ødegaard","Matheus Cunha","Memphis Depay","Michael Olise","Mikel Oyarzabal",
+  "Mohamed Kudus","Mohamed Salah","Mostafa Mohamed","Neymar","Nicolas Jackson",
+  "Niclas Füllkrug","Nico Williams","Nicolas Paz","Nishan Velupillay","Ollie Watkins",
+  "Omar Marmoush","Oscar Bobb","Ousmane Dembélé","Oh Hyeon-gyu","Phil Foden",
+  "Rafael Leão","Randal Kolo Muani","Raúl Jiménez","Rayan","Rayan Cherki",
+  "Ricardo Pepi","Richarlison","Romelu Lukaku","Sadio Mané","Santiago Giménez",
+  "Serge Gnabry","Soufiane Rahimi","Takumi Minamino","Thomas Müller","Vinicius Jr",
+  "Wout Weghorst","Florian Wirtz","Jamal Musiala","Patrik Schick","Enner Valencia",
+].sort();
 const NAV = [{id:"predict",icon:"🎯",label:"Predict"},{id:"standings",icon:"📋",label:"Standings"},{id:"leaderboard",icon:"🏆",label:"Rankings"},{id:"bonus",icon:"⭐",label:"Bonus"},{id:"stats",icon:"📊",label:"Stats"}];
 const MENU_EXTRA = [{id:"bracket",icon:"🗂️",label:"My Bracket"},{id:"rules",icon:"📖",label:"Rules"}];
 
@@ -327,7 +349,7 @@ export default function App(){
               <div><div style={{fontWeight:700,fontSize:14,color:"#f9fafb",display:"flex",alignItems:"center",gap:6}}>{user.name}{isAdmin&&<span style={{fontSize:9,fontWeight:800,color:"#000",background:G,borderRadius:4,padding:"2px 6px"}}>ADMIN</span>}</div><div style={{fontSize:11,color:"#6b7280"}}>{user.email}</div></div>
             </div>
             <div style={{height:1,background:"#141414"}}/>
-            {[...NAV,{id:"rules",icon:"📖",label:"Rules"}].map(n=>(<button key={n.id} onClick={()=>go(n.id)} style={{display:"flex",alignItems:"center",gap:14,padding:"15px 20px",background:tab===n.id?"#0d0d0d":"none",border:"none",color:tab===n.id?G:"#6b7280",cursor:"pointer",fontSize:14,fontWeight:500,width:"100%",textAlign:"left",borderLeft:tab===n.id?`3px solid ${G}`:"3px solid transparent"}}><span style={{fontSize:18,width:24,textAlign:"center"}}>{n.icon}</span><span>{n.label}</span>{tab===n.id&&<span style={{marginLeft:"auto",color:G,fontSize:8}}>●</span>}</button>))}
+            {[...NAV,...MENU_EXTRA].map(n=>(<button key={n.id} onClick={()=>go(n.id)} style={{display:"flex",alignItems:"center",gap:14,padding:"15px 20px",background:tab===n.id?"#0d0d0d":"none",border:"none",color:tab===n.id?G:"#6b7280",cursor:"pointer",fontSize:14,fontWeight:500,width:"100%",textAlign:"left",borderLeft:tab===n.id?`3px solid ${G}`:"3px solid transparent"}}><span style={{fontSize:18,width:24,textAlign:"center"}}>{n.icon}</span><span>{n.label}</span>{tab===n.id&&<span style={{marginLeft:"auto",color:G,fontSize:8}}>●</span>}</button>))}
             {isAdmin&&<button onClick={()=>go("admin")} style={{display:"flex",alignItems:"center",gap:14,padding:"15px 20px",background:tab==="admin"?"#0d0d0d":"none",border:"none",borderTop:"1px solid #1a1a1a",color:tab==="admin"?G:"#6b7280",cursor:"pointer",fontSize:14,fontWeight:500,width:"100%",textAlign:"left",borderLeft:tab==="admin"?`3px solid ${G}`:"3px solid transparent"}}><span style={{fontSize:18,width:24,textAlign:"center"}}>⚙️</span><span>Admin Dashboard</span></button>}
             <div style={{height:1,background:"#141414"}}/>
             <div style={{padding:"20px",marginTop:"auto"}}>
