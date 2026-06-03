@@ -167,7 +167,8 @@ const KNOCKOUT_BRACKET = [
 ];
 
 const PLAYERS = ["Lionel Messi","Kylian Mbappé","Erling Haaland","Vinicius Jr","Jude Bellingham","Harry Kane","Cristiano Ronaldo","Neymar Jr","Mohamed Salah","Kevin De Bruyne","Lamine Yamal","Pedri","Bukayo Saka","Phil Foden","Rodri","Antoine Griezmann","Bernardo Silva","Bruno Fernandes","Raphinha","Leroy Sané"];
-const NAV = [{id:"predict",icon:"🎯",label:"Predict"},{id:"standings",icon:"📋",label:"Standings"},{id:"leaderboard",icon:"🏆",label:"Rankings"},{id:"bonus",icon:"⭐",label:"Bonus"},{id:"bracket",icon:"🗂️",label:"Bracket"},{id:"stats",icon:"📊",label:"Stats"}];
+const NAV = [{id:"predict",icon:"🎯",label:"Predict"},{id:"standings",icon:"📋",label:"Standings"},{id:"leaderboard",icon:"🏆",label:"Rankings"},{id:"bonus",icon:"⭐",label:"Bonus"},{id:"stats",icon:"📊",label:"Stats"}];
+const MENU_EXTRA = [{id:"bracket",icon:"🗂️",label:"My Bracket"},{id:"rules",icon:"📖",label:"Rules"}];
 
 function pts(pred,res){if(!pred||!res)return null;const{homeGoals:ph,awayGoals:pa}=pred,{homeGoals:rh,awayGoals:ra}=res;if([ph,pa,rh,ra].some(v=>v==null))return null;if(+ph===+rh&&+pa===+ra)return PTS_EXACT;const po=ph>pa?"H":ph<pa?"A":"D",ro=rh>ra?"H":rh<ra?"A":"D";return po===ro?PTS_RESULT:0;}
 function locked(k){return k&&new Date()>=new Date(new Date(k).getTime()-LOCK_MINUTES*60000);}
@@ -718,248 +719,225 @@ tr:hover td{background:#0c0c0c;}
 `;
 
 // ══════════════════ BRACKET TAB ═══════════════════════════════════════
-// Official FIFA 2026 R32 bracket (fixed matchups from the draw)
 const R32_BRACKET = [
-  {id:"m74", homeKey:"W_E", awayKey:"3rd_ABCDF"},
-  {id:"m75", homeKey:"W_F", awayKey:"RU_C"},
-  {id:"m76", homeKey:"W_C", awayKey:"RU_F"},
-  {id:"m77", homeKey:"W_I", awayKey:"3rd_CDFGH"},
-  {id:"m78", homeKey:"RU_E", awayKey:"RU_I"},
-  {id:"m79", homeKey:"W_A", awayKey:"3rd_CEFHI"},
-  {id:"m80", homeKey:"W_L", awayKey:"3rd_EHIJK"},
-  {id:"m81", homeKey:"W_D", awayKey:"3rd_BEFIJ"},
-  {id:"m82", homeKey:"W_G", awayKey:"3rd_AEHIJ"},
-  {id:"m83", homeKey:"RU_K", awayKey:"RU_L"},
-  {id:"m84", homeKey:"W_H", awayKey:"RU_J"},
-  {id:"m85", homeKey:"W_B", awayKey:"3rd_EFGIJ"},
-  {id:"m86", homeKey:"W_J", awayKey:"RU_H"},
-  {id:"m87", homeKey:"RU_G", awayKey:"3rd_ABCDF"},
-  {id:"m88", homeKey:"W_K", awayKey:"RU_D"},
-  {id:"m89", homeKey:"RU_B", awayKey:"RU_A"},
+  {id:"m74",label:"Group E winner vs Best 3rd (A/B/C/D/F)",homeKey:"W_E",awayKey:"3rd_ABCDF"},
+  {id:"m75",label:"Group F winner vs Runner-up Group C",homeKey:"W_F",awayKey:"RU_C"},
+  {id:"m76",label:"Group C winner vs Runner-up Group F",homeKey:"W_C",awayKey:"RU_F"},
+  {id:"m77",label:"Group I winner vs Best 3rd (C/D/F/G/H)",homeKey:"W_I",awayKey:"3rd_CDFGH"},
+  {id:"m78",label:"Runner-up Group E vs Runner-up Group I",homeKey:"RU_E",awayKey:"RU_I"},
+  {id:"m79",label:"Group A winner vs Best 3rd (C/E/F/H/I)",homeKey:"W_A",awayKey:"3rd_CEFHI"},
+  {id:"m80",label:"Group L winner vs Best 3rd (E/H/I/J/K)",homeKey:"W_L",awayKey:"3rd_EHIJK"},
+  {id:"m81",label:"Group D winner vs Best 3rd (B/E/F/I/J)",homeKey:"W_D",awayKey:"3rd_BEFIJ"},
+  {id:"m82",label:"Group G winner vs Best 3rd (A/E/H/I/J)",homeKey:"W_G",awayKey:"3rd_AEHIJ"},
+  {id:"m83",label:"Runner-up Group K vs Runner-up Group L",homeKey:"RU_K",awayKey:"RU_L"},
+  {id:"m84",label:"Group H winner vs Runner-up Group J",homeKey:"W_H",awayKey:"RU_J"},
+  {id:"m85",label:"Group B winner vs Best 3rd (E/F/G/I/J)",homeKey:"W_B",awayKey:"3rd_EFGIJ"},
+  {id:"m86",label:"Group J winner vs Runner-up Group H",homeKey:"W_J",awayKey:"RU_H"},
+  {id:"m87",label:"Runner-up Group G vs Best 3rd (A/B/C/D/F)",homeKey:"RU_G",awayKey:"3rd_ABCDF2"},
+  {id:"m88",label:"Group K winner vs Runner-up Group D",homeKey:"W_K",awayKey:"RU_D"},
+  {id:"m89",label:"Runner-up Group B vs Runner-up Group A",homeKey:"RU_B",awayKey:"RU_A"},
 ];
 
-function calcBracketStandings(predictions, allFix, live) {
-  // Calculate standings per group from predictions
-  const standings = {};
-  Object.keys(GROUPS_TEAMS).forEach(g => {
-    const teams = GROUPS_TEAMS[g];
-    const table = {};
-    teams.forEach(t => { table[t] = {team:t, mp:0, w:0, d:0, l:0, gf:0, ga:0, pts:0}; });
-    allFix.filter(f => (f.group||'').toUpperCase().replace(/GROUP\s*/,'').trim() === g && !f.isKnockout).forEach(fix => {
-      const src = live[fix.id] || (fix.isDone ? {homeGoals:fix.homeGoals, awayGoals:fix.awayGoals} : null) || predictions[fix.id];
-      if (!src || src.homeGoals == null) return;
-      const hg = +src.homeGoals, ag = +src.awayGoals;
-      const h = table[fix.home], a = table[fix.away];
-      if (!h || !a) return;
-      h.mp++; a.mp++; h.gf += hg; h.ga += ag; a.gf += ag; a.ga += hg;
-      if (hg > ag) { h.w++; h.pts += 3; a.l++; }
-      else if (hg < ag) { a.w++; a.pts += 3; h.l++; }
-      else { h.d++; h.pts++; a.d++; a.pts++; }
+function calcBracketStandings(predictions,allFix,live){
+  const standings={};
+  Object.keys(GROUPS_TEAMS).forEach(g=>{
+    const teams=GROUPS_TEAMS[g],table={};
+    teams.forEach(t=>{table[t]={team:t,mp:0,w:0,d:0,l:0,gf:0,ga:0,pts:0};});
+    allFix.filter(f=>(f.group||'').toUpperCase().replace(/GROUP\s*/,'').trim()===g&&!f.isKnockout).forEach(fix=>{
+      const src=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null)||predictions[fix.id];
+      if(!src||src.homeGoals==null)return;
+      const hg=+src.homeGoals,ag=+src.awayGoals,h=table[fix.home],a=table[fix.away];
+      if(!h||!a)return;
+      h.mp++;a.mp++;h.gf+=hg;h.ga+=ag;a.gf+=ag;a.ga+=hg;
+      if(hg>ag){h.w++;h.pts+=3;a.l++;}else if(hg<ag){a.w++;a.pts+=3;h.l++;}else{h.d++;h.pts++;a.d++;a.pts++;}
     });
-    const sorted = Object.values(table).sort((a,b) => b.pts-a.pts || (b.gf-b.ga)-(a.gf-a.ga) || b.gf-a.gf);
-    standings[g] = sorted;
+    standings[g]=Object.values(table).sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga)||b.gf-a.gf);
   });
   return standings;
 }
 
-function getBest3rd(standings) {
-  const thirds = Object.entries(standings).map(([g, rows]) => ({
-    group: g, ...rows[2],
-  })).filter(t => t.team);
-  return thirds.sort((a,b) => b.pts-a.pts || (b.gf-b.ga)-(a.gf-a.ga) || b.gf-a.gf);
+function getBest3rd(standings){
+  return Object.entries(standings).map(([g,rows])=>({group:g,...rows[2]})).filter(t=>t.team).sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga)||b.gf-a.gf);
 }
 
-function resolveTeam(key, standings, best3rd) {
-  if (key.startsWith('W_')) return standings[key.slice(2)]?.[0]?.team || key;
-  if (key.startsWith('RU_')) return standings[key.slice(3)]?.[1]?.team || key;
-  if (key.startsWith('3rd_')) return best3rd[0]?.team || '3rd place';
+function resolveSlot(key,standings,best3rd){
+  if(key.startsWith('W_'))return standings[key.slice(2)]?.[0]?.team||`Winner Group ${key.slice(2)}`;
+  if(key.startsWith('RU_'))return standings[key.slice(3)]?.[1]?.team||`Runner-up Group ${key.slice(3)}`;
+  if(key.startsWith('3rd_'))return best3rd[0]?.team||'Best 3rd place';
   return key;
 }
 
-function BracketTab({predictions, allFix, live}) {
-  const standings = calcBracketStandings(predictions, allFix, live);
-  const allThirds = getBest3rd(standings);
-  const best3rd = allThirds.slice(0, 8);
-  const eliminated3rd = allThirds.slice(8);
+function BracketTab({predictions,allFix,live}){
+  const standings=calcBracketStandings(predictions,allFix,live);
+  const allThirds=getBest3rd(standings);
+  const best3rd=allThirds.slice(0,8);
 
-  // Build R32 matches with resolved team names
-  const r32 = R32_BRACKET.map((m, i) => {
-    const home = resolveTeam(m.homeKey, standings, best3rd);
-    const away = resolveTeam(m.awayKey, standings, best3rd);
-    return { ...m, home, away, match: i+1 };
-  });
+  // Build initial R32 from group predictions
+  const initR32=R32_BRACKET.map((m,i)=>({
+    id:m.id,label:m.label,
+    home:resolveSlot(m.homeKey,standings,best3rd),
+    away:resolveSlot(m.awayKey,standings,best3rd),
+    winner:null,
+  }));
 
-  // For the bracket flow beyond R32, just show predicted paths
-  // Group the R32 into pairs for R16
-  const r16 = [
-    { home: r32[0].home, away: r32[1].home },
-    { home: r32[2].home, away: r32[3].home },
-    { home: r32[4].home, away: r32[5].home },
-    { home: r32[6].home, away: r32[7].home },
-    { home: r32[8].home, away: r32[9].home },
-    { home: r32[10].home, away: r32[11].home },
-    { home: r32[12].home, away: r32[13].home },
-    { home: r32[14].home, away: r32[15].home },
-  ];
+  const [r32,setR32]=useState(initR32);
+  const [r16,setR16]=useState(Array(8).fill(null).map((_,i)=>({home:'TBD',away:'TBD',winner:null})));
+  const [qf,setQf]=useState(Array(4).fill(null).map((_,i)=>({home:'TBD',away:'TBD',winner:null})));
+  const [sf,setSf]=useState(Array(2).fill(null).map((_,i)=>({home:'TBD',away:'TBD',winner:null})));
+  const [final,setFinal]=useState({home:'TBD',away:'TBD',winner:null});
+  const [resetKey,setResetKey]=useState(0);
 
-  const qf = [
-    { home: r16[0].home, away: r16[1].home },
-    { home: r16[2].home, away: r16[3].home },
-    { home: r16[4].home, away: r16[5].home },
-    { home: r16[6].home, away: r16[7].home },
-  ];
+  function advanceR32(matchIdx,winner){
+    const newR32=[...r32];newR32[matchIdx]={...newR32[matchIdx],winner};
+    setR32(newR32);
+    // Build R16 from R32 winners - pairs: (0,1),(2,3),(4,5),(6,7),(8,9),(10,11),(12,13),(14,15)
+    const newR16=[...r16];
+    const pairIdx=Math.floor(matchIdx/2);
+    const slot=matchIdx%2===0?'home':'away';
+    newR16[pairIdx]={...newR16[pairIdx],[slot]:winner,winner:null};
+    setR16(newR16);
+    // Clear downstream
+    const qfIdx=Math.floor(pairIdx/2);
+    const newQf=[...qf];newQf[qfIdx]={home:'TBD',away:'TBD',winner:null};setQf(newQf);
+    const sfIdx=Math.floor(qfIdx/2);
+    const newSf=[...sf];newSf[sfIdx]={home:'TBD',away:'TBD',winner:null};setSf(newSf);
+    setFinal({home:'TBD',away:'TBD',winner:null});
+  }
 
-  const sf = [
-    { home: qf[0].home, away: qf[1].home },
-    { home: qf[2].home, away: qf[3].home },
-  ];
+  function advanceR16(matchIdx,winner){
+    const newR16=[...r16];newR16[matchIdx]={...newR16[matchIdx],winner};setR16(newR16);
+    const newQf=[...qf];
+    const pairIdx=Math.floor(matchIdx/2),slot=matchIdx%2===0?'home':'away';
+    newQf[pairIdx]={...newQf[pairIdx],[slot]:winner,winner:null};setQf(newQf);
+    const sfIdx=Math.floor(pairIdx/2);
+    const newSf=[...sf];newSf[sfIdx]={home:'TBD',away:'TBD',winner:null};setSf(newSf);
+    setFinal({home:'TBD',away:'TBD',winner:null});
+  }
 
-  const final = { home: sf[0].home, away: sf[1].home };
+  function advanceQf(matchIdx,winner){
+    const newQf=[...qf];newQf[matchIdx]={...newQf[matchIdx],winner};setQf(newQf);
+    const newSf=[...sf];
+    const pairIdx=Math.floor(matchIdx/2),slot=matchIdx%2===0?'home':'away';
+    newSf[pairIdx]={...newSf[pairIdx],[slot]:winner,winner:null};setSf(newSf);
+    setFinal({home:'TBD',away:'TBD',winner:null});
+  }
 
-  function MatchCard({ home, away, label, style={} }) {
-    return (
-      <div style={{background:"#080808", border:"1px solid #141414", borderRadius:12, padding:"12px 14px", marginBottom:8, ...style}}>
-        {label && <div style={{fontSize:9, color:"#6b7280", fontWeight:700, letterSpacing:0.5, marginBottom:8}}>{label}</div>}
-        <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:6}}>
-          <span style={{fontSize:18}}>{FLAGS[home] || "🏳️"}</span>
-          <span style={{flex:1, fontSize:13, fontWeight:700}}>{home}</span>
-        </div>
-        <div style={{height:1, background:"#111", margin:"4px 0"}}/>
-        <div style={{display:"flex", alignItems:"center", gap:8, marginTop:6}}>
-          <span style={{fontSize:18}}>{FLAGS[away] || "🏳️"}</span>
-          <span style={{flex:1, fontSize:13, fontWeight:600, color:"#6b7280"}}>{away}</span>
-        </div>
+  function advanceSf(matchIdx,winner){
+    const newSf=[...sf];newSf[matchIdx]={...newSf[matchIdx],winner};setSf(newSf);
+    const slot=matchIdx===0?'home':'away';
+    setFinal(f=>({...f,[slot]:winner,winner:null}));
+  }
+
+  function reset(){
+    setR32(initR32);
+    setR16(Array(8).fill(null).map(()=>({home:'TBD',away:'TBD',winner:null})));
+    setQf(Array(4).fill(null).map(()=>({home:'TBD',away:'TBD',winner:null})));
+    setSf(Array(2).fill(null).map(()=>({home:'TBD',away:'TBD',winner:null})));
+    setFinal({home:'TBD',away:'TBD',winner:null});
+    setResetKey(k=>k+1);
+  }
+
+  function RoundTitle({children}){return(<div style={{display:"flex",alignItems:"center",gap:8,margin:"20px 0 10px"}}><div style={{fontSize:12,fontWeight:800,color:G,letterSpacing:1,textTransform:"uppercase",whiteSpace:"nowrap"}}>{children}</div><div style={{flex:1,height:1,background:"#1a1a1a"}}/></div>);}
+
+  function MatchCard({match,onSelect,compact=false}){
+    const {home,away,winner}=match;
+    const tbd=home==='TBD'||away==='TBD';
+    return(
+      <div style={{background:"#080808",border:`1px solid ${winner?"#f59e0b33":"#141414"}`,borderRadius:10,padding:compact?"8px 10px":"12px 14px",marginBottom:8}}>
+        {match.label&&!compact&&<div style={{fontSize:8,color:"#374151",fontWeight:700,marginBottom:6,lineHeight:1.4}}>{match.label}</div>}
+        {[home,away].map((team,i)=>{
+          const isWinner=winner===team;
+          const isLoser=winner&&winner!==team;
+          return(<div key={i}>
+            {i===1&&<div style={{height:1,background:"#111",margin:"4px 0"}}/>}
+            <button onClick={()=>!tbd&&team!=='TBD'&&onSelect(team)} disabled={tbd||team==='TBD'}
+              style={{width:"100%",background:"none",border:"none",cursor:tbd?"default":"pointer",padding:"3px 0",display:"flex",alignItems:"center",gap:6,borderRadius:6,transition:"background 0.15s"}}>
+              <span style={{fontSize:compact?14:16}}>{FLAGS[team]||"🏳️"}</span>
+              <span style={{flex:1,fontSize:compact?10:12,fontWeight:isWinner?800:isLoser?400:600,color:isWinner?G:isLoser?"#374151":"#f9fafb",textAlign:"left",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{team}</span>
+              {isWinner&&<span style={{fontSize:8,fontWeight:800,color:"#22c55e",background:"rgba(34,197,94,0.12)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:20,padding:"1px 5px"}}>✓</span>}
+              {tbd&&i===0&&<span style={{fontSize:9,color:"#374151"}}>Pick above first</span>}
+            </button>
+          </div>);
+        })}
       </div>
     );
   }
 
-  function RoundTitle({children}) {
-    return (
-      <div style={{display:"flex", alignItems:"center", gap:8, margin:"20px 0 10px"}}>
-        <div style={{fontSize:12, fontWeight:800, color:G, letterSpacing:1, textTransform:"uppercase", whiteSpace:"nowrap"}}>{children}</div>
-        <div style={{flex:1, height:1, background:"#1a1a1a"}}/>
-      </div>
-    );
-  }
-
-  return (
+  return(
     <div style={{padding:16}}>
-      <div style={{fontSize:20, fontWeight:800, marginBottom:4}}>🗂 My Bracket</div>
-      <div style={{fontSize:12, color:"#6b7280", marginBottom:20}}>Calculated from your group stage predictions · Updates live</div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
+        <div style={{fontSize:20,fontWeight:800}}>🗂 My Bracket</div>
+        <button onClick={reset} style={{background:"#0f0f0f",border:"1px solid #1f1f1f",borderRadius:8,color:"#6b7280",fontSize:11,fontWeight:700,padding:"6px 12px",cursor:"pointer"}}>↺ Reset</button>
+      </div>
+      <div style={{fontSize:12,color:"#6b7280",marginBottom:20}}>Tap a team to advance them · Based on your group predictions</div>
 
       {/* Group standings summary */}
       <RoundTitle>Group Predictions</RoundTitle>
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom:8}}>
-        {Object.entries(standings).map(([g, rows]) => (
-          <div key={g} style={{background:"#080808", border:"1px solid #141414", borderRadius:10, padding:"10px 12px"}}>
-            <div style={{fontSize:9, fontWeight:800, color:G, letterSpacing:1, marginBottom:6}}>GROUP {g}</div>
-            {rows.map((r, i) => (
-              <div key={r.team} style={{display:"flex", alignItems:"center", gap:5, marginBottom:3}}>
-                <span style={{fontSize:9, color:i<2?"#22c55e":"#4b5563", width:12, fontWeight:700}}>{i+1}</span>
-                <span style={{fontSize:14}}>{FLAGS[r.team] || "🏳️"}</span>
-                <span style={{fontSize:11, fontWeight:i<2?700:500, color:i<2?"#f9fafb":"#4b5563", flex:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{r.team}</span>
-                <span style={{fontSize:10, fontWeight:700, color:i<2?G:"#4b5563"}}>{r.pts}</span>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:8}}>
+        {Object.entries(standings).map(([g,rows])=>(
+          <div key={g} style={{background:"#080808",border:"1px solid #141414",borderRadius:10,padding:"10px 12px"}}>
+            <div style={{fontSize:9,fontWeight:800,color:G,letterSpacing:1,marginBottom:6}}>GROUP {g}</div>
+            {rows.map((r,i)=>(
+              <div key={r.team} style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}>
+                <span style={{fontSize:9,color:i<2?"#22c55e":"#4b5563",width:12,fontWeight:700}}>{i+1}</span>
+                <span style={{fontSize:14}}>{FLAGS[r.team]||"🏳️"}</span>
+                <span style={{fontSize:10,fontWeight:i<2?700:500,color:i<2?"#f9fafb":"#4b5563",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.team}</span>
+                <span style={{fontSize:9,fontWeight:700,color:i<2?G:"#4b5563"}}>{r.pts}</span>
               </div>
             ))}
           </div>
         ))}
       </div>
 
-      {/* Best 3rd place */}
+      {/* Best 3rd */}
       <RoundTitle>Best 3rd Place Teams</RoundTitle>
-      <div style={{background:"#0a0600", border:`1px solid ${G}22`, borderRadius:10, padding:"10px 12px", marginBottom:8}}>
-        <div style={{fontSize:10, fontWeight:800, color:G, marginBottom:8}}>8 of 12 third-place teams advance · Ranked by pts → GD → GF</div>
-        <div style={{display:"flex", flexWrap:"wrap", gap:5}}>
-          {allThirds.map((t, i) => (
-            <div key={t.team} style={{fontSize:10, fontWeight:600, padding:"3px 8px", borderRadius:20, background:i<8?"rgba(34,197,94,0.1)":"#111", border:i<8?"1px solid rgba(34,197,94,0.3)":"1px solid #1f1f1f", color:i<8?"#22c55e":"#4b5563", textDecoration:i>=8?"line-through":"none"}}>
-              {FLAGS[t.team] || "🏳️"} {t.team} · {t.pts}pts
+      <div style={{background:"#0a0600",border:`1px solid ${G}22`,borderRadius:10,padding:"10px 12px",marginBottom:8}}>
+        <div style={{fontSize:10,fontWeight:800,color:G,marginBottom:8}}>8 of 12 third-place teams advance</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+          {allThirds.map((t,i)=>(
+            <div key={t.team} style={{fontSize:10,fontWeight:600,padding:"3px 8px",borderRadius:20,background:i<8?"rgba(34,197,94,0.1)":"#111",border:i<8?"1px solid rgba(34,197,94,0.3)":"1px solid #1f1f1f",color:i<8?"#22c55e":"#4b5563",textDecoration:i>=8?"line-through":"none"}}>
+              {FLAGS[t.team]||"🏳️"} {t.team} · {t.pts}pts
             </div>
           ))}
         </div>
       </div>
 
-      {/* Round of 32 */}
-      <RoundTitle>Round of 32</RoundTitle>
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:6}}>
-        {r32.map((m, i) => (
-          <div key={m.id} style={{background:"#080808", border:"1px solid #141414", borderRadius:10, padding:"10px 10px"}}>
-            <div style={{fontSize:8, color:"#6b7280", fontWeight:700, marginBottom:6}}>MATCH {i+1}</div>
-            <div style={{display:"flex", alignItems:"center", gap:5, marginBottom:4}}>
-              <span style={{fontSize:16}}>{FLAGS[m.home] || "🏳️"}</span>
-              <span style={{fontSize:11, fontWeight:700, flex:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{m.home}</span>
-            </div>
-            <div style={{height:1, background:"#111"}}/>
-            <div style={{display:"flex", alignItems:"center", gap:5, marginTop:4}}>
-              <span style={{fontSize:16}}>{FLAGS[m.away] || "🏳️"}</span>
-              <span style={{fontSize:11, fontWeight:500, color:"#6b7280", flex:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{m.away}</span>
-            </div>
-          </div>
-        ))}
+      {/* R32 */}
+      <RoundTitle>Round of 32 · Tap a team to advance</RoundTitle>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+        {r32.map((m,i)=><MatchCard key={`${resetKey}_r32_${i}`} match={m} onSelect={w=>advanceR32(i,w)} compact/>)}
       </div>
 
-      {/* Round of 16 */}
+      {/* R16 */}
       <RoundTitle>Round of 16</RoundTitle>
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:6}}>
-        {r16.map((m, i) => (
-          <div key={i} style={{background:"#080808", border:"1px solid #141414", borderRadius:10, padding:"10px 10px"}}>
-            <div style={{display:"flex", alignItems:"center", gap:5, marginBottom:4}}>
-              <span style={{fontSize:16}}>{FLAGS[m.home] || "🏳️"}</span>
-              <span style={{fontSize:11, fontWeight:700, flex:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{m.home}</span>
-            </div>
-            <div style={{height:1, background:"#111"}}/>
-            <div style={{display:"flex", alignItems:"center", gap:5, marginTop:4}}>
-              <span style={{fontSize:16}}>{FLAGS[m.away] || "🏳️"}</span>
-              <span style={{fontSize:11, fontWeight:500, color:"#6b7280", flex:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{m.away}</span>
-            </div>
-          </div>
-        ))}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+        {r16.map((m,i)=><MatchCard key={`${resetKey}_r16_${i}`} match={m} onSelect={w=>advanceR16(i,w)} compact/>)}
       </div>
 
-      {/* Quarter Finals */}
+      {/* QF */}
       <RoundTitle>Quarter-Finals</RoundTitle>
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:6}}>
-        {qf.map((m, i) => (
-          <div key={i} style={{background:"#080808", border:"1px solid #3b82f644", borderRadius:10, padding:"10px 10px"}}>
-            <div style={{display:"flex", alignItems:"center", gap:5, marginBottom:4}}>
-              <span style={{fontSize:16}}>{FLAGS[m.home] || "🏳️"}</span>
-              <span style={{fontSize:11, fontWeight:700, flex:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{m.home}</span>
-            </div>
-            <div style={{height:1, background:"#111"}}/>
-            <div style={{display:"flex", alignItems:"center", gap:5, marginTop:4}}>
-              <span style={{fontSize:16}}>{FLAGS[m.away] || "🏳️"}</span>
-              <span style={{fontSize:11, fontWeight:500, color:"#6b7280", flex:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{m.away}</span>
-            </div>
-          </div>
-        ))}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+        {qf.map((m,i)=><MatchCard key={`${resetKey}_qf_${i}`} match={{...m,label:undefined}} onSelect={w=>advanceQf(i,w)}/>)}
       </div>
 
-      {/* Semi Finals */}
+      {/* SF */}
       <RoundTitle>Semi-Finals</RoundTitle>
-      {sf.map((m, i) => (
-        <div key={i} style={{background:"#080808", border:"1px solid #a855f744", borderRadius:12, padding:"12px 14px", marginBottom:8}}>
-          <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:6}}>
-            <span style={{fontSize:20}}>{FLAGS[m.home] || "🏳️"}</span>
-            <span style={{flex:1, fontSize:13, fontWeight:700}}>{m.home}</span>
-          </div>
-          <div style={{height:1, background:"#111", margin:"4px 0"}}/>
-          <div style={{display:"flex", alignItems:"center", gap:8, marginTop:6}}>
-            <span style={{fontSize:20}}>{FLAGS[m.away] || "🏳️"}</span>
-            <span style={{flex:1, fontSize:13, fontWeight:600, color:"#6b7280"}}>{m.away}</span>
-          </div>
-        </div>
-      ))}
+      {sf.map((m,i)=><MatchCard key={`${resetKey}_sf_${i}`} match={m} onSelect={w=>advanceSf(i,w)}/>)}
 
       {/* Final */}
       <RoundTitle>The Final · Jul 19 · MetLife Stadium</RoundTitle>
-      <div style={{background:"linear-gradient(135deg,#1a0f00,#0a0a0a)", border:`1px solid ${G}44`, borderRadius:16, padding:20, textAlign:"center", marginBottom:12}}>
-        <div style={{fontSize:36, marginBottom:8}}>🏆</div>
-        <div style={{fontSize:18, fontWeight:800, color:G, marginBottom:4}}>{FLAGS[final.home] || "🏳️"} {final.home}</div>
-        <div style={{fontSize:11, color:"#6b7280"}}>vs {FLAGS[final.away] || "🏳️"} {final.away}</div>
-        <div style={{fontSize:11, color:"#374151", marginTop:8}}>Your predicted World Cup 2026 Final</div>
-      </div>
+      {final.winner?(
+        <div style={{background:"linear-gradient(135deg,#1a0f00,#0a0a0a)",border:`1px solid ${G}44`,borderRadius:16,padding:20,textAlign:"center",marginBottom:12}}>
+          <div style={{fontSize:36,marginBottom:8}}>🏆</div>
+          <div style={{fontSize:20,fontWeight:800,color:G,marginBottom:4}}>{FLAGS[final.winner]||"🏳️"} {final.winner}</div>
+          <div style={{fontSize:11,color:"#6b7280"}}>Your predicted World Cup 2026 Champion</div>
+        </div>
+      ):(
+        <MatchCard key={`${resetKey}_final`} match={final} onSelect={w=>setFinal(f=>({...f,winner:w}))}/>
+      )}
 
-      <div style={{fontSize:11, color:"#374151", textAlign:"center", fontStyle:"italic", marginTop:8}}>
-        ⚠️ Bracket is based on your predictions. Third-place matchups are approximated — exact pairings depend on which groups qualify.
+      <div style={{fontSize:11,color:"#374151",textAlign:"center",fontStyle:"italic",marginTop:12,lineHeight:1.6}}>
+        ⚠️ Third-place matchups are approximated — exact pairings are confirmed after all group games finish on Jun 28.
       </div>
     </div>
   );
