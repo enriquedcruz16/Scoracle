@@ -599,6 +599,7 @@ function BonusQuestion({q, saved, onSave, teams}){
 }
 
 function BonusTab({bonus,onSave,champion,setChampion,teams}){
+  const bonusLocked = new Date() >= new Date("2026-06-11T00:00:00");
   const[advTab,setAdvTab]=useState("r32");
   const rounds=[{id:"r32",label:"Round of 32",count:32,desc:"Pick 32 teams to advance from the group stage"},{id:"r16",label:"Round of 16",count:16,desc:"Pick your 16 teams to reach the Round of 16"},{id:"qf",label:"Quarter-Finals",count:8,desc:"Pick your 8 quarter-finalists"},{id:"sf",label:"Semi-Finals",count:4,desc:"Pick your 4 semi-finalists"},{id:"final",label:"The Final",count:2,desc:"Pick the 2 teams in the Final"}];
   return(<div style={{padding:16}}>
@@ -608,7 +609,7 @@ function BonusTab({bonus,onSave,champion,setChampion,teams}){
       <div style={{fontSize:18,fontWeight:800,color:G,marginBottom:4}}>🏆 Who will WIN the World Cup?</div>
       <div style={{fontSize:12,color:"#6b7280",marginBottom:14}}>Worth {PTS_WINNER} points · The biggest call</div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(88px,1fr))",gap:8,marginBottom:8}}>
-        {teams.map(t=>(<button key={t} onClick={()=>setChampion(t)} style={{background:champion===t?`${G}18`:"#0f0f0f",border:champion===t?`1px solid ${G}`:"1px solid #1f1f1f",borderRadius:10,color:champion===t?G:"#9ca3af",padding:"10px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5}}><span style={{fontSize:18}}>{FLAGS[t]||"🏳️"}</span><span style={{fontSize:10,fontWeight:600,textAlign:"center",lineHeight:1.3}}>{t}</span></button>))}
+        {teams.map(t=>(<button key={t} onClick={()=>{if(!bonusLocked)setChampion(t);}} style={{background:champion===t?`${G}18`:"#0f0f0f",border:champion===t?`1px solid ${G}`:"1px solid #1f1f1f",borderRadius:10,color:champion===t?G:"#9ca3af",padding:"10px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5}}><span style={{fontSize:18}}>{FLAGS[t]||"🏳️"}</span><span style={{fontSize:10,fontWeight:600,textAlign:"center",lineHeight:1.3}}>{t}</span></button>))}
       </div>
       <div style={{display:"flex",alignItems:"center",gap:8,paddingTop:"12px",borderTop:"1px solid #111",marginTop:4}}>
         <div style={{flex:1,fontSize:11,color:champion?"#22c55e":"#374151",fontWeight:champion?700:400}}>
@@ -622,11 +623,31 @@ function BonusTab({bonus,onSave,champion,setChampion,teams}){
       <BonusQuestion key={q.id} q={q} saved={bonus[q.id]||""} onSave={onSave} teams={teams}/>
     ))}
     <div style={{fontSize:15,fontWeight:800,marginBottom:12,marginTop:24}}>🗓 Pick Teams to Advance</div>
+    {bonusLocked&&<div style={{background:"#0f0f00",border:"1px solid #f59e0b33",borderRadius:10,padding:"12px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:20}}>🔒</span><span style={{fontSize:12,color:"#f59e0b",fontWeight:600}}>Bonus questions are locked — competition has started!</span></div>}
     <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>{rounds.map(r=><button key={r.id} onClick={()=>setAdvTab(r.id)} style={{background:advTab===r.id?`${G}15`:"#0a0a0a",border:advTab===r.id?`1px solid ${G}`:"1px solid #1a1a1a",color:advTab===r.id?G:"#6b7280",borderRadius:20,padding:"6px 14px",fontSize:11,fontWeight:700,cursor:"pointer"}}>{r.label}</button>)}</div>
     {rounds.filter(r=>r.id===advTab).map(round=>{
-      const key=`adv_${round.id}`,sel=bonus[key]?JSON.parse(bonus[key]):[],max=round.count;
-      function toggle(t){const c=bonus[key]?JSON.parse(bonus[key]):[];onSave(key,JSON.stringify(c.includes(t)?c.filter(x=>x!==t):(c.length<max?[...c,t]:c)));}
-      return(<div key={round.id}><div style={{fontSize:12,color:"#6b7280",marginBottom:10}}>{round.desc}</div><div style={{height:3,background:"#1a1a1a",borderRadius:2,marginBottom:6}}><div style={{height:"100%",background:`linear-gradient(90deg,${G},#22c55e)`,width:`${(sel.length/max)*100}%`,borderRadius:2,transition:"width 0.4s"}}/></div><div style={{fontSize:11,color:"#6b7280",marginBottom:12,textAlign:"right"}}>{sel.length}/{max} selected</div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(88px,1fr))",gap:8}}>{teams.map(t=><button key={t} onClick={()=>toggle(t)} style={{background:sel.includes(t)?`${G}18`:"#0f0f0f",border:sel.includes(t)?`1px solid ${G}`:"1px solid #1f1f1f",borderRadius:10,color:sel.includes(t)?G:"#9ca3af",padding:"10px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5,opacity:!sel.includes(t)&&sel.length>=max?0.3:1}}><span style={{fontSize:18}}>{FLAGS[t]||"🏳️"}</span><span style={{fontSize:10,fontWeight:600,textAlign:"center",lineHeight:1.3}}>{t}</span></button>)}</div></div>);
+      const key=`adv_${round.id}`,saved=bonus[key]?JSON.parse(bonus[key]):[],max=round.count;
+      const[draft,setDraft]=useState(saved);
+      const isDirty=JSON.stringify(draft)!==JSON.stringify(saved);
+      function toggle(t){if(bonusLocked)return;setDraft(c=>c.includes(t)?c.filter(x=>x!==t):c.length<max?[...c,t]:c);}
+      function saveDraft(){onSave(key,JSON.stringify(draft));}
+      return(<div key={round.id}>
+        <div style={{fontSize:12,color:"#6b7280",marginBottom:10}}>{round.desc}</div>
+        <div style={{height:3,background:"#1a1a1a",borderRadius:2,marginBottom:6}}><div style={{height:"100%",background:bonusLocked?`linear-gradient(90deg,#374151,#4b5563)`:`linear-gradient(90deg,${G},#22c55e)`,width:`${(draft.length/max)*100}%`,borderRadius:2,transition:"width 0.4s"}}/></div>
+        <div style={{fontSize:11,color:bonusLocked?"#4b5563":"#6b7280",marginBottom:12,textAlign:"right"}}>{draft.length}/{max} selected</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(88px,1fr))",gap:8,marginBottom:16}}>
+          {teams.map(t=><button key={t} onClick={()=>toggle(t)} style={{background:draft.includes(t)?`${G}18`:"#0f0f0f",border:draft.includes(t)?`1px solid ${G}`:"1px solid #1f1f1f",borderRadius:10,color:draft.includes(t)?G:"#9ca3af",padding:"10px 6px",cursor:bonusLocked?"default":"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5,opacity:(!draft.includes(t)&&draft.length>=max)||bonusLocked?0.4:1,transition:"all 0.15s"}}><span style={{fontSize:18}}>{FLAGS[t]||"🏳️"}</span><span style={{fontSize:10,fontWeight:600,textAlign:"center",lineHeight:1.3}}>{t}</span></button>)}
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:10,paddingTop:12,borderTop:"1px solid #111"}}>
+          <div style={{flex:1,fontSize:11,color:bonusLocked?"#4b5563":isDirty?"#f59e0b":saved.length>0?"#22c55e":"#374151",fontWeight:isDirty||saved.length>0?700:400}}>
+            {bonusLocked?`Locked · Jun 11 2026`:isDirty?"⚠ Unsaved changes":saved.length>0?"✓ All picks saved":"No picks yet"}
+          </div>
+          <button onClick={saveDraft} disabled={bonusLocked||!isDirty}
+            style={{background:bonusLocked?"#0f0f0f":!isDirty&&saved.length>0?"linear-gradient(90deg,#22c55e,#16a34a)":isDirty?`linear-gradient(90deg,${G},#f97316)`:"#0f0f0f",border:isDirty||(!isDirty&&saved.length>0)?"none":"1px solid #1f1f1f",borderRadius:10,color:bonusLocked?"#374151":!isDirty&&saved.length>0?"#fff":isDirty?"#000":"#374151",fontWeight:800,fontSize:12,padding:"10px 18px",cursor:bonusLocked||!isDirty?"default":"pointer",whiteSpace:"nowrap",outline:"none",transition:"all 0.2s"}}>
+            {bonusLocked?"🔒 Locked":!isDirty&&saved.length>0?"✓ Saved":"Save Picks →"}
+          </button>
+        </div>
+      </div>);
     })}
   </div>);
 }
