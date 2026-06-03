@@ -785,7 +785,14 @@ function getBest3rd(standings){
 function resolveSlot(key,standings,best3rd){
   if(key.startsWith('W_'))return standings[key.slice(2)]?.[0]?.team||`Winner Group ${key.slice(2)}`;
   if(key.startsWith('RU_'))return standings[key.slice(3)]?.[1]?.team||`Runner-up Group ${key.slice(3)}`;
-  if(key.startsWith('3rd_'))return best3rd[0]?.team||'Best 3rd place';
+  if(key.startsWith('3rd_')){
+    // Get the eligible groups from the key e.g. "3rd_ABCDF" → groups A,B,C,D,F
+    const suffix = key.replace('3rd_','').replace(/[0-9]/g,''); // strip trailing numbers for duplicates
+    const eligibleGroups = suffix.split('');
+    // Find the best 3rd place team from eligible groups
+    const match = best3rd.find(t => eligibleGroups.includes(t.group));
+    return match?.team || `Best 3rd (${suffix})`;
+  }
   return key;
 }
 
