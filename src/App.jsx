@@ -422,7 +422,20 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId}){
           </div>
           <div style={{flex:1,display:"flex",alignItems:"center",gap:8,justifyContent:"flex-end"}}><span style={{fontSize:12,fontWeight:600,lineHeight:1.3,textAlign:"right"}}>{fix.away}</span>{fix.awayLogo?<img src={fix.awayLogo} alt="" style={{width:32,height:32,objectFit:"contain",borderRadius:4}}/>:<span style={{fontSize:26}}>{FLAGS[fix.away]||"🏳️"}</span>}</div>
         </div>
-        <button onClick={()=>onSave(fix.id,hv,av)} disabled={lk} style={{width:"100%",background:isSaved?"linear-gradient(90deg,#22c55e,#16a34a)":lk?"#0f0f0f":`linear-gradient(90deg,${G},#f97316)`,border:lk?"1px solid #1a1a1a":"none",borderRadius:10,color:lk?"#374151":"#000",fontWeight:800,fontSize:13,padding:"11px",cursor:lk?"not-allowed":"pointer",letterSpacing:0.5}}>{isSaved?"✓ Saved!":lk?(fix.isLive?"🔴 Live — Locked":fix.isDone?"✓ Final Result":"🔒 Locked"):pred?"Update Pick":"Save Pick"}</button>
+        {(()=>{
+          const hasPred=!!pred;
+          const isDirty=hv!==""&&av!==""&&(String(hv)!==String(pred?.homeGoals)||String(av)!==String(pred?.awayGoals));
+          const btnBg=lk?"#0f0f0f":isSaved||(!isDirty&&hasPred)?"linear-gradient(90deg,#22c55e,#16a34a)":`linear-gradient(90deg,${G},#f97316)`;
+          const btnColor=lk?"#374151":isSaved||(!isDirty&&hasPred)?"#fff":"#000";
+          const btnBorder=lk?"1px solid #1a1a1a":"none";
+          const btnLabel=lk?(fix.isLive?"🔴 Live — Locked":fix.isDone?"✓ Final Result":"🔒 Locked"):isSaved?"✓ Saved!":!isDirty&&hasPred?"✓ Saved":"Save Pick";
+          return(
+            <button onClick={()=>onSave(fix.id,hv,av)} disabled={lk||(!isDirty&&hasPred&&!isSaved)}
+              style={{width:"100%",background:btnBg,border:btnBorder,borderRadius:10,color:btnColor,fontWeight:800,fontSize:13,padding:"11px",cursor:lk||(!isDirty&&hasPred)?"default":"pointer",letterSpacing:0.5,transition:"all 0.3s",outline:"none"}}>
+              {btnLabel}
+            </button>
+          );
+        })()}
       </div>);
     })}</div>
   </div>);
@@ -559,6 +572,32 @@ function RankTab({allFix,live,allPreds,profiles,currentUser}){
   </div>);
 }
 
+function BonusQuestion({q, saved, onSave, teams}){
+  const [draft, setDraft] = useState(saved);
+  const isDirty = draft && draft !== saved;
+  // sync if external save changes
+  useState(()=>{ setDraft(saved); },[saved]);
+  return(
+    <div style={{background:"#080808",border:`1px solid ${saved?"#22c55e33":"#141414"}`,borderRadius:14,padding:16,marginBottom:12,transition:"border-color 0.3s"}}>
+      <div style={{fontWeight:600,fontSize:14,marginBottom:10}}>⭐ {q.q}</div>
+      {q.type==="number"&&<input type="number" min="0" value={draft||""} onChange={e=>setDraft(e.target.value)} placeholder="Enter a number" style={{...S.inp,marginBottom:10}}/>}
+      {q.type==="player"&&<select value={draft||""} onChange={e=>setDraft(e.target.value)} style={{...S.inp,marginBottom:10}}><option value="">Choose a player…</option>{PLAYERS.map(p=><option key={p} value={p}>{p}</option>)}</select>}
+      {q.type==="team"&&<select value={draft||""} onChange={e=>setDraft(e.target.value)} style={{...S.inp,marginBottom:10}}><option value="">Choose a team…</option>{teams.map(t=><option key={t} value={t}>{FLAGS[t]} {t}</option>)}</select>}
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <div style={{flex:1,fontSize:11,color:saved?"#22c55e":"#374151",fontWeight:saved?700:400}}>
+          {saved?`✓ Saved: ${saved}`:"No answer yet"}
+        </div>
+        <button
+          onClick={()=>{if(draft)onSave(q.id,draft);setDraft(draft);}}
+          disabled={!draft||!isDirty}
+          style={{background:saved&&!isDirty?"linear-gradient(90deg,#22c55e,#16a34a)":draft&&isDirty?`linear-gradient(90deg,#f59e0b,#f97316)`:"#0f0f0f",border:draft&&isDirty?"none":"1px solid #1f1f1f",borderRadius:9,color:draft&&isDirty?"#000":saved&&!isDirty?"#fff":"#374151",fontWeight:800,fontSize:12,padding:"9px 16px",cursor:draft&&isDirty?"pointer":"default",whiteSpace:"nowrap",transition:"all 0.2s",outline:"none"}}>
+          {saved&&!isDirty?"✓ Saved":"Save Pick →"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function BonusTab({bonus,onSave,champion,setChampion,teams}){
   const[advTab,setAdvTab]=useState("r32");
   const rounds=[{id:"r32",label:"Round of 32",count:32,desc:"Pick 32 teams to advance from the group stage"},{id:"r16",label:"Round of 16",count:16,desc:"Pick your 16 teams to reach the Round of 16"},{id:"qf",label:"Quarter-Finals",count:8,desc:"Pick your 8 quarter-finalists"},{id:"sf",label:"Semi-Finals",count:4,desc:"Pick your 4 semi-finalists"},{id:"final",label:"The Final",count:2,desc:"Pick the 2 teams in the Final"}];
@@ -571,16 +610,17 @@ function BonusTab({bonus,onSave,champion,setChampion,teams}){
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(88px,1fr))",gap:8,marginBottom:8}}>
         {teams.map(t=>(<button key={t} onClick={()=>setChampion(t)} style={{background:champion===t?`${G}18`:"#0f0f0f",border:champion===t?`1px solid ${G}`:"1px solid #1f1f1f",borderRadius:10,color:champion===t?G:"#9ca3af",padding:"10px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5}}><span style={{fontSize:18}}>{FLAGS[t]||"🏳️"}</span><span style={{fontSize:10,fontWeight:600,textAlign:"center",lineHeight:1.3}}>{t}</span></button>))}
       </div>
-      {champion&&<div style={{fontSize:11,color:"#22c55e",fontWeight:700}}>✓ Your pick: {FLAGS[champion]} {champion}</div>}
+      <div style={{display:"flex",alignItems:"center",gap:8,paddingTop:"12px",borderTop:"1px solid #111",marginTop:4}}>
+        <div style={{flex:1,fontSize:11,color:champion?"#22c55e":"#374151",fontWeight:champion?700:400}}>
+          {champion?`✓ Saved: ${FLAGS[champion]} ${champion}`:"No team selected yet"}
+        </div>
+        {champion&&<div style={{fontSize:11,fontWeight:700,color:"#22c55e",background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:8,padding:"6px 14px"}}>✓ Saved</div>}
+      </div>
     </div>
     <div style={{fontSize:15,fontWeight:800,marginBottom:12,marginTop:24}}>🌟 Individual Awards</div>
-    {[{id:"topscorer",q:"Who will win the Golden Boot?",type:"player"},{id:"mostgoals",q:"Which team scores most group stage goals?",type:"team"}].map(q=>(<div key={q.id} style={{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:16,marginBottom:12}}>
-      <div style={{fontWeight:600,fontSize:14,marginBottom:10}}>⭐ {q.q}</div>
-      {q.type==="number"&&<input type="number" min="0" value={bonus[q.id]||""} onChange={e=>onSave(q.id,e.target.value)} placeholder="Enter a number" style={S.inp}/>}
-      {q.type==="player"&&<select value={bonus[q.id]||""} onChange={e=>onSave(q.id,e.target.value)} style={S.inp}><option value="">Choose a player…</option>{PLAYERS.map(p=><option key={p} value={p}>{p}</option>)}</select>}
-      {q.type==="team"&&<select value={bonus[q.id]||""} onChange={e=>onSave(q.id,e.target.value)} style={S.inp}><option value="">Choose a team…</option>{teams.map(t=><option key={t} value={t}>{FLAGS[t]} {t}</option>)}</select>}
-      {bonus[q.id]&&<div style={{fontSize:11,color:"#22c55e",marginTop:8,fontWeight:700}}>✓ Locked: {bonus[q.id]}</div>}
-    </div>))}
+    {[{id:"topscorer",q:"Who will win the Golden Boot?",type:"player"},{id:"mostgoals",q:"Which team scores most group stage goals?",type:"team"}].map(q=>(
+      <BonusQuestion key={q.id} q={q} saved={bonus[q.id]||""} onSave={onSave} teams={teams}/>
+    ))}
     <div style={{fontSize:15,fontWeight:800,marginBottom:12,marginTop:24}}>🗓 Pick Teams to Advance</div>
     <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>{rounds.map(r=><button key={r.id} onClick={()=>setAdvTab(r.id)} style={{background:advTab===r.id?`${G}15`:"#0a0a0a",border:advTab===r.id?`1px solid ${G}`:"1px solid #1a1a1a",color:advTab===r.id?G:"#6b7280",borderRadius:20,padding:"6px 14px",fontSize:11,fontWeight:700,cursor:"pointer"}}>{r.label}</button>)}</div>
     {rounds.filter(r=>r.id===advTab).map(round=>{
@@ -821,18 +861,26 @@ function resolveSlot(key,standings){
 }
 
 function assignBest3rd(r32Bracket, standings, allThirds){
-  // Build a map of which match needs which 3rd place pool
   const best8 = allThirds.slice(0,8);
   const used = new Set();
-  return r32Bracket.map(m => {
-    if(!m.awayKey.startsWith('3rd_')) return m;
+  // Sort slots by how restrictive they are (fewer eligible groups = assign first)
+  const slotsWithIdx = r32Bracket
+    .map((m,i) => ({m, i}))
+    .filter(({m}) => m.awayKey && m.awayKey.startsWith('3rd_'));
+  slotsWithIdx.sort((a,b) => {
+    const la = a.m.awayKey.replace('3rd_','').replace(/[0-9]/g,'').length;
+    const lb = b.m.awayKey.replace('3rd_','').replace(/[0-9]/g,'').length;
+    return la - lb; // assign most restrictive slots first
+  });
+  const result = [...r32Bracket];
+  slotsWithIdx.forEach(({m, i}) => {
     const suffix = m.awayKey.replace('3rd_','').replace(/[0-9]/g,'');
     const eligibleGroups = suffix.split('');
-    // Find best available 3rd place team from eligible groups not yet used
     const pick = best8.find(t => eligibleGroups.includes(t.group) && !used.has(t.team));
     if(pick) used.add(pick.team);
-    return {...m, away: pick?.team || `Best 3rd (${suffix})`};
+    result[i] = {...result[i], away: pick?.team || `Best 3rd (${suffix})`};
   });
+  return result;
 }
 
 function BracketTab({predictions,allFix,live}){
