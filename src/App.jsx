@@ -175,13 +175,13 @@ const PLAYERS = [
   "Kylian Mbappé","Ousmane Dembélé","Marcus Thuram","Bradley Barcola","Désiré Doué",
   "Rayan Cherki","Jean-Philippe Mateta","Michael Olise","Maghnes Akliouche",
   // England
-  "Harry Kane","Bukayo Saka","Phil Foden","Cole Palmer","Anthony Gordon","Dominic Solanke","Ollie Watkins",
+  "Harry Kane","Bukayo Saka","Anthony Gordon","Jude Bellingham","Ollie Watkins",
   // Spain
-  "Lamine Yamal","Nico Williams","Álvaro Morata","Mikel Oyarzabal","Ferran Torres","Ayoze Pérez",
+  "Lamine Yamal","Nico Williams","Yeremy Pino","Mikel Oyarzabal","Ferran Torres","Dani Olmo",
   // Portugal
   "Cristiano Ronaldo","Rafael Leão","Gonçalo Ramos","Diogo Jota","Bruno Fernandes",
   // Germany
-  "Leroy Sané","Serge Gnabry","Niclas Füllkrug","Florian Wirtz","Jamal Musiala","Thomas Müller",
+  "Leroy Sané","Serge Gnabry","Niclas Füllkrug","Florian Wirtz","Jamal Musiala",
   // Netherlands
   "Cody Gakpo","Memphis Depay","Wout Weghorst","Donyell Malen","Brian Brobbey",
   // Norway
@@ -189,7 +189,7 @@ const PLAYERS = [
   // Belgium
   "Romelu Lukaku","Jeremy Doku","Leandro Trossard","Dodi Lukebakio","Charles De Ketelaere",
   // Morocco
-  "Ayoub El Kaabi","Soufiane Rahimi","Brahim Díaz","Abde Ezzalzouli",
+  "Ayoub El Kaabi","Soufiane Rahimi","Brahim Díaz","Achraf Hakimi",
   // Senegal
   "Sadio Mané","Nicolas Jackson","Ismaïla Sarr","Iliman Ndiaye",
   // Mexico
@@ -199,17 +199,17 @@ const PLAYERS = [
   // Uruguay
   "Darwin Núñez","Facundo Pellistri","Federico Viñas",
   // Japan
-  "Kaoru Mitoma","Takumi Minamino","Ayase Ueda",
+  "Kaoru Mitoma","Daizen Maeda","Ayase Ueda",
   // South Korea
   "Heung-min Son","Hwang Hee-chan","Oh Hyeon-gyu",
   // Colombia
-  "Luis Díaz","Jhon Córdoba","Radamel Falcao",
+  "Luis Díaz","Jhon Córdoba","Luis Suarez",
   // Ecuador
-  "Enner Valencia","Jordy Caicedo",
+  "Enner Valencia","Moises Caicedo",
   // Egypt
-  "Omar Marmoush","Mostafa Mohamed",
+  "Omar Marmoush","Mohamed Salah",
   // Scotland
-  "Che Adams","Lyndon Dykes","Callum McGregor",
+  "Che Adams","Lyndon Dykes","Lawrence Shankland",
   // Croatia
   "Andrej Kramarić","Marko Livaja","Ivan Perišić",
 ].sort();
