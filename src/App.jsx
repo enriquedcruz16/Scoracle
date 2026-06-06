@@ -785,7 +785,7 @@ ${none.map(n=>`• ${n}`).join("
         }
         function copyReminder(){
           const incomplete=sorted.filter(p=>!getStatus(p).complete).map(p=>p.name);
-          const msg=`⚽ Scoracle reminder — bonus questions close at midnight June 11! Still waiting on: ${incomplete.join(", ")} to complete theirs. Get them in at scoracle.live 🏆`;
+          const msg="⚽ Scoracle reminder — bonus questions close at midnight June 11! Still waiting on: "+incomplete.join(", ")+" to complete theirs. Get them in at scoracle.live";
           navigator.clipboard.writeText(msg);
         }
         return(
