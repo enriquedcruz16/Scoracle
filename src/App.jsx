@@ -758,34 +758,22 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
           return{done,total:BONUS_KEYS.length,complete:done===BONUS_KEYS.length,partial:done>0&&done<BONUS_KEYS.length,none:done===0};
         }
         function copyMessage(){
-          const complete=sorted.filter(p=>getStatus(p).complete).map(p=>p.name);
-          const partial=sorted.filter(p=>getStatus(p).partial).map(p=>{const s=getStatus(p);return`${p.name} (${s.done}/8)`;});
-          const none=sorted.filter(p=>getStatus(p).none).map(p=>p.name);
-          let msg="⚽ *Scoracle — Bonus Questions Status*
-🔒 Deadline: Midnight, June 11
-
-";
-          if(complete.length)msg+=`✅ *Complete (${complete.length})*
-${complete.map(n=>`• ${n}`).join("
-")}
-
-`;
-          if(partial.length)msg+=`⚠️ *Partial (${partial.length})*
-${partial.map(n=>`• ${n}`).join("
-")}
-
-`;
-          if(none.length)msg+=`❌ *Not started (${none.length})*
-${none.map(n=>`• ${n}`).join("
-")}
-
-`;
-          msg+="Get your picks in before midnight! 👉 scoracle.live";
-          navigator.clipboard.writeText(msg);
+          var complete=sorted.filter(function(p){return getStatus(p).complete;}).map(function(p){return p.name;});
+          var partial=sorted.filter(function(p){return getStatus(p).partial;}).map(function(p){var s=getStatus(p);return p.name+" ("+s.done+"/8)";});
+          var none=sorted.filter(function(p){return getStatus(p).none;}).map(function(p){return p.name;});
+          var lines=[];
+          lines.push("Scoracle - Bonus Questions Status");
+          lines.push("Deadline: Midnight, June 11");
+          lines.push("");
+          if(complete.length){lines.push("Complete ("+complete.length+"):");complete.forEach(function(n){lines.push("- "+n);});lines.push("");}
+          if(partial.length){lines.push("Partial ("+partial.length+"):");partial.forEach(function(n){lines.push("- "+n);});lines.push("");}
+          if(none.length){lines.push("Not started ("+none.length+"):");none.forEach(function(n){lines.push("- "+n);});lines.push("");}
+          lines.push("Get picks in before midnight! scoracle.live");
+          navigator.clipboard.writeText(lines.join("\n"));
         }
         function copyReminder(){
           const incomplete=sorted.filter(p=>!getStatus(p).complete).map(p=>p.name);
-          const msg="⚽ Scoracle reminder — bonus questions close at midnight June 11! Still waiting on: "+incomplete.join(", ")+" to complete theirs. Get them in at scoracle.live";
+          const msg="Scoracle reminder - bonus questions close at midnight June 11! Still waiting on: "+incomplete.join(", ")+". Get picks in at scoracle.live";
           navigator.clipboard.writeText(msg);
         }
         return(
