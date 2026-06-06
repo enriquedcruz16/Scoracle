@@ -900,39 +900,69 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
               <button onClick={copyMessage} style={{flex:1,background:"#0f0f0f",border:"1px solid #1f1f1f",borderRadius:10,color:"#6b7280",fontSize:11,fontWeight:700,padding:"10px",cursor:"pointer",outline:"none"}}>📋 Copy Status</button>
               <button onClick={saveImage} style={{flex:1,background:"linear-gradient(90deg,#f59e0b,#f97316)",border:"none",borderRadius:10,color:"#000",fontSize:11,fontWeight:700,padding:"10px",cursor:"pointer",outline:"none"}}>🖼 Save Image</button>
             </div>
-            {/* Hidden image card for html2canvas */}
-            <div id="bonusStatusCard" style={{position:"fixed",left:"-9999px",top:0,width:380,background:"#0d0d0d",borderRadius:20,overflow:"hidden",fontFamily:"sans-serif"}}>
-              <div style={{background:"linear-gradient(135deg,#1a0f00,#0a0a0a)",padding:"20px",textAlign:"center",borderBottom:"1px solid #1f1f1f"}}>
-                <div style={{fontSize:32,marginBottom:6}}>⚽</div>
-                <div style={{fontSize:18,fontWeight:800,letterSpacing:3,color:"#f59e0b",marginBottom:4}}>SCORACLE</div>
-                <div style={{fontSize:11,color:"#6b7280"}}>Bonus Questions Status · Deadline Jun 11 00:00</div>
+            {/* Hidden image card for html2canvas - 2 column layout */}
+            <div id="bonusStatusCard" style={{position:"fixed",left:"-9999px",top:0,width:480,background:"#0d0d0d",borderRadius:20,overflow:"hidden",fontFamily:"sans-serif"}}>
+              <div style={{background:"linear-gradient(135deg,#1a0f00,#080808)",padding:"20px",textAlign:"center",borderBottom:"1px solid #1f1f1f"}}>
+                <div style={{fontSize:36,marginBottom:6}}>⚽</div>
+                <div style={{fontSize:20,fontWeight:800,letterSpacing:4,color:"#f59e0b",marginBottom:4}}>SCORACLE</div>
+                <div style={{fontSize:11,color:"#6b7280"}}>Bonus Questions Status · Deadline Midnight, Jun 11</div>
               </div>
               <div style={{padding:16}}>
-                <div style={{display:"flex",gap:6,marginBottom:14}}>
-                  {[{n:sorted.filter(p=>getStatus(p).complete).length,l:"Complete",c:"#22c55e"},{n:sorted.filter(p=>getStatus(p).partial).length,l:"Partial",c:"#f59e0b"},{n:sorted.filter(p=>getStatus(p).none).length,l:"Not started",c:"#ef4444"},{n:sorted.length,l:"Total",c:"#6b7280"}].map(function(s){return(
-                    <div key={s.l} style={{flex:1,background:"#111",borderRadius:10,padding:"8px 4px",textAlign:"center"}}>
-                      <div style={{fontSize:18,fontWeight:800,color:s.c}}>{s.n}</div>
+                {/* Summary strip */}
+                <div style={{display:"flex",gap:6,marginBottom:16}}>
+                  {[
+                    {n:sorted.filter(function(p){return getStatus(p).complete;}).length,l:"Complete",c:"#22c55e"},
+                    {n:sorted.filter(function(p){return getStatus(p).partial;}).length,l:"Partial",c:"#f59e0b"},
+                    {n:sorted.filter(function(p){return getStatus(p).none;}).length,l:"Not started",c:"#ef4444"},
+                    {n:sorted.length,l:"Total",c:"#6b7280"}
+                  ].map(function(s){return(
+                    <div key={s.l} style={{flex:1,background:"#111",borderRadius:10,padding:"10px 4px",textAlign:"center"}}>
+                      <div style={{fontSize:20,fontWeight:800,color:s.c}}>{s.n}</div>
                       <div style={{fontSize:9,color:"#6b7280",marginTop:2}}>{s.l}</div>
                     </div>
                   );})}
                 </div>
-                {sorted.map(function(p){
-                  const st=getStatus(p);
-                  const bg=st.complete?"rgba(34,197,94,0.06)":st.partial?"rgba(245,158,11,0.06)":"rgba(239,68,68,0.04)";
-                  const border=st.complete?"1px solid rgba(34,197,94,0.15)":st.partial?"1px solid rgba(245,158,11,0.15)":"1px solid rgba(239,68,68,0.12)";
-                  const icon=st.complete?"✅":st.partial?"⚠️":"❌";
-                  const badge=st.complete?"Complete":st.partial?(st.done+"/8 done"):"Not started";
-                  const badgeC=st.complete?"#22c55e":st.partial?"#f59e0b":"#ef4444";
-                  const badgeBg=st.complete?"rgba(34,197,94,0.15)":st.partial?"rgba(245,158,11,0.15)":"rgba(239,68,68,0.12)";
-                  return(
-                    <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,marginBottom:4,background:bg,border}}>
-                      <div style={{fontSize:13,width:20,textAlign:"center"}}>{icon}</div>
-                      <div style={{flex:1,fontSize:13,fontWeight:600,color:"#f9fafb"}}>{p.name}</div>
-                      <div style={{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:20,background:badgeBg,color:badgeC}}>{badge}</div>
+                {/* 2-column grid grouped by status */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:5}}>
+                  {/* Complete */}
+                  {sorted.filter(function(p){return getStatus(p).complete;}).length>0&&(
+                    <div style={{gridColumn:"1/-1",fontSize:10,fontWeight:800,color:"#22c55e",letterSpacing:1,padding:"6px 0 2px"}}>
+                      {"COMPLETE ("+sorted.filter(function(p){return getStatus(p).complete;}).length+")"}
                     </div>
-                  );
-                })}
-                <div style={{marginTop:12,paddingTop:12,borderTop:"1px solid #111",textAlign:"center",fontSize:10,color:"#374151"}}>scoracle.live · World Cup 2026 Prediction Game</div>
+                  )}
+                  {sorted.filter(function(p){return getStatus(p).complete;}).map(function(p){return(
+                    <div key={p.id} style={{display:"flex",alignItems:"center",padding:"5px 8px",background:"rgba(34,197,94,0.06)",border:"1px solid rgba(34,197,94,0.15)",borderRadius:8}}>
+                      <span style={{fontSize:11,color:"#f9fafb",fontWeight:600}}>{p.name}</span>
+                    </div>
+                  );})}
+                  {/* Partial */}
+                  {sorted.filter(function(p){return getStatus(p).partial;}).length>0&&(
+                    <div style={{gridColumn:"1/-1",fontSize:10,fontWeight:800,color:"#f59e0b",letterSpacing:1,padding:"10px 0 2px"}}>
+                      {"PARTIAL ("+sorted.filter(function(p){return getStatus(p).partial;}).length+")"}
+                    </div>
+                  )}
+                  {sorted.filter(function(p){return getStatus(p).partial;}).map(function(p){
+                    const st=getStatus(p);
+                    return(
+                      <div key={p.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"5px 8px",background:"rgba(245,158,11,0.06)",border:"1px solid rgba(245,158,11,0.15)",borderRadius:8}}>
+                        <span style={{fontSize:11,color:"#f9fafb",fontWeight:600}}>{p.name}</span>
+                        <span style={{fontSize:9,color:"#f59e0b",fontWeight:700}}>{st.done+"/8"}</span>
+                      </div>
+                    );
+                  })}
+                  {/* Not started */}
+                  {sorted.filter(function(p){return getStatus(p).none;}).length>0&&(
+                    <div style={{gridColumn:"1/-1",fontSize:10,fontWeight:800,color:"#ef4444",letterSpacing:1,padding:"10px 0 2px"}}>
+                      {"NOT STARTED ("+sorted.filter(function(p){return getStatus(p).none;}).length+")"}
+                    </div>
+                  )}
+                  {sorted.filter(function(p){return getStatus(p).none;}).map(function(p){return(
+                    <div key={p.id} style={{display:"flex",alignItems:"center",padding:"5px 8px",background:"rgba(239,68,68,0.04)",border:"1px solid rgba(239,68,68,0.12)",borderRadius:8}}>
+                      <span style={{fontSize:11,color:"#6b7280",fontWeight:600}}>{p.name}</span>
+                    </div>
+                  );})}
+                </div>
+                <div style={{marginTop:14,paddingTop:12,borderTop:"1px solid #111",textAlign:"center",fontSize:10,color:"#374151"}}>scoracle.live · World Cup 2026 Prediction Game</div>
               </div>
             </div>
           </div>
