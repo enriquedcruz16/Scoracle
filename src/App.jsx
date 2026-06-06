@@ -876,6 +876,18 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
           lines.push("Get picks in before midnight! scoracle.live");
           navigator.clipboard.writeText(lines.join("\n"));
         }
+        function saveImage(){
+          var card=document.getElementById("bonusStatusCard");
+          if(!card||typeof html2canvas==="undefined"){alert("Image generation not available");return;}
+          card.style.left="0";card.style.top="0";card.style.position="absolute";card.style.zIndex="-1";
+          html2canvas(card,{backgroundColor:"#0d0d0d",scale:2,useCORS:true}).then(function(canvas){
+            card.style.left="-9999px";card.style.position="fixed";card.style.zIndex="auto";
+            var link=document.createElement("a");
+            link.download="scoracle-bonus-status.png";
+            link.href=canvas.toDataURL("image/png");
+            link.click();
+          }).catch(function(){alert("Could not generate image — try copying the status instead.");});
+        }
         function copyReminder(){
           const incomplete=sorted.filter(p=>!getStatus(p).complete).map(p=>p.name);
           const msg="Scoracle reminder - bonus questions close at midnight June 11! Still waiting on: "+incomplete.join(", ")+". Get picks in at scoracle.live";
@@ -884,8 +896,44 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
         return(
           <div style={{marginBottom:16}}>
             <div style={{display:"flex",gap:8,marginBottom:8}}>
-              <button onClick={copyReminder} style={{flex:1,background:"#0f0f0f",border:"1px solid #1f1f1f",borderRadius:10,color:G,fontSize:11,fontWeight:700,padding:"10px",cursor:"pointer",outline:"none"}}>📋 Copy Group Reminder</button>
-              <button onClick={copyMessage} style={{flex:1,background:"#0f0f0f",border:"1px solid #1f1f1f",borderRadius:10,color:"#6b7280",fontSize:11,fontWeight:700,padding:"10px",cursor:"pointer",outline:"none"}}>📋 Copy Full Status</button>
+              <button onClick={copyReminder} style={{flex:1,background:"#0f0f0f",border:"1px solid #1f1f1f",borderRadius:10,color:G,fontSize:11,fontWeight:700,padding:"10px",cursor:"pointer",outline:"none"}}>📋 Copy Reminder</button>
+              <button onClick={copyMessage} style={{flex:1,background:"#0f0f0f",border:"1px solid #1f1f1f",borderRadius:10,color:"#6b7280",fontSize:11,fontWeight:700,padding:"10px",cursor:"pointer",outline:"none"}}>📋 Copy Status</button>
+              <button onClick={saveImage} style={{flex:1,background:"linear-gradient(90deg,#f59e0b,#f97316)",border:"none",borderRadius:10,color:"#000",fontSize:11,fontWeight:700,padding:"10px",cursor:"pointer",outline:"none"}}>🖼 Save Image</button>
+            </div>
+            {/* Hidden image card for html2canvas */}
+            <div id="bonusStatusCard" style={{position:"fixed",left:"-9999px",top:0,width:380,background:"#0d0d0d",borderRadius:20,overflow:"hidden",fontFamily:"sans-serif"}}>
+              <div style={{background:"linear-gradient(135deg,#1a0f00,#0a0a0a)",padding:"20px",textAlign:"center",borderBottom:"1px solid #1f1f1f"}}>
+                <div style={{fontSize:32,marginBottom:6}}>⚽</div>
+                <div style={{fontSize:18,fontWeight:800,letterSpacing:3,color:"#f59e0b",marginBottom:4}}>SCORACLE</div>
+                <div style={{fontSize:11,color:"#6b7280"}}>Bonus Questions Status · Deadline Jun 11 00:00</div>
+              </div>
+              <div style={{padding:16}}>
+                <div style={{display:"flex",gap:6,marginBottom:14}}>
+                  {[{n:sorted.filter(p=>getStatus(p).complete).length,l:"Complete",c:"#22c55e"},{n:sorted.filter(p=>getStatus(p).partial).length,l:"Partial",c:"#f59e0b"},{n:sorted.filter(p=>getStatus(p).none).length,l:"Not started",c:"#ef4444"},{n:sorted.length,l:"Total",c:"#6b7280"}].map(function(s){return(
+                    <div key={s.l} style={{flex:1,background:"#111",borderRadius:10,padding:"8px 4px",textAlign:"center"}}>
+                      <div style={{fontSize:18,fontWeight:800,color:s.c}}>{s.n}</div>
+                      <div style={{fontSize:9,color:"#6b7280",marginTop:2}}>{s.l}</div>
+                    </div>
+                  );})}
+                </div>
+                {sorted.map(function(p){
+                  const st=getStatus(p);
+                  const bg=st.complete?"rgba(34,197,94,0.06)":st.partial?"rgba(245,158,11,0.06)":"rgba(239,68,68,0.04)";
+                  const border=st.complete?"1px solid rgba(34,197,94,0.15)":st.partial?"1px solid rgba(245,158,11,0.15)":"1px solid rgba(239,68,68,0.12)";
+                  const icon=st.complete?"✅":st.partial?"⚠️":"❌";
+                  const badge=st.complete?"Complete":st.partial?(st.done+"/8 done"):"Not started";
+                  const badgeC=st.complete?"#22c55e":st.partial?"#f59e0b":"#ef4444";
+                  const badgeBg=st.complete?"rgba(34,197,94,0.15)":st.partial?"rgba(245,158,11,0.15)":"rgba(239,68,68,0.12)";
+                  return(
+                    <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,marginBottom:4,background:bg,border}}>
+                      <div style={{fontSize:13,width:20,textAlign:"center"}}>{icon}</div>
+                      <div style={{flex:1,fontSize:13,fontWeight:600,color:"#f9fafb"}}>{p.name}</div>
+                      <div style={{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:20,background:badgeBg,color:badgeC}}>{badge}</div>
+                    </div>
+                  );
+                })}
+                <div style={{marginTop:12,paddingTop:12,borderTop:"1px solid #111",textAlign:"center",fontSize:10,color:"#374151"}}>scoracle.live · World Cup 2026 Prediction Game</div>
+              </div>
             </div>
           </div>
         );
