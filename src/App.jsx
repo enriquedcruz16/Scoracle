@@ -189,7 +189,7 @@ const PLAYERS = [
   "Serge Gnabry","Soufiane Rahimi","Takumi Minamino","Thomas Müller","Vinicius Jr",
   "Wout Weghorst","Florian Wirtz","Jamal Musiala","Patrik Schick","Enner Valencia",
 ].sort();
-const NAV = [{id:"predict",icon:"🎯",label:"Predict"},{id:"standings",icon:"📋",label:"Standings"},{id:"leaderboard",icon:"🏆",label:"Rankings"},{id:"bonus",icon:"⭐",label:"Bonus"},{id:"stats",icon:"📊",label:"Stats"}];
+const NAV = [{id:"predict",icon:"🎯",label:"Predict"},{id:"standings",icon:"📋",label:"Standings"},{id:"leaderboard",icon:"🏆",label:"Leaderboard"},{id:"bonus",icon:"⭐",label:"Bonus"},{id:"stats",icon:"📊",label:"Stats"}];
 const MENU_EXTRA = [{id:"bracket",icon:"🗂️",label:"My Bracket"},{id:"rules",icon:"📖",label:"Rules"}];
 
 function pts(pred,res){if(!pred||!res)return null;const{homeGoals:ph,awayGoals:pa}=pred,{homeGoals:rh,awayGoals:ra}=res;if([ph,pa,rh,ra].some(v=>v==null))return null;if(+ph===+rh&&+pa===+ra)return PTS_EXACT;const po=ph>pa?"H":ph<pa?"A":"D",ro=rh>ra?"H":rh<ra?"A":"D";return po===ro?PTS_RESULT:0;}
@@ -464,53 +464,47 @@ function StandTab({allFix,live,predictions}){
 
 function RankTab({allFix,live,allPreds,profiles,currentUser}){
   const medals=["🥇","🥈","🥉"];
+  const[view,setView]=useState("leaderboard"); // leaderboard | breakdown
+  const[filter,setFilter]=useState("live"); // live | completed | upcoming
+
   const userTotals=profiles.map(pr=>{
     const myP=allPreds.filter(p=>p.user_id===pr.id);let tp=0,exact=0,correct=0;
     allFix.forEach(fix=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);if(!r)return;const p=myP.find(x=>x.fixture_id===fix.id);if(!p)return;const sc=pts({homeGoals:p.home_goals,awayGoals:p.away_goals},r);if(sc===PTS_EXACT){tp+=sc;exact++;}else if(sc===PTS_RESULT){tp+=sc;correct++;}});
     return{id:pr.id,name:pr.name,pts:tp,exact,correct,preds:myP};
   }).sort((a,b)=>b.pts-a.pts||b.exact-a.exact||b.correct-a.correct||a.name.localeCompare(b.name));
 
-  const lockedFix=allFix.filter(fix=>locked(fix.kickoffISO)||fix.isLive||fix.isDone);
-  const upcomingFix=allFix.filter(fix=>!locked(fix.kickoffISO)&&!fix.isLive&&!fix.isDone);
+  // Last 5 form for each user
+  const last5Fix=allFix.filter(f=>(f.isLive||f.isDone)&&(live[f.id]!=null||(f.isDone&&f.homeGoals!=null))).slice(-5);
+  function getForm(u){
+    return last5Fix.map(fix=>{
+      const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);
+      const pred=u.preds.find(p=>p.fixture_id===fix.id);
+      if(!pred)return"n";
+      const sc=pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals},r);
+      return sc===PTS_EXACT?"p":sc===PTS_RESULT?"r":"w";
+    });
+  }
 
-  return(<div style={{padding:16}}>
-    <div style={S.pageTitle}>Rankings</div>
-    {userTotals.length>=1&&(
-      <div style={{display:"flex",justifyContent:"center",alignItems:"flex-end",gap:6,marginBottom:20,padding:"12px 0"}}>
-        {[userTotals[1],userTotals[0],userTotals[2]].filter(Boolean).map((p,i)=>(
-          <div key={p.id} style={{display:"flex",flexDirection:"column",alignItems:"center",flex:1}}>
-            <div style={{fontSize:28,marginBottom:4}}>👤</div>
-            <div style={{fontSize:11,fontWeight:700,textAlign:"center",marginBottom:2,color:"#d1d5db"}}>{p.name}</div>
-            <div style={{fontSize:15,fontWeight:800,color:G,marginBottom:6}}>{p.pts}<span style={{fontSize:10,color:"#6b7280"}}> pts</span></div>
-            <div style={{width:"100%",height:["82px","104px","68px"][i],background:"#0f0f0f",border:"1px solid #1a1a1a",borderRadius:"8px 8px 0 0",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:22}}>{medals[[1,0,2][i]]}</span></div>
-          </div>
-        ))}
-      </div>
-    )}
-    <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:28}}>
-      {userTotals.map((p,i)=>(<div key={p.id} style={{display:"flex",alignItems:"center",gap:12,background:p.id===currentUser.id?`${G}0a`:"#080808",border:p.id===currentUser.id?`1px solid ${G}`:"1px solid #141414",borderRadius:12,padding:"12px 14px"}}>
-        <div style={{fontSize:16,width:28,textAlign:"center",fontWeight:700}}>{i<3?medals[i]:`#${i+1}`}</div>
-        <div style={{fontSize:22}}>👤</div>
-        <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14}}>{p.name}{p.id===currentUser.id&&" (You)"}</div><div style={{fontSize:11,color:"#6b7280",marginTop:2}}>{p.exact} perfect · {p.correct} result</div></div>
-        <div style={{fontSize:20,fontWeight:800,color:G}}>{p.pts}<span style={{fontSize:11,color:"#6b7280"}}> pts</span></div>
-      </div>))}
-      {userTotals.length===0&&<div style={{textAlign:"center",color:"#374151",padding:40,fontSize:14}}>No results yet — check back after June 11! ⚽</div>}
-    </div>
+  const liveFix=allFix.filter(f=>f.isLive);
+  const completedFix=allFix.filter(f=>f.isDone&&!f.isLive);
+  const upcomingFix=allFix.filter(f=>!f.isLive&&!f.isDone);
 
-    <div style={{fontSize:18,fontWeight:800,marginBottom:8,letterSpacing:0.3}}>Match Breakdown</div>
-    <div style={{fontSize:12,color:"#6b7280",marginBottom:16}}>Predictions revealed after each deadline · 🟢 perfect · 🟡 result · 🔴 wrong</div>
+  const filteredFix=filter==="live"?liveFix:filter==="completed"?completedFix:upcomingFix;
 
-    {lockedFix.length===0&&(
-      <div style={{background:"#080808",border:"1px solid #141414",borderRadius:16,padding:32,textAlign:"center",marginBottom:16}}>
-        <div style={{fontSize:32,marginBottom:8}}>🔒</div>
-        <div style={{fontWeight:700,fontSize:15,marginBottom:6}}>Predictions hidden until kick-off</div>
-        <div style={{fontSize:12,color:"#6b7280",lineHeight:1.6}}>Revealed 15 mins before each match.<br/><span style={{color:G,fontWeight:700}}>First match: Mexico vs South Africa · Jun 11</span></div>
-      </div>
-    )}
+  // Auto switch to completed if no live matches
+  useState(()=>{if(liveFix.length===0)setFilter("completed");},[]);
 
-    {lockedFix.map(fix=>{
-      const result=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);
-      return(<div key={fix.id} style={{background:"#080808",border:"1px solid #141414",borderRadius:16,padding:16,marginBottom:12}}>
+  function FormDot({type}){
+    const cfg={p:{bg:"rgba(34,197,94,0.2)",border:"rgba(34,197,94,0.5)",c:"#22c55e",l:"P"},r:{bg:"rgba(245,158,11,0.2)",border:"rgba(245,158,11,0.5)",c:"#f59e0b",l:"R"},w:{bg:"rgba(239,68,68,0.15)",border:"rgba(239,68,68,0.4)",c:"#ef4444",l:"W"},n:{bg:"#111",border:"#222",c:"#374151",l:"–"}};
+    const s=cfg[type]||cfg.n;
+    return<div style={{width:14,height:14,borderRadius:"50%",background:s.bg,border:`1px solid ${s.border}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:7,fontWeight:800,color:s.c,flexShrink:0}}>{s.l}</div>;
+  }
+
+  function MatchCard({fix}){
+    const result=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);
+    const isUpcoming=!fix.isLive&&!fix.isDone;
+    return(
+      <div style={{background:"#080808",border:`1px solid ${fix.isLive?"rgba(239,68,68,0.3)":"#141414"}`,borderRadius:16,padding:16,marginBottom:12,boxShadow:fix.isLive?"0 0 16px rgba(239,68,68,0.06)":"none"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
           <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?fix.group:`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {fix.time}</span></div>
           <SPill status={fix.status} elapsed={fix.elapsed}/>
@@ -518,151 +512,145 @@ function RankTab({allFix,live,allPreds,profiles,currentUser}){
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
           <div style={{flex:1,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:20}}>{FLAGS[fix.home]||"🏳️"}</span><span style={{fontSize:13,fontWeight:600}}>{fix.home}</span></div>
           <div style={{textAlign:"center",minWidth:80}}>
-            {result!=null?<span style={{fontSize:26,fontWeight:800,display:"block",color:fix.isLive?"#ef4444":"#f59e0b"}}>{result.homeGoals} – {result.awayGoals}</span>:<span style={{fontSize:16,fontWeight:700,color:"#374151",display:"block"}}>vs</span>}
-            {fix.isLive&&<div style={{fontSize:10,color:"#ef4444",fontWeight:700,textAlign:"center"}}>{fix.elapsed}'</div>}
+            {result!=null?<span style={{fontSize:26,fontWeight:800,display:"block",color:fix.isLive?"#ef4444":G}}>{result.homeGoals} – {result.awayGoals}</span>:<span style={{fontSize:16,fontWeight:700,color:"#374151",display:"block"}}>vs</span>}
+            {fix.isLive&&<div style={{fontSize:10,color:"#ef4444",fontWeight:700}}>{fix.elapsed}'</div>}
           </div>
           <div style={{flex:1,display:"flex",alignItems:"center",gap:8,justifyContent:"flex-end"}}><span style={{fontSize:13,fontWeight:600,textAlign:"right"}}>{fix.away}</span><span style={{fontSize:20}}>{FLAGS[fix.away]||"🏳️"}</span></div>
         </div>
-        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-          {userTotals.map(u=>{
-            const pred=u.preds.find(p=>p.fixture_id===fix.id);const sc=pred&&result?pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals},result):null;
-            const bg=sc===PTS_EXACT?"#22c55e18":sc===PTS_RESULT?"#f59e0b18":sc===0?"#ef444418":"#111";
-            const border=`1px solid ${sc===PTS_EXACT?"#22c55e44":sc===PTS_RESULT?"#f59e0b44":sc===0?"#ef444444":"#1f1f1f"}`;
-            const color=sc===PTS_EXACT?"#22c55e":sc===PTS_RESULT?"#f59e0b":sc===0?"#ef4444":"#9ca3af";
-            return(<div key={u.id} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,minWidth:64,...(u.id===currentUser.id?{filter:"drop-shadow(0 0 4px #f59e0b44)"}:{})}}>
-              <div style={{fontSize:9,color:u.id===currentUser.id?G:"#6b7280",fontWeight:u.id===currentUser.id?800:600,textAlign:"center",maxWidth:64,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.name.split(" ")[0]}</div>
-              {pred?<div style={{fontSize:13,fontWeight:800,padding:"5px 8px",borderRadius:8,textAlign:"center",minWidth:44,background:bg,border,color}}>{pred.home_goals}–{pred.away_goals}{sc!==null&&<span style={{fontSize:9,display:"block",fontWeight:700}}>+{sc}</span>}</div>:<div style={{fontSize:11,padding:"5px 8px",borderRadius:8,textAlign:"center",minWidth:44,color:"#374151",border:"1px solid #1a1a1a"}}>–</div>}
-            </div>);
-          })}
-        </div>
-        {/* Stats bar */}
-        {result!=null&&(()=>{
-          const total=userTotals.length;
-          const ex=userTotals.filter(u=>{const pred=u.preds.find(p=>p.fixture_id===fix.id);return pred&&pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals},result)===PTS_EXACT;}).length;
-          const res=userTotals.filter(u=>{const pred=u.preds.find(p=>p.fixture_id===fix.id);return pred&&pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals},result)===PTS_RESULT;}).length;
-          const wrong=userTotals.filter(u=>{const pred=u.preds.find(p=>p.fixture_id===fix.id);return pred&&pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals},result)===0;}).length;
-          const none=userTotals.filter(u=>!u.preds.find(p=>p.fixture_id===fix.id)).length;
-          return(
-            <div style={{display:"flex",gap:6,marginTop:10,paddingTop:10,borderTop:"1px solid #111"}}>
-              {[{n:ex,l:"Perfect",c:"#22c55e"},{n:res,l:"Result",c:"#f59e0b"},{n:wrong,l:"Wrong",c:"#ef4444"},{n:none,l:"No pick",c:"#374151"}].map(s=>(
-                <div key={s.l} style={{flex:1,textAlign:"center",background:"#0f0f0f",borderRadius:8,padding:"6px 4px"}}>
-                  <div style={{fontSize:16,fontWeight:800,color:s.c}}>{s.n}</div>
-                  <div style={{fontSize:9,color:"#6b7280",marginTop:1}}>{s.l}</div>
+        {isUpcoming?(
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"#0a0a0a",borderRadius:10,border:"1px dashed #1f1f1f",flexDirection:"column",gap:4}}>
+            <span style={{fontSize:20}}>🔒</span>
+            <div style={{fontSize:11,color:"#374151",fontWeight:600}}>Predictions hidden until match locks</div>
+          </div>
+        ):(
+          <>
+            {/* Stats bar first */}
+            {result!=null&&(()=>{
+              const ex=userTotals.filter(u=>{const p=u.preds.find(x=>x.fixture_id===fix.id);return p&&pts({homeGoals:p.home_goals,awayGoals:p.away_goals},result)===PTS_EXACT;}).length;
+              const res=userTotals.filter(u=>{const p=u.preds.find(x=>x.fixture_id===fix.id);return p&&pts({homeGoals:p.home_goals,awayGoals:p.away_goals},result)===PTS_RESULT;}).length;
+              const wrong=userTotals.filter(u=>{const p=u.preds.find(x=>x.fixture_id===fix.id);return p&&pts({homeGoals:p.home_goals,awayGoals:p.away_goals},result)===0;}).length;
+              const none=userTotals.filter(u=>!u.preds.find(x=>x.fixture_id===fix.id)).length;
+              return(
+                <div style={{display:"flex",gap:6,marginBottom:12}}>
+                  {[{n:ex,l:"Perfect",c:"#22c55e"},{n:res,l:"Result",c:"#f59e0b"},{n:wrong,l:"Wrong",c:"#ef4444"},{n:none,l:"No pick",c:"#374151"}].map(s=>(
+                    <div key={s.l} style={{flex:1,textAlign:"center",background:"#0f0f0f",borderRadius:8,padding:"5px 4px"}}>
+                      <div style={{fontSize:14,fontWeight:800,color:s.c}}>{s.n}</div>
+                      <div style={{fontSize:9,color:"#6b7280",marginTop:1}}>{s.l}</div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              );
+            })()}
+            {/* 6-per-row grid */}
+            <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+              {userTotals.map(u=>{
+                const pred=u.preds.find(p=>p.fixture_id===fix.id);
+                const sc=pred&&result?pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals},result):null;
+                const bg=sc===PTS_EXACT?"rgba(34,197,94,0.1)":sc===PTS_RESULT?"rgba(245,158,11,0.1)":sc===0?"rgba(239,68,68,0.1)":"#111";
+                const border=`1px solid ${sc===PTS_EXACT?"rgba(34,197,94,0.3)":sc===PTS_RESULT?"rgba(245,158,11,0.3)":sc===0?"rgba(239,68,68,0.3)":"#1a1a1a"}`;
+                const color=sc===PTS_EXACT?"#22c55e":sc===PTS_RESULT?"#f59e0b":sc===0?"#ef4444":"#374151";
+                return(
+                  <div key={u.id} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,width:"calc(16.666% - 4px)"}}>
+                    <div style={{fontSize:7,color:u.id===currentUser.id?G:"#6b7280",fontWeight:u.id===currentUser.id?800:600,textAlign:"center",width:"100%",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.name.split(" ")[0]}</div>
+                    <div style={{fontSize:9,fontWeight:800,padding:"3px 2px",borderRadius:5,textAlign:"center",width:"100%",background:bg,border,color}}>
+                      {pred?`${pred.home_goals}–${pred.away_goals}`:"–"}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {fix.isLive&&<div style={{fontSize:10,color:"#6b7280",textAlign:"center",marginTop:8}}>⚡ Updates every 30s</div>}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  return(<div style={{padding:16}}>
+    <div style={S.pageTitle}>Leaderboard</div>
+
+    {/* Main tab switcher */}
+    <div style={{display:"flex",background:"#0a0a0a",border:"1px solid #1a1a1a",borderRadius:12,padding:4,gap:4,marginBottom:16}}>
+      {[{id:"leaderboard",label:"🏆 Leaderboard"},{id:"breakdown",label:"⚽ Match Breakdown"}].map(t=>(
+        <button key={t.id} onClick={()=>setView(t.id)} style={{flex:1,textAlign:"center",padding:"9px",borderRadius:9,fontSize:13,fontWeight:700,cursor:"pointer",color:view===t.id?G:"#6b7280",border:"none",background:view===t.id?"#1a1a1a":"none",outline:"none",transition:"all 0.2s"}}>{t.label}</button>
+      ))}
+    </div>
+
+    {/* ── LEADERBOARD VIEW ── */}
+    {view==="leaderboard"&&<>
+      {userTotals.length>=1&&(
+        <div style={{display:"flex",justifyContent:"center",alignItems:"flex-end",gap:6,marginBottom:20,padding:"12px 0"}}>
+          {[userTotals[1],userTotals[0],userTotals[2]].filter(Boolean).map((p,i)=>(
+            <div key={p.id} style={{display:"flex",flexDirection:"column",alignItems:"center",flex:1}}>
+              <div style={{fontSize:22,marginBottom:4}}>👤</div>
+              <div style={{fontSize:11,fontWeight:700,textAlign:"center",marginBottom:2,color:"#d1d5db"}}>{p.name}</div>
+              <div style={{fontSize:14,fontWeight:800,color:G,marginBottom:6}}>{p.pts}<span style={{fontSize:10,color:"#6b7280"}}> pts</span></div>
+              <div style={{width:"100%",height:["82px","104px","68px"][i],background:"#0f0f0f",border:"1px solid #1a1a1a",borderRadius:"8px 8px 0 0",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:20}}>{medals[[1,0,2][i]]}</span></div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Form guide legend */}
+      {last5Fix.length>0&&(
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"7px 12px",background:"#080808",border:"1px solid #141414",borderRadius:10,flexWrap:"wrap"}}>
+          <div style={{fontSize:10,color:"#6b7280",fontWeight:700}}>Last 5:</div>
+          {[{t:"p",l:"Perfect",c:"#22c55e"},{t:"r",l:"Result",c:"#f59e0b"},{t:"w",l:"Wrong",c:"#ef4444"},{t:"n",l:"No pick",c:"#374151"}].map(({t,l,c})=>(
+            <div key={t} style={{display:"flex",alignItems:"center",gap:3}}><FormDot type={t}/><span style={{fontSize:10,color:"#6b7280"}}>{l}</span></div>
+          ))}
+        </div>
+      )}
+
+      {/* Leaderboard rows */}
+      <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:28}}>
+        {userTotals.map((p,i)=>{
+          const form=getForm(p);
+          return(
+            <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,background:p.id===currentUser.id?`${G}0a`:"#080808",border:p.id===currentUser.id?`1px solid ${G}`:"1px solid #141414",borderRadius:12,padding:"10px 14px"}}>
+              <div style={{fontSize:14,width:26,textAlign:"center",fontWeight:700,color:i>=3?"#6b7280":"inherit"}}>{i<3?medals[i]:`#${i+1}`}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontWeight:700,fontSize:13}}>{p.name}{p.id===currentUser.id&&" (You)"}</div>
+                <div style={{fontSize:10,color:"#6b7280",marginTop:1}}>{p.exact} perfect · {p.correct} result</div>
+                {form.length>0&&<div style={{display:"flex",gap:3,marginTop:4}}>{form.map((f,fi)=><FormDot key={fi} type={f}/>)}</div>}
+              </div>
+              <div style={{fontSize:18,fontWeight:800,color:G,flexShrink:0}}>{p.pts}<span style={{fontSize:10,color:"#6b7280"}}> pts</span></div>
             </div>
           );
-        })()}
-      </div>);
-    })}
+        })}
+        {userTotals.length===0&&<div style={{textAlign:"center",color:"#374151",padding:40,fontSize:14}}>No results yet — check back after June 11! ⚽</div>}
+      </div>
+    </>}
 
-    {upcomingFix.length>0&&<>
-      <div style={{fontSize:16,fontWeight:800,marginTop:24,marginBottom:8}}>Upcoming Matches</div>
-      <div style={{fontSize:12,color:"#6b7280",marginBottom:12}}>Predictions hidden until 15 mins before kick-off</div>
-      {upcomingFix.slice(0,6).map(fix=>(<div key={fix.id} style={{background:"#080808",border:"1px solid #141414",borderRadius:16,padding:16,marginBottom:12,opacity:0.55}}>
-        <div style={{marginBottom:10}}><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?fix.group:`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {fix.time}</span></div>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <div style={{flex:1,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18}}>{FLAGS[fix.home]||"🏳️"}</span><span style={{fontSize:13,fontWeight:600}}>{fix.home}</span></div>
-          <div style={{textAlign:"center",minWidth:60}}><span style={{fontSize:14,fontWeight:700,color:"#374151"}}>vs</span></div>
-          <div style={{flex:1,display:"flex",alignItems:"center",gap:8,justifyContent:"flex-end"}}><span style={{fontSize:13,fontWeight:600,textAlign:"right"}}>{fix.away}</span><span style={{fontSize:18}}>{FLAGS[fix.away]||"🏳️"}</span></div>
+    {/* ── MATCH BREAKDOWN VIEW ── */}
+    {view==="breakdown"&&<>
+      {/* Filter pills */}
+      <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
+        {[
+          {id:"live",label:`🔴 Live`,count:liveFix.length,onColor:"#ef4444",onBg:"#ef4444"},
+          {id:"completed",label:`✅ Completed`,count:completedFix.length,onColor:"#fff",onBg:"#1f2937"},
+          {id:"upcoming",label:`🕐 Upcoming`,count:upcomingFix.length,onColor:G,onBg:`${G}18`},
+        ].map(p=>(
+          <button key={p.id} onClick={()=>setFilter(p.id)}
+            style={{padding:"7px 14px",borderRadius:20,fontSize:12,fontWeight:700,cursor:"pointer",border:filter===p.id?"none":`1px solid #1f1f1f`,background:filter===p.id?p.onBg:"#0f0f0f",color:filter===p.id?p.onColor:"#6b7280",outline:"none",transition:"all 0.2s"}}>
+            {p.label} <span style={{background:"rgba(255,255,255,0.15)",borderRadius:20,padding:"1px 6px",fontSize:10,marginLeft:2}}>{p.count}</span>
+          </button>
+        ))}
+      </div>
+
+      <div style={{fontSize:12,color:"#6b7280",marginBottom:14}}>🟢 perfect · 🟡 result · 🔴 wrong{filter==="live"?" · Based on current score":""}</div>
+
+      {filteredFix.length===0&&(
+        <div style={{background:"#080808",border:"1px solid #141414",borderRadius:16,padding:32,textAlign:"center"}}>
+          <div style={{fontSize:32,marginBottom:8}}>{filter==="live"?"🔴":filter==="completed"?"✅":"🕐"}</div>
+          <div style={{fontWeight:700,fontSize:15,marginBottom:6}}>{filter==="live"?"No live matches right now":filter==="completed"?"No completed matches yet":"No upcoming matches"}</div>
         </div>
-        <div style={{textAlign:"center",fontSize:11,color:"#374151",marginTop:10}}>🔒 Predictions hidden until deadline</div>
-      </div>))}
+      )}
+
+      {filteredFix.map(fix=><MatchCard key={fix.id} fix={fix}/>)}
     </>}
   </div>);
 }
 
-function AdvRound({round,bonus,onSave,teams,bonusLocked}){
-  const key=`adv_${round.id}`;
-  const saved=bonus[key]?JSON.parse(bonus[key]):[];
-  const[draft,setDraft]=useState(saved);
-  const isDirty=JSON.stringify([...draft].sort())!==JSON.stringify([...saved].sort());
-  function toggle(t){if(bonusLocked)return;setDraft(c=>c.includes(t)?c.filter(x=>x!==t):c.length<round.count?[...c,t]:c);}
-  return(<div>
-    <div style={{fontSize:12,color:"#6b7280",marginBottom:10}}>{round.desc}</div>
-    <div style={{height:3,background:"#1a1a1a",borderRadius:2,marginBottom:6}}>
-      <div style={{height:"100%",background:bonusLocked?"linear-gradient(90deg,#374151,#4b5563)":`linear-gradient(90deg,#f59e0b,#22c55e)`,width:`${(draft.length/round.count)*100}%`,borderRadius:2,transition:"width 0.4s"}}/>
-    </div>
-    <div style={{fontSize:11,color:bonusLocked?"#4b5563":"#6b7280",marginBottom:12,textAlign:"right"}}>{draft.length}/{round.count} selected</div>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(88px,1fr))",gap:8,marginBottom:16}}>
-      {teams.map(t=>(
-        <button key={t} onClick={()=>toggle(t)}
-          style={{background:draft.includes(t)?"rgba(245,158,11,0.12)":"#0f0f0f",border:draft.includes(t)?"1px solid #f59e0b":"1px solid #1f1f1f",borderRadius:10,color:draft.includes(t)?"#f59e0b":"#9ca3af",padding:"10px 6px",cursor:bonusLocked?"default":"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5,opacity:(!draft.includes(t)&&draft.length>=round.count)||bonusLocked?0.4:1,transition:"all 0.15s",outline:"none"}}>
-          <span style={{fontSize:18}}>{FLAGS[t]||"🏳️"}</span>
-          <span style={{fontSize:10,fontWeight:600,textAlign:"center",lineHeight:1.3}}>{t}</span>
-        </button>
-      ))}
-    </div>
-    <div style={{display:"flex",alignItems:"center",gap:10,paddingTop:12,borderTop:"1px solid #111"}}>
-      <div style={{flex:1,fontSize:11,fontWeight:isDirty||saved.length>0?700:400,color:bonusLocked?"#4b5563":isDirty?"#f59e0b":saved.length>0?"#22c55e":"#374151"}}>
-        {bonusLocked?"Locked · Jun 11 2026":isDirty?"⚠ Unsaved changes":saved.length>0?"✓ All picks saved":"No picks yet"}
-      </div>
-      <button onClick={()=>onSave(key,JSON.stringify(draft))} disabled={bonusLocked||!isDirty}
-        style={{background:bonusLocked?"#0f0f0f":!isDirty&&saved.length>0?"linear-gradient(90deg,#22c55e,#16a34a)":isDirty?"linear-gradient(90deg,#f59e0b,#f97316)":"#0f0f0f",border:isDirty||(!isDirty&&saved.length>0)?"none":"1px solid #1f1f1f",borderRadius:10,color:bonusLocked?"#374151":!isDirty&&saved.length>0?"#fff":isDirty?"#000":"#374151",fontWeight:800,fontSize:12,padding:"10px 18px",cursor:bonusLocked||!isDirty?"default":"pointer",whiteSpace:"nowrap",outline:"none",transition:"all 0.2s"}}>
-        {bonusLocked?"🔒 Locked":!isDirty&&saved.length>0?"✓ Saved":"Save Picks →"}
-      </button>
-    </div>
-  </div>);
-}
-
-function BonusQuestion({q, saved, onSave, teams}){
-  const [draft, setDraft] = useState(saved);
-  const isDirty = draft && draft !== saved;
-  // sync if external save changes
-  useState(()=>{ setDraft(saved); },[saved]);
-  return(
-    <div style={{background:"#080808",border:`1px solid ${saved?"#22c55e33":"#141414"}`,borderRadius:14,padding:16,marginBottom:12,transition:"border-color 0.3s"}}>
-      <div style={{fontWeight:600,fontSize:14,marginBottom:10}}>⭐ {q.q}</div>
-      {q.type==="number"&&<input type="number" min="0" value={draft||""} onChange={e=>setDraft(e.target.value)} placeholder="Enter a number" style={{...S.inp,marginBottom:10}}/>}
-      {q.type==="player"&&<select value={draft||""} onChange={e=>setDraft(e.target.value)} style={{...S.inp,marginBottom:10}}><option value="">Choose a player…</option>{PLAYERS.map(p=><option key={p} value={p}>{p}</option>)}</select>}
-      {q.type==="team"&&<select value={draft||""} onChange={e=>setDraft(e.target.value)} style={{...S.inp,marginBottom:10}}><option value="">Choose a team…</option>{teams.map(t=><option key={t} value={t}>{FLAGS[t]} {t}</option>)}</select>}
-      <div style={{display:"flex",alignItems:"center",gap:8}}>
-        <div style={{flex:1,fontSize:11,color:saved?"#22c55e":"#374151",fontWeight:saved?700:400}}>
-          {saved?`✓ Saved: ${saved}`:"No answer yet"}
-        </div>
-        <button
-          onClick={()=>{if(draft)onSave(q.id,draft);setDraft(draft);}}
-          disabled={!draft||!isDirty}
-          style={{background:saved&&!isDirty?"linear-gradient(90deg,#22c55e,#16a34a)":draft&&isDirty?`linear-gradient(90deg,#f59e0b,#f97316)`:"#0f0f0f",border:draft&&isDirty?"none":"1px solid #1f1f1f",borderRadius:9,color:draft&&isDirty?"#000":saved&&!isDirty?"#fff":"#374151",fontWeight:800,fontSize:12,padding:"9px 16px",cursor:draft&&isDirty?"pointer":"default",whiteSpace:"nowrap",transition:"all 0.2s",outline:"none"}}>
-          {saved&&!isDirty?"✓ Saved":"Save Pick →"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function BonusTab({bonus,onSave,champion,setChampion,teams}){
-  const bonusLocked = new Date() >= new Date("2026-06-11T00:00:00");
-  const[advTab,setAdvTab]=useState("r32");
-  const rounds=[{id:"r32",label:"Round of 32",count:32,desc:"Pick 32 teams to advance from the group stage"},{id:"r16",label:"Round of 16",count:16,desc:"Pick your 16 teams to reach the Round of 16"},{id:"qf",label:"Quarter-Finals",count:8,desc:"Pick your 8 quarter-finalists"},{id:"sf",label:"Semi-Finals",count:4,desc:"Pick your 4 semi-finalists"},{id:"final",label:"The Final",count:2,desc:"Pick the 2 teams in the Final"}];
-  return(<div style={{padding:16}}>
-    <div style={S.pageTitle}>Bonus Questions</div>
-    <div style={{fontSize:12,color:"#6b7280",marginBottom:20}}>Lock in all answers before Jun 11 · Each correct = {PTS_BONUS} pts</div>
-    <div style={{background:"#0a0600",border:`1px solid ${G}25`,borderRadius:16,padding:18,marginBottom:8}}>
-      <div style={{fontSize:18,fontWeight:800,color:G,marginBottom:4}}>🏆 Who will WIN the World Cup?</div>
-      <div style={{fontSize:12,color:"#6b7280",marginBottom:14}}>Worth {PTS_WINNER} points · The biggest call</div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(88px,1fr))",gap:8,marginBottom:8}}>
-        {teams.map(t=>(<button key={t} onClick={()=>{if(!bonusLocked)setChampion(t);}} style={{background:champion===t?`${G}18`:"#0f0f0f",border:champion===t?`1px solid ${G}`:"1px solid #1f1f1f",borderRadius:10,color:champion===t?G:"#9ca3af",padding:"10px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5}}><span style={{fontSize:18}}>{FLAGS[t]||"🏳️"}</span><span style={{fontSize:10,fontWeight:600,textAlign:"center",lineHeight:1.3}}>{t}</span></button>))}
-      </div>
-      <div style={{display:"flex",alignItems:"center",gap:8,paddingTop:"12px",borderTop:"1px solid #111",marginTop:4}}>
-        <div style={{flex:1,fontSize:11,color:champion?"#22c55e":"#374151",fontWeight:champion?700:400}}>
-          {champion?`✓ Saved: ${FLAGS[champion]} ${champion}`:"No team selected yet"}
-        </div>
-        {champion&&<div style={{fontSize:11,fontWeight:700,color:"#22c55e",background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:8,padding:"6px 14px"}}>✓ Saved</div>}
-      </div>
-    </div>
-    <div style={{fontSize:15,fontWeight:800,marginBottom:12,marginTop:24}}>🌟 Individual Awards</div>
-    {[{id:"topscorer",q:"Who will win the Golden Boot?",type:"player"},{id:"mostgoals",q:"Which team scores most group stage goals?",type:"team"}].map(q=>(
-      <BonusQuestion key={q.id} q={q} saved={bonus[q.id]||""} onSave={onSave} teams={teams}/>
-    ))}
-    <div style={{fontSize:15,fontWeight:800,marginBottom:12,marginTop:24}}>🗓 Pick Teams to Advance</div>
-    {bonusLocked&&<div style={{background:"#0f0f00",border:"1px solid #f59e0b33",borderRadius:10,padding:"12px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:20}}>🔒</span><span style={{fontSize:12,color:"#f59e0b",fontWeight:600}}>Bonus questions are locked — competition has started!</span></div>}
-    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>{rounds.map(r=><button key={r.id} onClick={()=>setAdvTab(r.id)} style={{background:advTab===r.id?`${G}15`:"#0a0a0a",border:advTab===r.id?`1px solid ${G}`:"1px solid #1a1a1a",color:advTab===r.id?G:"#6b7280",borderRadius:20,padding:"6px 14px",fontSize:11,fontWeight:700,cursor:"pointer"}}>{r.label}</button>)}</div>
-    {rounds.filter(r=>r.id===advTab).map(round=>(
-      <AdvRound key={round.id} round={round} bonus={bonus} onSave={onSave} teams={teams} bonusLocked={bonusLocked}/>
-    ))}
-  </div>);
-}
 
 function StatsTab({allFix,predictions,live,totalPts,predCount,totalFix}){
   const rm=allFix.reduce((a,fix)=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);if(r)a[fix.id]=r;return a;},{});
@@ -759,7 +747,56 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
         </div>
       </div>);})}</div>))}</div>}
     {view==="bonus"&&<div>
-      <div style={{fontSize:12,color:"#6b7280",marginBottom:12}}>Everyone's bonus question picks</div>
+      <div style={{fontSize:12,color:"#6b7280",marginBottom:12}}>Everyone's bonus question picks · Sorted alphabetically</div>
+      {/* Copy buttons */}
+      {(()=>{
+        const BONUS_KEYS=["champion","topscorer","mostgoals","adv_r32","adv_r16","adv_qf","adv_sf","adv_final"];
+        const sorted=[...profiles].sort((a,b)=>a.name.localeCompare(b.name));
+        function getStatus(p){
+          const ub=allBonusAnswers.filter(b=>b.user_id===p.id);
+          const done=BONUS_KEYS.filter(k=>ub.find(b=>b.question_id===k)).length;
+          return{done,total:BONUS_KEYS.length,complete:done===BONUS_KEYS.length,partial:done>0&&done<BONUS_KEYS.length,none:done===0};
+        }
+        function copyMessage(){
+          const complete=sorted.filter(p=>getStatus(p).complete).map(p=>p.name);
+          const partial=sorted.filter(p=>getStatus(p).partial).map(p=>{const s=getStatus(p);return`${p.name} (${s.done}/8)`;});
+          const none=sorted.filter(p=>getStatus(p).none).map(p=>p.name);
+          let msg="⚽ *Scoracle — Bonus Questions Status*
+🔒 Deadline: Midnight, June 11
+
+";
+          if(complete.length)msg+=`✅ *Complete (${complete.length})*
+${complete.map(n=>`• ${n}`).join("
+")}
+
+`;
+          if(partial.length)msg+=`⚠️ *Partial (${partial.length})*
+${partial.map(n=>`• ${n}`).join("
+")}
+
+`;
+          if(none.length)msg+=`❌ *Not started (${none.length})*
+${none.map(n=>`• ${n}`).join("
+")}
+
+`;
+          msg+="Get your picks in before midnight! 👉 scoracle.live";
+          navigator.clipboard.writeText(msg);
+        }
+        function copyReminder(){
+          const incomplete=sorted.filter(p=>!getStatus(p).complete).map(p=>p.name);
+          const msg=`⚽ Scoracle reminder — bonus questions close at midnight June 11! Still waiting on: ${incomplete.join(", ")} to complete theirs. Get them in at scoracle.live 🏆`;
+          navigator.clipboard.writeText(msg);
+        }
+        return(
+          <div style={{marginBottom:16}}>
+            <div style={{display:"flex",gap:8,marginBottom:8}}>
+              <button onClick={copyReminder} style={{flex:1,background:"#0f0f0f",border:"1px solid #1f1f1f",borderRadius:10,color:G,fontSize:11,fontWeight:700,padding:"10px",cursor:"pointer",outline:"none"}}>📋 Copy Group Reminder</button>
+              <button onClick={copyMessage} style={{flex:1,background:"#0f0f0f",border:"1px solid #1f1f1f",borderRadius:10,color:"#6b7280",fontSize:11,fontWeight:700,padding:"10px",cursor:"pointer",outline:"none"}}>📋 Copy Full Status</button>
+            </div>
+          </div>
+        );
+      })()}
       {profiles.map(p=>{
         const ub=allBonusAnswers.filter(b=>b.user_id===p.id);
         const get=id=>ub.find(b=>b.question_id===id)?.answer;
