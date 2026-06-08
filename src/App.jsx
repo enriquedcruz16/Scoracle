@@ -668,22 +668,53 @@ function StatsTab({allFix,predictions,live,totalPts,predCount,totalFix}){
   return(<div style={{padding:16}}><div style={S.pageTitle}>My Stats</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>{[{label:"Total Points",value:totalPts,icon:"🏅",color:"#f59e0b"},{label:"Perfect Scores",value:exact,icon:"🎯",color:"#22c55e"},{label:"Correct Results",value:correct,icon:"✅",color:"#3b82f6"},{label:"Accuracy",value:`${acc}%`,icon:"📈",color:"#a855f7"},{label:"Picks Made",value:`${predCount}/${totalFix}`,icon:"✍️",color:"#ec4899"},{label:"Avg / Match",value:played>0?(totalPts/played).toFixed(1):"0.0",icon:"⚡",color:"#06b6d4"}].map(c=>(<div key={c.label} style={{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:16,textAlign:"center"}}><div style={{width:36,height:36,borderRadius:10,background:c.color+"22",color:c.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,margin:"0 auto 10px"}}>{c.icon}</div><div style={{fontSize:26,fontWeight:800,marginBottom:4}}>{c.value}</div><div style={{fontSize:11,color:"#6b7280"}}>{c.label}</div></div>))}</div></div>);
 }
 
-function AdvRound({round,bonus,onSave,teams,bonusLocked}){
+function AdvRound({round,bonus,onSave,bonusLocked,downstreamIds}){
   const key="adv_"+round.id;
   const saved=bonus[key]?JSON.parse(bonus[key]):[];
   const[draft,setDraft]=useState(saved);
   const isDirty=JSON.stringify([...draft].sort())!==JSON.stringify([...saved].sort());
-  function toggle(t){if(bonusLocked)return;setDraft(function(c){return c.includes(t)?c.filter(function(x){return x!==t;}):c.length<round.count?[...c,t]:c;});}
+
+  // Pool = previous round's saved picks, or ALL_TEAMS if this is R32
+  const prevKey=round.prevId?"adv_"+round.prevId:null;
+  const pool=prevKey&&bonus[prevKey]?JSON.parse(bonus[prevKey]):null;
+  const displayTeams=pool||ALL_TEAMS;
+
+  function toggle(t){
+    if(bonusLocked)return;
+    setDraft(function(c){return c.includes(t)?c.filter(function(x){return x!==t;}):c.length<round.count?[...c,t]:c;});
+  }
+
+  function handleSave(){
+    // Save this round
+    onSave(key,JSON.stringify(draft));
+    // Auto-clear all downstream rounds if picks changed
+    if(isDirty&&downstreamIds){
+      downstreamIds.forEach(function(did){
+        onSave("adv_"+did,JSON.stringify([]));
+      });
+    }
+  }
+
+  // If pool exists and draft has teams not in pool, filter them out
+  var validDraft=pool?draft.filter(function(t){return pool.includes(t);}):draft;
+
   return(<div>
-    <div style={{fontSize:12,color:"#6b7280",marginBottom:10}}>{round.desc}</div>
+    <div style={{fontSize:12,color:"#6b7280",marginBottom:6}}>{round.desc}</div>
+    {pool&&<div style={{fontSize:11,color:"#374151",marginBottom:10}}>Showing your {pool.length} picks from previous round</div>}
     <div style={{height:3,background:"#1a1a1a",borderRadius:2,marginBottom:6}}>
-      <div style={{height:"100%",background:bonusLocked?"linear-gradient(90deg,#374151,#4b5563)":"linear-gradient(90deg,#f59e0b,#22c55e)",width:(draft.length/round.count*100)+"%",borderRadius:2,transition:"width 0.4s"}}/>
+      <div style={{height:"100%",background:bonusLocked?"linear-gradient(90deg,#374151,#4b5563)":"linear-gradient(90deg,#f59e0b,#22c55e)",width:(validDraft.length/round.count*100)+"%",borderRadius:2,transition:"width 0.4s"}}/>
     </div>
-    <div style={{fontSize:11,color:bonusLocked?"#4b5563":"#6b7280",marginBottom:12,textAlign:"right"}}>{draft.length}/{round.count} selected</div>
+    <div style={{fontSize:11,color:bonusLocked?"#4b5563":"#6b7280",marginBottom:12,textAlign:"right"}}>{validDraft.length}/{round.count} selected</div>
+    {pool&&pool.length===0&&(
+      <div style={{textAlign:"center",padding:"20px",background:"#0a0a0a",borderRadius:10,border:"1px solid #1f1f1f",marginBottom:12}}>
+        <div style={{fontSize:20,marginBottom:6}}>⚠️</div>
+        <div style={{fontSize:12,color:"#6b7280"}}>Save your previous round picks first</div>
+      </div>
+    )}
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(88px,1fr))",gap:8,marginBottom:16}}>
-      {teams.map(function(t){return(
+      {displayTeams.map(function(t){return(
         <button key={t} onClick={function(){toggle(t);}}
-          style={{background:draft.includes(t)?"rgba(245,158,11,0.12)":"#0f0f0f",border:draft.includes(t)?"1px solid #f59e0b":"1px solid #1f1f1f",borderRadius:10,color:draft.includes(t)?"#f59e0b":"#9ca3af",padding:"10px 6px",cursor:bonusLocked?"default":"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5,opacity:(!draft.includes(t)&&draft.length>=round.count)||bonusLocked?0.4:1,transition:"all 0.15s",outline:"none"}}>
+          style={{background:validDraft.includes(t)?"rgba(245,158,11,0.12)":"#0f0f0f",border:validDraft.includes(t)?"1px solid #f59e0b":"1px solid #1f1f1f",borderRadius:10,color:validDraft.includes(t)?"#f59e0b":"#9ca3af",padding:"10px 6px",cursor:bonusLocked?"default":"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5,opacity:(!validDraft.includes(t)&&validDraft.length>=round.count)||bonusLocked?0.4:1,transition:"all 0.15s",outline:"none"}}>
           <span style={{fontSize:18}}>{FLAGS[t]||"🏳"}</span>
           <span style={{fontSize:10,fontWeight:600,textAlign:"center",lineHeight:1.3}}>{t}</span>
         </button>
@@ -691,9 +722,9 @@ function AdvRound({round,bonus,onSave,teams,bonusLocked}){
     </div>
     <div style={{display:"flex",alignItems:"center",gap:10,paddingTop:12,borderTop:"1px solid #111"}}>
       <div style={{flex:1,fontSize:11,fontWeight:isDirty||saved.length>0?700:400,color:bonusLocked?"#4b5563":isDirty?"#f59e0b":saved.length>0?"#22c55e":"#374151"}}>
-        {bonusLocked?"Locked":isDirty?"Unsaved changes":saved.length>0?"All picks saved":"No picks yet"}
+        {bonusLocked?"Locked":isDirty?"Unsaved changes — downstream picks will reset":saved.length>0?"All picks saved":"No picks yet"}
       </div>
-      <button onClick={function(){onSave(key,JSON.stringify(draft));}} disabled={bonusLocked||!isDirty}
+      <button onClick={handleSave} disabled={bonusLocked||!isDirty}
         style={{background:bonusLocked?"#0f0f0f":!isDirty&&saved.length>0?"linear-gradient(90deg,#22c55e,#16a34a)":isDirty?"linear-gradient(90deg,#f59e0b,#f97316)":"#0f0f0f",border:isDirty||(!isDirty&&saved.length>0)?"none":"1px solid #1f1f1f",borderRadius:10,color:bonusLocked?"#374151":!isDirty&&saved.length>0?"#fff":isDirty?"#000":"#374151",fontWeight:800,fontSize:12,padding:"10px 18px",cursor:bonusLocked||!isDirty?"default":"pointer",whiteSpace:"nowrap",outline:"none",transition:"all 0.2s"}}>
         {bonusLocked?"Locked":!isDirty&&saved.length>0?"Saved":"Save Picks"}
       </button>
@@ -725,11 +756,11 @@ function BonusQuestion({q,saved,onSave,teams}){
 function BonusTab({bonus,onSave,champion,setChampion,teams}){
   const bonusLocked=new Date()>=new Date("2026-06-11T00:00:00");
   const rounds=[
-    {id:"r32",label:"Round of 32",count:32,desc:"Pick 32 teams to advance from the group stage"},
-    {id:"r16",label:"Round of 16",count:16,desc:"Pick your 16 teams to reach the Round of 16"},
-    {id:"qf",label:"Quarter-Finals",count:8,desc:"Pick your 8 quarter-finalists"},
-    {id:"sf",label:"Semi-Finals",count:4,desc:"Pick your 4 semi-finalists"},
-    {id:"final",label:"The Final",count:2,desc:"Pick the 2 teams in the Final"},
+    {id:"r32",label:"Round of 32",count:32,desc:"Pick 32 teams to advance from the group stage",prevId:null,downstream:["r16","qf","sf","final"]},
+    {id:"r16",label:"Round of 16",count:16,desc:"Pick your 16 from your Round of 32 picks",prevId:"r32",downstream:["qf","sf","final"]},
+    {id:"qf",label:"Quarter-Finals",count:8,desc:"Pick your 8 from your Round of 16 picks",prevId:"r16",downstream:["sf","final"]},
+    {id:"sf",label:"Semi-Finals",count:4,desc:"Pick your 4 from your Quarter-Final picks",prevId:"qf",downstream:["final"]},
+    {id:"final",label:"The Final",count:2,desc:"Pick your 2 finalists from your Semi-Final picks",prevId:"sf",downstream:[]},
   ];
   const[advTab,setAdvTab]=useState("r32");
   return(<div style={{padding:16}}>
@@ -768,7 +799,7 @@ function BonusTab({bonus,onSave,champion,setChampion,teams}){
       );})}
     </div>
     {rounds.filter(function(r){return r.id===advTab;}).map(function(round){
-      return <AdvRound key={round.id} round={round} bonus={bonus} onSave={onSave} teams={teams} bonusLocked={bonusLocked}/>;
+      return <AdvRound key={round.id} round={round} bonus={bonus} onSave={onSave} bonusLocked={bonusLocked} downstreamIds={round.downstream}/>;
     })}
   </div>);
 }
