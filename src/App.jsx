@@ -203,6 +203,11 @@ function localTime(iso){
   try{return new Date(iso).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});}
   catch{return"TBD";}
 }
+function localDate(iso){
+  if(!iso)return"";
+  try{return new Date(iso).toLocaleDateString([],{month:"short",day:"numeric"});}
+  catch{return"";}
+}
 function locked(k){return k&&new Date()>=new Date(new Date(k).getTime()-LOCK_MINUTES*60000);}
 function lockMsg(k){if(!k)return null;const d=new Date(new Date(k).getTime()-LOCK_MINUTES*60000)-new Date();if(d<=0||d>86400000)return null;const h=Math.floor(d/3600000),m=Math.floor((d%3600000)/60000);return h>0?`Locks in ${h}h ${m}m`:`Locks in ${m}m`;}
 async function apiFetch(p){const r=await fetch(`${API_BASE}${p}`,{headers:{"x-apisports-key":API_KEY}});if(!r.ok)throw new Error(r.status);return r.json();}
@@ -416,7 +421,7 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId}){
       const lv=live[fix.id],result=lv||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null),pred=predictions[fix.id],p=pts(pred,result),lk=locked(fix.kickoffISO)||fix.isLive||fix.isDone,isSaved=savedId===fix.id,hv=val(fix.id,"home"),av=val(fix.id,"away"),lm=lockMsg(fix.kickoffISO);
       return(<div key={fix.id} style={{...S.card,...(isSaved?{borderColor:"#22c55e",boxShadow:"0 0 18px #22c55e2a"}:{}),...(fix.isLive?{borderColor:"#ef444440",boxShadow:"0 0 18px #ef44441a"}:{})}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,gap:8}}>
-          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?fix.group:`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {localTime(fix.kickoffISO)}</span>{fix.venue&&<div style={{fontSize:10,color:"#374151",marginTop:2}}>📍 {fix.venue}</div>}{lm&&<div style={{fontSize:10,color:"#f59e0b",marginTop:3,fontWeight:600}}>⏱ {lm}</div>}</div>
+          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?fix.group:`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {localDate(fix.kickoffISO)} · {localTime(fix.kickoffISO)}</span>{fix.venue&&<div style={{fontSize:10,color:"#374151",marginTop:2}}>📍 {fix.venue}</div>}{lm&&<div style={{fontSize:10,color:"#f59e0b",marginTop:3,fontWeight:600}}>⏱ {lm}</div>}</div>
           <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}><SPill status={fix.status} elapsed={fix.elapsed}/>{p!==null&&<span style={{fontSize:11,fontWeight:700,color:"#fff",padding:"3px 8px",borderRadius:20,background:p===PTS_EXACT?"#22c55e":p===PTS_RESULT?"#f59e0b":"#ef4444"}}>{p===PTS_EXACT?`✓ +${PTS_EXACT}`:p===PTS_RESULT?`~ +${PTS_RESULT}`:`✗ +0`}</span>}</div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
@@ -516,7 +521,7 @@ function RankTab({allFix,live,allPreds,profiles,currentUser}){
     return(
       <div style={{background:"#080808",border:`1px solid ${fix.isLive?"rgba(239,68,68,0.3)":"#141414"}`,borderRadius:16,padding:16,marginBottom:12,boxShadow:fix.isLive?"0 0 16px rgba(239,68,68,0.06)":"none"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?fix.group:`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {localTime(fix.kickoffISO)}</span></div>
+          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?fix.group:`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {localDate(fix.kickoffISO)} · {localTime(fix.kickoffISO)}</span></div>
           <SPill status={fix.status} elapsed={fix.elapsed}/>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
@@ -874,7 +879,7 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
         <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
           <div style={{flex:1}}>
             <div style={{fontSize:13,fontWeight:700}}>{fix.home} vs {fix.away}</div>
-            <div style={{fontSize:11,color:"#6b7280"}}>{fix.date} · {localTime(fix.kickoffISO)} · Group {fix.group}</div>
+            <div style={{fontSize:11,color:"#6b7280"}}>{localDate(fix.kickoffISO)} · {localTime(fix.kickoffISO)} · Group {fix.group}</div>
             <div style={{fontSize:11,color:"#6b7280"}}>{predsForMatch.length}/{totalUsers} predictions · {missingUsers.length} missing</div>
           </div>
           <div style={{textAlign:"right",flexShrink:0}}>
