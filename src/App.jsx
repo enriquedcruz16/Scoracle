@@ -198,6 +198,11 @@ const NAV = [{id:"predict",icon:"🎯",label:"Predict"},{id:"standings",icon:"�
 const MENU_EXTRA = [{id:"bracket",icon:"🗂️",label:"My Bracket"},{id:"rules",icon:"📖",label:"Rules"}];
 
 function pts(pred,res){if(!pred||!res)return null;const{homeGoals:ph,awayGoals:pa}=pred,{homeGoals:rh,awayGoals:ra}=res;if([ph,pa,rh,ra].some(v=>v==null))return null;if(+ph===+rh&&+pa===+ra)return PTS_EXACT;const po=ph>pa?"H":ph<pa?"A":"D",ro=rh>ra?"H":rh<ra?"A":"D";return po===ro?PTS_RESULT:0;}
+function localTime(iso){
+  if(!iso)return"TBD";
+  try{return new Date(iso).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});}
+  catch{return"TBD";}
+}
 function locked(k){return k&&new Date()>=new Date(new Date(k).getTime()-LOCK_MINUTES*60000);}
 function lockMsg(k){if(!k)return null;const d=new Date(new Date(k).getTime()-LOCK_MINUTES*60000)-new Date();if(d<=0||d>86400000)return null;const h=Math.floor(d/3600000),m=Math.floor((d%3600000)/60000);return h>0?`Locks in ${h}h ${m}m`:`Locks in ${m}m`;}
 async function apiFetch(p){const r=await fetch(`${API_BASE}${p}`,{headers:{"x-apisports-key":API_KEY}});if(!r.ok)throw new Error(r.status);return r.json();}
@@ -411,7 +416,7 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId}){
       const lv=live[fix.id],result=lv||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null),pred=predictions[fix.id],p=pts(pred,result),lk=locked(fix.kickoffISO)||fix.isLive||fix.isDone,isSaved=savedId===fix.id,hv=val(fix.id,"home"),av=val(fix.id,"away"),lm=lockMsg(fix.kickoffISO);
       return(<div key={fix.id} style={{...S.card,...(isSaved?{borderColor:"#22c55e",boxShadow:"0 0 18px #22c55e2a"}:{}),...(fix.isLive?{borderColor:"#ef444440",boxShadow:"0 0 18px #ef44441a"}:{})}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,gap:8}}>
-          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?fix.group:`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {fix.time}</span>{fix.venue&&<div style={{fontSize:10,color:"#374151",marginTop:2}}>📍 {fix.venue}</div>}{lm&&<div style={{fontSize:10,color:"#f59e0b",marginTop:3,fontWeight:600}}>⏱ {lm}</div>}</div>
+          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?fix.group:`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {localTime(fix.kickoffISO)}</span>{fix.venue&&<div style={{fontSize:10,color:"#374151",marginTop:2}}>📍 {fix.venue}</div>}{lm&&<div style={{fontSize:10,color:"#f59e0b",marginTop:3,fontWeight:600}}>⏱ {lm}</div>}</div>
           <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}><SPill status={fix.status} elapsed={fix.elapsed}/>{p!==null&&<span style={{fontSize:11,fontWeight:700,color:"#fff",padding:"3px 8px",borderRadius:20,background:p===PTS_EXACT?"#22c55e":p===PTS_RESULT?"#f59e0b":"#ef4444"}}>{p===PTS_EXACT?`✓ +${PTS_EXACT}`:p===PTS_RESULT?`~ +${PTS_RESULT}`:`✗ +0`}</span>}</div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
@@ -511,7 +516,7 @@ function RankTab({allFix,live,allPreds,profiles,currentUser}){
     return(
       <div style={{background:"#080808",border:`1px solid ${fix.isLive?"rgba(239,68,68,0.3)":"#141414"}`,borderRadius:16,padding:16,marginBottom:12,boxShadow:fix.isLive?"0 0 16px rgba(239,68,68,0.06)":"none"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?fix.group:`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {fix.time}</span></div>
+          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?fix.group:`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {localTime(fix.kickoffISO)}</span></div>
           <SPill status={fix.status} elapsed={fix.elapsed}/>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
@@ -825,7 +830,7 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
       const lockTime=new Date(new Date(fix.kickoffISO).getTime()-60*60000);
       const lockStr=lockTime.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
       function copyReminder(){
-        const msg=`⚽ Scoracle reminder — ${fix.home} vs ${fix.away} kicks off at ${fix.time} on ${fix.date}! Get your prediction in before ${lockStr} when it locks. scoracle.live`;
+        const msg=`⚽ Scoracle reminder — ${fix.home} vs ${fix.away} kicks off at ${localTime(fix.kickoffISO)} on ${fix.date}! Get your prediction in before ${lockStr} when it locks. scoracle.live`;
         navigator.clipboard.writeText(msg);
       }
       function copyMissing(){
@@ -838,7 +843,7 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
         <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
           <div style={{flex:1}}>
             <div style={{fontSize:13,fontWeight:700}}>{fix.home} vs {fix.away}</div>
-            <div style={{fontSize:11,color:"#6b7280"}}>{fix.date} · {fix.time} · Group {fix.group}</div>
+            <div style={{fontSize:11,color:"#6b7280"}}>{fix.date} · {localTime(fix.kickoffISO)} · Group {fix.group}</div>
             <div style={{fontSize:11,color:"#6b7280"}}>{predsForMatch.length}/{totalUsers} predictions · {missingUsers.length} missing</div>
           </div>
           <div style={{textAlign:"right",flexShrink:0}}>
@@ -1059,23 +1064,25 @@ tr:hover td{background:#0c0c0c;}
 `;
 
 // ══════════════════ BRACKET TAB ═══════════════════════════════════════
+// R32_BRACKET indices 0-15 = official matches M73-M88
+// This ordering is CRITICAL — the R16_MAP indices reference these positions
 const R32_BRACKET = [
-  {id:"m74",label:"Group E winner vs Best 3rd (A/B/C/D/F)",homeKey:"W_E",awayKey:"3rd_ABCDF"},
-  {id:"m75",label:"Group F winner vs Runner-up Group C",homeKey:"W_F",awayKey:"RU_C"},
-  {id:"m76",label:"Group C winner vs Runner-up Group F",homeKey:"W_C",awayKey:"RU_F"},
-  {id:"m77",label:"Group I winner vs Best 3rd (C/D/F/G/H)",homeKey:"W_I",awayKey:"3rd_CDFGH"},
-  {id:"m78",label:"Runner-up Group E vs Runner-up Group I",homeKey:"RU_E",awayKey:"RU_I"},
-  {id:"m79",label:"Group A winner vs Best 3rd (C/E/F/H/I)",homeKey:"W_A",awayKey:"3rd_CEFHI"},
-  {id:"m80",label:"Group L winner vs Best 3rd (E/H/I/J/K)",homeKey:"W_L",awayKey:"3rd_EHIJK"},
-  {id:"m81",label:"Group D winner vs Best 3rd (B/E/F/I/J)",homeKey:"W_D",awayKey:"3rd_BEFIJ"},
-  {id:"m82",label:"Group G winner vs Best 3rd (A/E/H/I/J)",homeKey:"W_G",awayKey:"3rd_AEHIJ"},
-  {id:"m83",label:"Runner-up Group K vs Runner-up Group L",homeKey:"RU_K",awayKey:"RU_L"},
-  {id:"m84",label:"Group H winner vs Runner-up Group J",homeKey:"W_H",awayKey:"RU_J"},
-  {id:"m85",label:"Group B winner vs Best 3rd (E/F/G/I/J)",homeKey:"W_B",awayKey:"3rd_EFGIJ"},
-  {id:"m86",label:"Group J winner vs Runner-up Group H",homeKey:"W_J",awayKey:"RU_H"},
-  {id:"m87",label:"Runner-up Group G vs Best 3rd (A/B/C/D/F)",homeKey:"RU_G",awayKey:"3rd_ABCDF2"},
-  {id:"m88",label:"Group K winner vs Runner-up Group D",homeKey:"W_K",awayKey:"RU_D"},
-  {id:"m89",label:"Runner-up Group B vs Runner-up Group A",homeKey:"RU_B",awayKey:"RU_A"},
+  {id:"m73",label:"Runner-up A vs Runner-up B",homeKey:"RU_A",awayKey:"RU_B"},           // idx 0
+  {id:"m74",label:"Winner E vs Best 3rd (A/B/C/D/F)",homeKey:"W_E",awayKey:"3rd_ABCDF"}, // idx 1
+  {id:"m75",label:"Winner F vs Runner-up C",homeKey:"W_F",awayKey:"RU_C"},               // idx 2
+  {id:"m76",label:"Winner C vs Runner-up F",homeKey:"W_C",awayKey:"RU_F"},               // idx 3
+  {id:"m77",label:"Winner I vs Best 3rd (C/D/F/G/H)",homeKey:"W_I",awayKey:"3rd_CDFGH"},// idx 4
+  {id:"m78",label:"Runner-up E vs Runner-up I",homeKey:"RU_E",awayKey:"RU_I"},           // idx 5
+  {id:"m79",label:"Winner A vs Best 3rd (C/E/F/H/I)",homeKey:"W_A",awayKey:"3rd_CEFHI"},// idx 6
+  {id:"m80",label:"Winner L vs Best 3rd (E/H/I/J/K)",homeKey:"W_L",awayKey:"3rd_EHIJK"},// idx 7
+  {id:"m81",label:"Runner-up K vs Runner-up L",homeKey:"RU_K",awayKey:"RU_L"},           // idx 8
+  {id:"m82",label:"Winner H vs Runner-up J",homeKey:"W_H",awayKey:"RU_J"},               // idx 9
+  {id:"m83",label:"Winner D vs Best 3rd (B/E/F/I/J)",homeKey:"W_D",awayKey:"3rd_BEFIJ"},// idx 10
+  {id:"m84",label:"Winner G vs Best 3rd (A/E/H/I/J)",homeKey:"W_G",awayKey:"3rd_AEHIJ"},// idx 11
+  {id:"m85",label:"Winner J vs Runner-up H",homeKey:"W_J",awayKey:"RU_H"},               // idx 12
+  {id:"m86",label:"Winner B vs Best 3rd (E/F/G/I/J)",homeKey:"W_B",awayKey:"3rd_EFGIJ"},// idx 13
+  {id:"m87",label:"Runner-up G vs Runner-up D",homeKey:"RU_G",awayKey:"RU_D"},           // idx 14
+  {id:"m88",label:"Winner K vs Best 3rd (D/E/I/J/L)",homeKey:"W_K",awayKey:"3rd_DEIJL"},// idx 15
 ];
 
 function calcBracketStandings(predictions,allFix,live){
