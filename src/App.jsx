@@ -398,9 +398,9 @@ export default function App(){
       <main>
         {tab==="predict"&&<PredTab matchdays={matchdays} selDay={selDay} setSelDay={setSelDay} predictions={predictions} live={live} onSave={savePred} savedId={savedId}/>}
         {tab==="standings"&&<StandTab allFix={allFix} live={live} predictions={predictions}/>}
-        {tab==="leaderboard"&&<RankTab allFix={allFix} live={live} allPreds={allPreds} profiles={profiles} currentUser={user}/>}
+        {tab==="leaderboard"&&<RankTab allFix={allFix} live={live} allPreds={allPreds} profiles={profiles} currentUser={user} allBonusAnswers={allBonusAnswers}/>}
         {tab==="bonus"&&<BonusTab bonus={bonus} onSave={saveBonus} champion={champion} setChampion={c=>{setChampion(c);saveBonus("champion",c);}} teams={ALL_TEAMS}/>}
-        {tab==="stats"&&<StatsTab allFix={allFix} predictions={predictions} live={live} totalPts={totalPts} predCount={predCount} totalFix={totalFix}/>}
+        {tab==="stats"&&<StatsTab allFix={allFix} predictions={predictions} live={live} totalPts={totalPts} predCount={predCount} totalFix={totalFix} bonus={bonus} allBonusAnswers={allBonusAnswers} currentUser={user}/>}
         {tab==="rules"&&<RulesTab/>}
         {tab==="bracket"&&<BracketTab predictions={predictions} allFix={allFix} live={live}/>}
         {tab==="admin"&&isAdmin&&<AdminTab profiles={profiles} allPreds={allPreds} allBonusAnswers={allBonusAnswers} allFix={allFix} live={live} matchdays={matchdays}/>}
@@ -477,15 +477,45 @@ function StandTab({allFix,live,predictions}){
   </div>);
 }
 
-function RankTab({allFix,live,allPreds,profiles,currentUser}){
+function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
   const medals=["🥇","🥈","🥉"];
   const[view,setView]=useState("leaderboard"); // leaderboard | breakdown
   const[filter,setFilter]=useState("live"); // live | completed | upcoming
 
+  // Bonus points calculation helper
+  function calcBonusPoints(userId){
+    const ub=(allBonusAnswers||[]).filter(b=>b.user_id===userId);
+    const get=function(k){return ub.find(b=>b.question_id===k)?.answer||"";};
+    const getAdv=function(k){try{return JSON.parse(get(k)||"[]");}catch{return[];}};
+    let bp=0,bBreakdown={winner:0,boot:0,goals:0,adv:0};
+    // Champion - awarded when tournament ends (manual override via bonus_answers with question_id "champion_result")
+    // For now: check if champion pick matches a special "champion_result" record stored by admin
+    const champResult=ub.find(b=>b.question_id==="champion_result")?.answer||"";
+    const bootResult=ub.find(b=>b.question_id==="topscorer_result")?.answer||"";
+    const goalsResult=ub.find(b=>b.question_id==="mostgoals_result")?.answer||"";
+    if(champResult&&get("champion")===champResult){bp+=PTS_WINNER;bBreakdown.winner=PTS_WINNER;}
+    if(bootResult&&get("topscorer")===bootResult){bp+=PTS_BONUS;bBreakdown.boot=PTS_BONUS;}
+    if(goalsResult&&get("mostgoals")===goalsResult){bp+=PTS_BONUS;bBreakdown.goals=PTS_BONUS;}
+    // Advancement picks — check against actual_adv_XX records stored by admin/auto
+    ["r32","r16","qf","sf","final"].forEach(function(rnd){
+      const actual=ub.find(b=>b.question_id==="actual_adv_"+rnd)?.answer||"";
+      if(!actual)return;
+      try{
+        const actualTeams=JSON.parse(actual);
+        const userPicks=getAdv("adv_"+rnd);
+        const correct=userPicks.filter(function(t){return actualTeams.includes(t);}).length;
+        bp+=correct*PTS_BONUS;
+        bBreakdown.adv+=correct*PTS_BONUS;
+      }catch{}
+    });
+    return{bp,bBreakdown};
+  }
+
   const userTotals=profiles.map(pr=>{
     const myP=allPreds.filter(p=>p.user_id===pr.id);let tp=0,exact=0,correct=0;
     allFix.forEach(fix=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);if(!r)return;const p=myP.find(x=>x.fixture_id===fix.id);if(!p)return;const sc=pts({homeGoals:p.home_goals,awayGoals:p.away_goals},r);if(sc===PTS_EXACT){tp+=sc;exact++;}else if(sc===PTS_RESULT){tp+=sc;correct++;}});
-    return{id:pr.id,name:pr.name,pts:tp,exact,correct,preds:myP};
+    const{bp,bBreakdown}=calcBonusPoints(pr.id);
+    return{id:pr.id,name:pr.name,pts:tp+bp,matchPts:tp,bonusPts:bp,bBreakdown,exact,correct,preds:myP};
   }).sort((a,b)=>b.pts-a.pts||b.exact-a.exact||b.correct-a.correct||a.name.localeCompare(b.name));
 
   // Last 5 form for each user
@@ -667,10 +697,96 @@ function RankTab({allFix,live,allPreds,profiles,currentUser}){
 }
 
 
-function StatsTab({allFix,predictions,live,totalPts,predCount,totalFix}){
+function StatsTab({allFix,predictions,live,totalPts,predCount,totalFix,bonus,allBonusAnswers,currentUser}){
   const rm=allFix.reduce((a,fix)=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);if(r)a[fix.id]=r;return a;},{});
   const played=Object.keys(rm).length,exact=Object.keys(predictions).filter(id=>pts(predictions[id],rm[id])===PTS_EXACT).length,correct=Object.keys(predictions).filter(id=>(pts(predictions[id],rm[id])||0)>=PTS_RESULT).length,acc=predCount>0?Math.round((exact/Math.min(predCount,played||1))*100):0;
-  return(<div style={{padding:16}}><div style={S.pageTitle}>My Stats</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>{[{label:"Total Points",value:totalPts,icon:"🏅",color:"#f59e0b"},{label:"Perfect Scores",value:exact,icon:"🎯",color:"#22c55e"},{label:"Correct Results",value:correct,icon:"✅",color:"#3b82f6"},{label:"Accuracy",value:`${acc}%`,icon:"📈",color:"#a855f7"},{label:"Picks Made",value:`${predCount}/${totalFix}`,icon:"✍️",color:"#ec4899"},{label:"Avg / Match",value:played>0?(totalPts/played).toFixed(1):"0.0",icon:"⚡",color:"#06b6d4"}].map(c=>(<div key={c.label} style={{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:16,textAlign:"center"}}><div style={{width:36,height:36,borderRadius:10,background:c.color+"22",color:c.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,margin:"0 auto 10px"}}>{c.icon}</div><div style={{fontSize:26,fontWeight:800,marginBottom:4}}>{c.value}</div><div style={{fontSize:11,color:"#6b7280"}}>{c.label}</div></div>))}</div></div>);
+
+  // Bonus breakdown for current user
+  const myUserId=currentUser?.id;
+  const ub=(allBonusAnswers||[]).filter(b=>b.user_id===myUserId);
+  const get=function(k){return ub.find(b=>b.question_id===k)?.answer||"";};
+  const getAdv=function(k){try{return JSON.parse(get(k)||"[]");}catch{return[];}};
+  const champResult=ub.find(b=>b.question_id==="champion_result")?.answer||"";
+  const bootResult=ub.find(b=>b.question_id==="topscorer_result")?.answer||"";
+  const goalsResult=ub.find(b=>b.question_id==="mostgoals_result")?.answer||"";
+  const champPts=champResult&&get("champion")===champResult?PTS_WINNER:0;
+  const bootPts=bootResult&&get("topscorer")===bootResult?PTS_BONUS:0;
+  const goalsPts=goalsResult&&get("mostgoals")===goalsResult?PTS_BONUS:0;
+
+  const advRows=["r32","r16","qf","sf","final"].map(function(rnd){
+    const actual=ub.find(b=>b.question_id==="actual_adv_"+rnd)?.answer||"";
+    if(!actual)return{rnd,pts:0,correct:0,total:getAdv("adv_"+rnd).length,pending:true};
+    try{
+      const actualTeams=JSON.parse(actual);
+      const userPicks=getAdv("adv_"+rnd);
+      const correct=userPicks.filter(function(t){return actualTeams.includes(t);}).length;
+      return{rnd,pts:correct*PTS_BONUS,correct,total:userPicks.length,pending:false};
+    }catch{return{rnd,pts:0,correct:0,total:0,pending:true};}
+  });
+  const advPts=advRows.reduce(function(s,r){return s+r.pts;},0);
+  const totalBonusPts=champPts+bootPts+goalsPts+advPts;
+  const grandTotal=totalPts+totalBonusPts;
+
+  const rndLabels={"r32":"Round of 32","r16":"Round of 16","qf":"Quarter-Finals","sf":"Semi-Finals","final":"The Final"};
+
+  return(<div style={{padding:16}}>
+    <div style={S.pageTitle}>My Stats</div>
+
+    {/* Match prediction stats grid */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
+      {[
+        {label:"Total Points",value:grandTotal,icon:"🏅",color:"#f59e0b"},
+        {label:"Perfect Scores",value:exact,icon:"🎯",color:"#22c55e"},
+        {label:"Correct Results",value:correct,icon:"✅",color:"#3b82f6"},
+        {label:"Accuracy",value:`${acc}%`,icon:"📈",color:"#a855f7"},
+        {label:"Picks Made",value:`${predCount}/${totalFix}`,icon:"✍️",color:"#ec4899"},
+        {label:"Avg / Match",value:played>0?(totalPts/played).toFixed(1):"0.0",icon:"⚡",color:"#06b6d4"},
+      ].map(c=>(<div key={c.label} style={{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:16,textAlign:"center"}}>
+        <div style={{width:36,height:36,borderRadius:10,background:c.color+"22",color:c.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,margin:"0 auto 10px"}}>{c.icon}</div>
+        <div style={{fontSize:26,fontWeight:800,marginBottom:4}}>{c.value}</div>
+        <div style={{fontSize:11,color:"#6b7280"}}>{c.label}</div>
+      </div>))}
+    </div>
+
+    {/* Bonus breakdown */}
+    <div style={{fontSize:15,fontWeight:800,marginBottom:12}}>My Bonus Points</div>
+    <div style={{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:14,marginBottom:8}}>
+      {[
+        {label:"Tournament Winner",pts:champPts,pending:!champResult,pick:get("champion"),result:champResult,max:PTS_WINNER},
+        {label:"Golden Boot",pts:bootPts,pending:!bootResult,pick:get("topscorer"),result:bootResult,max:PTS_BONUS},
+        {label:"Most Group Goals",pts:goalsPts,pending:!goalsResult,pick:get("mostgoals"),result:goalsResult,max:PTS_BONUS},
+      ].map(function(row){
+        return(
+          <div key={row.label} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 0",borderBottom:"1px solid #0f0f0f"}}>
+            <div>
+              <div style={{fontSize:12,fontWeight:600}}>{row.label}</div>
+              {row.pick&&<div style={{fontSize:10,color:"#6b7280",marginTop:2}}>Your pick: {row.pick}{row.result&&row.result!==row.pick?" · Result: "+row.result:""}</div>}
+            </div>
+            <div style={{fontSize:13,fontWeight:800,color:row.pending?"#374151":row.pts>0?"#22c55e":"#ef4444"}}>
+              {row.pending?"Pending":row.pts>0?"+"+row.pts+" pts":"0 pts"}
+            </div>
+          </div>
+        );
+      })}
+      {advRows.map(function(row){
+        return(
+          <div key={row.rnd} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 0",borderBottom:"1px solid #0f0f0f"}}>
+            <div>
+              <div style={{fontSize:12,fontWeight:600}}>{rndLabels[row.rnd]}</div>
+              {!row.pending&&<div style={{fontSize:10,color:"#6b7280",marginTop:2}}>{row.correct}/{row.total} correct</div>}
+            </div>
+            <div style={{fontSize:13,fontWeight:800,color:row.pending?"#374151":row.pts>0?"#22c55e":"#ef4444"}}>
+              {row.pending?"Pending":row.pts>0?"+"+row.pts+" pts":"0 pts"}
+            </div>
+          </div>
+        );
+      })}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:12,marginTop:4}}>
+        <div style={{fontSize:13,fontWeight:800}}>Total Bonus</div>
+        <div style={{fontSize:18,fontWeight:800,color:G}}>{totalBonusPts>0?"+"+totalBonusPts:"0"} pts</div>
+      </div>
+    </div>
+  </div>);
 }
 
 function AdvRound({round,bonus,onSave,bonusLocked,downstreamIds}){
