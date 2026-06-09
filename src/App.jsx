@@ -905,7 +905,17 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
         const sorted=[...profiles].sort((a,b)=>a.name.localeCompare(b.name));
         function getStatus(p){
           const ub=allBonusAnswers.filter(b=>b.user_id===p.id);
-          const done=BONUS_KEYS.filter(k=>ub.find(b=>b.question_id===k)).length;
+          const ADV_COUNTS={"adv_r32":32,"adv_r16":16,"adv_qf":8,"adv_sf":4,"adv_final":2};
+          const done=BONUS_KEYS.filter(k=>{
+            const rec=ub.find(b=>b.question_id===k);
+            if(!rec)return false;
+            // For advancement keys, check array is non-empty and has enough picks
+            if(ADV_COUNTS[k]!==undefined){
+              try{const arr=JSON.parse(rec.answer||"[]");return arr.length===ADV_COUNTS[k];}
+              catch{return false;}
+            }
+            return rec.answer&&rec.answer.trim()!=="";
+          }).length;
           return{done,total:BONUS_KEYS.length,complete:done===BONUS_KEYS.length,partial:done>0&&done<BONUS_KEYS.length,none:done===0};
         }
         function copyMessage(){
@@ -1014,35 +1024,96 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
           </div>
         );
       })()}
-      {profiles.map(p=>{
-        const ub=allBonusAnswers.filter(b=>b.user_id===p.id);
-        const get=id=>ub.find(b=>b.question_id===id)?.answer;
-        const champ=get("champion"),topscorer=get("topscorer"),mostgoals=get("mostgoals");
-        const r32=get("adv_r32"),r16=get("adv_r16"),qf=get("adv_qf"),sf=get("adv_sf"),fin=get("adv_final");
-        const rows=[
-          {l:"🏆 Champion",v:champ},
-          {l:"⚽ Top Scorer",v:topscorer},
-          {l:"📊 Most Group Goals",v:mostgoals},
-          {l:"R32 picks",v:r32?`${JSON.parse(r32).length}/32`:null},
-          {l:"R16 picks",v:r16?`${JSON.parse(r16).length}/16`:null},
-          {l:"QF picks",v:qf?`${JSON.parse(qf).length}/8`:null},
-          {l:"SF picks",v:sf?`${JSON.parse(sf).length}/4`:null},
-          {l:"Final picks",v:fin?`${JSON.parse(fin).length}/2`:null},
-        ];
-        const answered=rows.filter(r=>r.v).length;
-        return(<div key={p.id} style={{background:"#080808",border:"1px solid #141414",borderRadius:12,padding:"12px 14px",marginBottom:8}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-            <div style={{fontWeight:700,fontSize:14}}>{p.name}</div>
-            <div style={{fontSize:10,color:answered===rows.length?"#22c55e":answered>0?"#f59e0b":"#ef4444",fontWeight:700}}>{answered}/{rows.length} done</div>
-          </div>
-          {rows.map(({l,v})=>(
-            <div key={l} style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:3}}>
-              <span style={{color:"#6b7280"}}>{l}</span>
-              <span style={{color:v?"#f9fafb":"#374151",fontWeight:v?600:400}}>{v||"Not picked"}</span>
+      {(()=>{
+        const[expanded,setExpanded]=useState({});
+        const ADV_COUNTS={"adv_r32":32,"adv_r16":16,"adv_qf":8,"adv_sf":4,"adv_final":2};
+        function getBonusStatus(p){
+          const ub=allBonusAnswers.filter(b=>b.user_id===p.id);
+          const KEYS=["champion","topscorer","mostgoals","adv_r32","adv_r16","adv_qf","adv_sf","adv_final"];
+          const done=KEYS.filter(k=>{
+            const rec=ub.find(b=>b.question_id===k);
+            if(!rec)return false;
+            if(ADV_COUNTS[k]!==undefined){try{return JSON.parse(rec.answer||"[]").length===ADV_COUNTS[k];}catch{return false;}}
+            return rec.answer&&rec.answer.trim()!=="";
+          }).length;
+          return{done,total:8,complete:done===8,partial:done>0&&done<8,none:done===0};
+        }
+        return profiles.map(function(p){
+          const ub=allBonusAnswers.filter(b=>b.user_id===p.id);
+          const get=function(id){return ub.find(b=>b.question_id===id)?.answer||"";};
+          const getAdv=function(k){try{return JSON.parse(get(k)||"[]");}catch{return[];}};
+          const st=getBonusStatus(p);
+          const isExp=!!expanded[p.id];
+          const rows=[
+            {l:"🏆 Champion",v:get("champion")||null},
+            {l:"⚽ Top Scorer",v:get("topscorer")||null},
+            {l:"📊 Most Group Goals",v:get("mostgoals")||null},
+            {l:"R32",v:getAdv("adv_r32"),total:32},
+            {l:"R16",v:getAdv("adv_r16"),total:16},
+            {l:"QF",v:getAdv("adv_qf"),total:8},
+            {l:"SF",v:getAdv("adv_sf"),total:4},
+            {l:"Final",v:getAdv("adv_final"),total:2},
+          ];
+          const borderC=st.complete?"rgba(34,197,94,0.25)":st.partial?"rgba(245,158,11,0.2)":"#141414";
+          const statusC=st.complete?"#22c55e":st.partial?"#f59e0b":"#ef4444";
+          const statusL=st.complete?"Complete":st.partial?(st.done+"/8"):"Not started";
+          return(
+            <div key={p.id} style={{background:"#080808",border:`1px solid ${borderC}`,borderRadius:12,marginBottom:8,overflow:"hidden"}}>
+              {/* Header row */}
+              <div style={{padding:"12px 14px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                  <div style={{fontWeight:700,fontSize:14}}>{p.name}</div>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{fontSize:10,color:statusC,fontWeight:700,background:`${statusC}18`,padding:"2px 8px",borderRadius:20}}>{statusL}</div>
+                    <button onClick={function(){setExpanded(function(e){return{...e,[p.id]:!e[p.id]};});}}
+                      style={{background:"#111",border:"1px solid #1f1f1f",borderRadius:8,color:"#6b7280",fontSize:11,fontWeight:700,padding:"4px 10px",cursor:"pointer",outline:"none"}}>
+                      {isExp?"Hide picks ▲":"See picks ▼"}
+                    </button>
+                  </div>
+                </div>
+                {/* Summary row */}
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {[{l:"Champion",v:get("champion")},{l:"Top Scorer",v:get("topscorer")},{l:"Most Goals",v:get("mostgoals")}].map(function(r){return(
+                    <div key={r.l} style={{fontSize:10,color:r.v?"#f9fafb":"#374151"}}>
+                      <span style={{color:"#6b7280"}}>{r.l}: </span>{r.v||"–"}
+                    </div>
+                  );})}
+                </div>
+                <div style={{display:"flex",gap:8,marginTop:6}}>
+                  {[{l:"R32",k:"adv_r32",t:32},{l:"R16",k:"adv_r16",t:16},{l:"QF",k:"adv_qf",t:8},{l:"SF",k:"adv_sf",t:4},{l:"Final",k:"adv_final",t:2}].map(function(r){
+                    const arr=getAdv(r.k);const done=arr.length===r.t;
+                    return(<div key={r.l} style={{fontSize:10,fontWeight:700,color:done?"#22c55e":arr.length>0?"#f59e0b":"#374151"}}>{r.l}: {arr.length}/{r.t}</div>);
+                  })}
+                </div>
+              </div>
+              {/* Expandable picks */}
+              {isExp&&(
+                <div style={{borderTop:"1px solid #111",padding:"12px 14px",background:"#050505"}}>
+                  {[{l:"R32",k:"adv_r32",t:32},{l:"R16",k:"adv_r16",t:16},{l:"QF",k:"adv_qf",t:8},{l:"SF",k:"adv_sf",t:4},{l:"Final",k:"adv_final",t:2}].map(function(r){
+                    const arr=getAdv(r.k);
+                    return(
+                      <div key={r.l} style={{marginBottom:12}}>
+                        <div style={{fontSize:11,fontWeight:800,color:"#6b7280",letterSpacing:1,marginBottom:6}}>{r.l} PICKS ({arr.length}/{r.t})</div>
+                        {arr.length===0
+                          ?<div style={{fontSize:11,color:"#374151"}}>No picks saved</div>
+                          :<div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                            {arr.map(function(t){return(
+                              <div key={t} style={{display:"flex",alignItems:"center",gap:4,background:"#111",border:"1px solid #1f1f1f",borderRadius:8,padding:"4px 8px"}}>
+                                <span style={{fontSize:13}}>{FLAGS[t]||"🏳"}</span>
+                                <span style={{fontSize:10,fontWeight:600,color:"#f9fafb"}}>{t}</span>
+                              </div>
+                            );})}
+                          </div>
+                        }
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          ))}
-        </div>);
-      })}
+          );
+        });
+      })()}
     </div>}
   </div>);
 }
