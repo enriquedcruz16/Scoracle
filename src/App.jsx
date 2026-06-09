@@ -1038,7 +1038,6 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
                 <div style={{marginTop:14,paddingTop:12,borderTop:"1px solid #111",textAlign:"center",fontSize:10,color:"#374151"}}>scoracle.live · World Cup 2026 Prediction Game</div>
               </div>
             </div>
-          </div>
             {/* Hidden bonus picks reveal card for html2canvas */}
             <div id="bonusRevealCard" style={{position:"fixed",left:"-9999px",top:0,width:520,background:"#0d0d0d",borderRadius:20,overflow:"hidden",fontFamily:"sans-serif"}}>
               <div style={{background:"linear-gradient(135deg,#1a0f00,#080808)",padding:"18px",textAlign:"center",borderBottom:"1px solid #1f1f1f"}}>
