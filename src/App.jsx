@@ -970,7 +970,7 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
             </div>
             {new Date()>=new Date("2026-06-11T08:00:00+01:00")&&(
               <div style={{display:"flex",gap:8,marginBottom:8}}>
-                <button onClick={saveRevealImage} style={{flex:1,background:"linear-gradient(90deg,#22c55e,#16a34a)",border:"none",borderRadius:10,color:"#fff",fontSize:11,fontWeight:700,padding:"10px",cursor:"pointer",outline:"none"}}>🎉 Save Picks Reveal Image</button>
+                <button onClick={saveRevealImage} style={{flex:1,background:"linear-gradient(90deg,#22c55e,#16a34a)",border:"none",borderRadius:10,color:"#fff",fontSize:11,fontWeight:700,padding:"10px",cursor:"pointer",outline:"none"}>Save Picks Reveal Image</button>
               </div>
             )}
             {/* Hidden image card for html2canvas - 2 column layout */}
@@ -1042,7 +1042,7 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
             {/* Hidden bonus picks reveal card for html2canvas */}
             <div id="bonusRevealCard" style={{position:"fixed",left:"-9999px",top:0,width:520,background:"#0d0d0d",borderRadius:20,overflow:"hidden",fontFamily:"sans-serif"}}>
               <div style={{background:"linear-gradient(135deg,#1a0f00,#080808)",padding:"18px",textAlign:"center",borderBottom:"1px solid #1f1f1f"}}>
-                <div style={{fontSize:28,marginBottom:4}}>🔓</div>
+                <div style={{fontSize:28,marginBottom:4}}>&#128275;</div>
                 <div style={{fontSize:18,fontWeight:800,letterSpacing:4,color:"#f59e0b",marginBottom:3}}>SCORACLE</div>
                 <div style={{fontSize:12,fontWeight:700,color:"#f9fafb",marginBottom:2}}>Bonus Picks Revealed!</div>
                 <div style={{fontSize:10,color:"#6b7280"}}>{"World Cup 2026 · "+sorted.length+" players"}</div>
@@ -1067,7 +1067,7 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
                     const isMe=p.id===ADMIN_ID;
                     return(
                       <div key={p.id} style={{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr",gap:4,background:isMe?"rgba(245,158,11,0.06)":hasAny?"#111":"#0a0a0a",borderRadius:8,padding:"6px 8px",border:isMe?"1px solid rgba(245,158,11,0.25)":"1px solid #1a1a1a",opacity:hasAny?1:0.4}}>
-                        <div style={{fontSize:11,fontWeight:isMe?800:700,color:isMe?"#f59e0b":"#f9fafb",display:"flex",alignItems:"center",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{p.name}{isMe?" ⭐":""}</div>
+                        <div style={{fontSize:11,fontWeight:isMe?800:700,color:isMe?"#f59e0b":"#f9fafb",display:"flex",alignItems:"center",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{p.name}{isMe?" (you)":""}</div>
                         <div style={{textAlign:"center"}}>
                           {champ?<div><div style={{fontSize:13}}>{FLAGS[champ]||"🏳"}</div><div style={{fontSize:8,color:"#d1d5db",marginTop:1}}>{champ}</div></div>:<div style={{fontSize:10,color:"#374151"}}>–</div>}
                         </div>
