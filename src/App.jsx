@@ -353,15 +353,11 @@ export default function App(){
   useEffect(()=>{if(!user)return;supabase.from("predictions").select("*").eq("user_id",user.id).then(({data})=>{
       if(!data)return;
       const p={};
-      data.forEach(x=>{
-        p[x.fixture_id]={homeGoals:x.home_goals,awayGoals:x.away_goals,fixture_id:x.fixture_id};
-      });
-      // Also index by home|away using static fixture data so API ID changes don't break display
-      const staticFix=STATIC_MATCHDAYS.flatMap(function(m){return m.fixtures||[];});
-      staticFix.forEach(function(fix){
-        const pred=p[fix.id];
-        if(pred){p[(fix.home+"|"+fix.away).toLowerCase()]=pred;}
-      });
+      data.forEach(x=>{p[x.fixture_id]={homeGoals:x.home_goals,awayGoals:x.away_goals,fixture_id:x.fixture_id};});
+      // Index by home|away from static fixtures for API ID resilience
+      STATIC_MATCHDAYS.forEach(function(md){(md.fixtures||[]).forEach(function(fix){
+        if(p[fix.id])p[(fix.home+"|"+fix.away).toLowerCase()]=p[fix.id];
+      });});
       setPredictions(p);
     });supabase.from("bonus_answers").select("*").eq("user_id",user.id).then(({data})=>{if(!data)return;const a={};data.forEach(x=>{a[x.question_id]=x.answer;});setBonus(a);const champ=data.find(x=>x.question_id==="champion");if(champ)setChampion(champ.answer);});loadAll();},[user]);
   async function loadAll(){
