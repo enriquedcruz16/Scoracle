@@ -346,7 +346,15 @@ export default function App(){
   },[]);
   async function handleNewPassword(){if(newPw.length<6){setNewPwErr("Password must be at least 6 characters.");return;}setNewPwErr("");const{error:e}=await supabase.auth.updateUser({password:newPw});if(e){setNewPwErr(e.message||"Could not update password.");return;}setNewPwDone(true);setTimeout(function(){setResetMode(false);window.location.hash="";},2000);}
   useEffect(()=>{if(!user)return;supabase.from("predictions").select("*").eq("user_id",user.id).then(({data})=>{if(!data)return;const p={};data.forEach(x=>{p[x.fixture_id]={homeGoals:x.home_goals,awayGoals:x.away_goals};});setPredictions(p);});supabase.from("bonus_answers").select("*").eq("user_id",user.id).then(({data})=>{if(!data)return;const a={};data.forEach(x=>{a[x.question_id]=x.answer;});setBonus(a);const champ=data.find(x=>x.question_id==="champion");if(champ)setChampion(champ.answer);});loadAll();},[user]);
-  async function loadAll(){const{data:pr}=await supabase.from("profiles").select("id,name");const{data:ap}=await supabase.from("predictions").select("*");const{data:ab}=await supabase.from("bonus_answers").select("*");setProfiles(pr||[]);setAllPreds(ap||[]);setAllBonusAnswers(ab||[]);}
+  async function loadAll(){
+    const{data:pr}=await supabase.from("profiles").select("id,name");
+    // Fetch all predictions in batches to bypass 1000 row limit
+    let allAp=[],apOffset=0,apDone=false;
+    while(!apDone){const{data:batch}=await supabase.from("predictions").select("*").range(apOffset,apOffset+999);if(!batch||batch.length===0){apDone=true;}else{allAp=[...allAp,...batch];if(batch.length<1000)apDone=true;else apOffset+=1000;}}
+    let allAb=[],abOffset=0,abDone=false;
+    while(!abDone){const{data:batch}=await supabase.from("bonus_answers").select("*").range(abOffset,abOffset+999);if(!batch||batch.length===0){abDone=true;}else{allAb=[...allAb,...batch];if(batch.length<1000)abDone=true;else abOffset+=1000;}}
+    setProfiles(pr||[]);setAllPreds(allAp);setAllBonusAnswers(allAb);
+  }
   async function runBonusEngine(currentLive,currentAllFix){
     if(!user)return;const lv=currentLive||live;const fx=currentAllFix||allFix;
     const groupsDone=["A","B","C","D","E","F","G","H","I","J","K","L"].every(function(g){return fx.filter(function(f){return(f.group||"").toUpperCase().replace(/GROUP/i,"").trim()===g&&!f.isKnockout;}).every(function(f){return f.isDone;});});
