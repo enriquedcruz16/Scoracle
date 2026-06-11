@@ -238,7 +238,8 @@ async function apiFetch(p){
   if(!r.ok)throw new Error(r.status);
   return r.json();
 }
-function parseFix(data){return data.map(f=>{const s=f.fixture.status.short,isLive=["1H","HT","2H","ET","BT","P","SUSP","INT"].includes(s),isDone=["FT","AET","PEN"].includes(s),dt=new Date(f.fixture.date),rn=parseInt(((f.league.round||"").match(/(\d+)/)||[0,1])[1]);return{id:String(f.fixture.id),rn,group:(f.league.round||"").replace(/Group Stage - /i,"").trim(),home:f.teams.home.name,away:f.teams.away.name,homeLogo:f.teams.home.logo,awayLogo:f.teams.away.logo,date:dt.toLocaleDateString("en-GB",{month:"short",day:"numeric"}),time:dt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}),kickoffISO:f.fixture.date,status:s,elapsed:f.fixture.status.elapsed,venue:f.fixture.venue?.name,isLive,isDone,homeGoals:f.goals.home,awayGoals:f.goals.away};});}
+const GROUP_NUM_TO_LETTER={"1":"A","2":"B","3":"C","4":"D","5":"E","6":"F","7":"G","8":"H","9":"I","10":"J","11":"K","12":"L"};
+function parseFix(data){return data.map(f=>{const s=f.fixture.status.short,isLive=["1H","HT","2H","ET","BT","P","SUSP","INT"].includes(s),isDone=["FT","AET","PEN"].includes(s),dt=new Date(f.fixture.date),rn=parseInt(((f.league.round||"").match(/(\d+)/)||[0,1])[1]);const rawGroup=(f.league.round||"").replace(/Group Stage - /i,"").trim();const group=GROUP_NUM_TO_LETTER[rawGroup]||rawGroup;return{id:String(f.fixture.id),rn,group,home:f.teams.home.name,away:f.teams.away.name,homeLogo:f.teams.home.logo,awayLogo:f.teams.away.logo,date:dt.toLocaleDateString("en-GB",{month:"short",day:"numeric"}),time:dt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}),kickoffISO:f.fixture.date,status:s,elapsed:f.fixture.status.elapsed,venue:f.fixture.venue?.name,isLive,isDone,homeGoals:f.goals.home,awayGoals:f.goals.away};});}
 function buildMD(fixtures){const byR={};fixtures.forEach(f=>{const r=f.rn||1;(byR[r]=byR[r]||[]).push(f);});return Object.entries(byR).sort(([a],[b])=>+a-+b).map(([,fxs],i)=>{const s=[...fxs].sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));return{day:i+1,label:`Matchday ${i+1}`,dates:s[0]?.date+(s.length>1?` – ${s[s.length-1]?.date}`:""),fixtures:s};});}
 function groupTable(gKey,allFix,live,preds){const teams=GROUPS_TEAMS[gKey]||[],t={};teams.forEach(tm=>{t[tm]={team:tm,mp:0,w:0,d:0,l:0,gf:0,ga:0,pts:0};});allFix.filter(f=>(f.group||"").toUpperCase().replace(/GROUP\s*/,"").trim()===gKey).forEach(fix=>{const src=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null)||preds[fix.id];if(!src||src.homeGoals==null)return;const hg=+src.homeGoals,ag=+src.awayGoals,h=t[fix.home],a=t[fix.away];if(!h||!a)return;h.mp++;a.mp++;h.gf+=hg;h.ga+=ag;a.gf+=ag;a.ga+=hg;if(hg>ag){h.w++;h.pts+=3;a.l++;}else if(hg<ag){a.w++;a.pts+=3;h.l++;}else{h.d++;h.pts++;a.d++;a.pts++;}});return Object.values(t).sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga)||b.gf-a.gf);}
 
@@ -349,7 +350,7 @@ export default function App(){
     supabase.auth.onAuthStateChange(async(event,session)=>{if(event==="PASSWORD_RECOVERY"){setResetMode(true);}});
   },[]);
   async function handleNewPassword(){if(newPw.length<6){setNewPwErr("Password must be at least 6 characters.");return;}setNewPwErr("");const{error:e}=await supabase.auth.updateUser({password:newPw});if(e){setNewPwErr(e.message||"Could not update password.");return;}setNewPwDone(true);setTimeout(function(){setResetMode(false);window.location.hash="";},2000);}
-  useEffect(()=>{if(!user)return;supabase.from("predictions").select("*").eq("user_id",user.id).then(({data})=>{if(!data)return;const p={};data.forEach(x=>{p[x.fixture_id]={homeGoals:x.home_goals,awayGoals:x.away_goals};});setPredictions(p);});supabase.from("bonus_answers").select("*").eq("user_id",user.id).then(({data})=>{if(!data)return;const a={};data.forEach(x=>{a[x.question_id]=x.answer;});setBonus(a);const champ=data.find(x=>x.question_id==="champion");if(champ)setChampion(champ.answer);});loadAll();},[user]);
+  useEffect(()=>{if(!user)return;supabase.from("predictions").select("*").eq("user_id",user.id).then(({data})=>{if(!data)return;const p={};data.forEach(x=>{p[x.fixture_id]={homeGoals:x.home_goals,awayGoals:x.away_goals,fixture_id:x.fixture_id};});setPredictions(p);});supabase.from("bonus_answers").select("*").eq("user_id",user.id).then(({data})=>{if(!data)return;const a={};data.forEach(x=>{a[x.question_id]=x.answer;});setBonus(a);const champ=data.find(x=>x.question_id==="champion");if(champ)setChampion(champ.answer);});loadAll();},[user]);
   async function loadAll(){
     const{data:pr}=await supabase.from("profiles").select("id,name");
     // Fetch all predictions in batches to bypass 1000 row limit
@@ -407,7 +408,17 @@ export default function App(){
   const totalFix=allFix.length||48;
   const isAdmin=user?.id===ADMIN_ID;
 
-  async function savePred(id,h,a){const hg=parseInt(h),ag=parseInt(a);if(isNaN(hg)||isNaN(ag))return;setPredictions(p=>({...p,[id]:{homeGoals:hg,awayGoals:ag}}));setSavedId(id);setConfetti(true);setTimeout(()=>setConfetti(false),1400);setTimeout(()=>setSavedId(null),2200);await supabase.from("predictions").upsert({user_id:user.id,fixture_id:id,home_goals:hg,away_goals:ag},{onConflict:"user_id,fixture_id"});loadAll();}
+  async function savePred(id,h,a){
+    const hg=parseInt(h),ag=parseInt(a);if(isNaN(hg)||isNaN(ag))return;
+    // Find API id for this fixture
+    const fix=allFix.find(function(f){return f.id===id;});
+    const apiId=fix&&apiIdMap&&apiIdMap[(fix.home+"|"+fix.away).toLowerCase()];
+    const saveId=apiId||id;
+    setPredictions(p=>({...p,[id]:{homeGoals:hg,awayGoals:ag},...(apiId?{[apiId]:{homeGoals:hg,awayGoals:ag}}:{})}));
+    setSavedId(id);setConfetti(true);setTimeout(()=>setConfetti(false),1400);setTimeout(()=>setSavedId(null),2200);
+    await supabase.from("predictions").upsert({user_id:user.id,fixture_id:saveId,home_goals:hg,away_goals:ag},{onConflict:"user_id,fixture_id"});
+    loadAll();
+  }
   async function saveBonus(id,val){setBonus(p=>({...p,[id]:val}));await supabase.from("bonus_answers").upsert({user_id:user.id,question_id:id,answer:val},{onConflict:"user_id,question_id"});}
   async function signOut(){await supabase.auth.signOut();setUser(null);setPredictions({});setBonus({});setChampion("");}
   function go(t){setTab(t);setMenuOpen(false);}
@@ -482,7 +493,18 @@ export default function App(){
 function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId}){
   const[drafts,setDrafts]=useState({});
   const md=matchdays.find(m=>m.day===selDay)||matchdays[0];
-  function val(id,side){const d=drafts[id],pr=predictions[id];if(d?.[side]!==undefined)return d[side];if(side==="home"&&pr?.homeGoals!==undefined)return String(pr.homeGoals);if(side==="away"&&pr?.awayGoals!==undefined)return String(pr.awayGoals);return "";}
+  function val(id,side){
+    const d=drafts[id];
+    const fix=allFix.find(function(f){return f.id===id;});
+    const apiId=fix&&apiIdMap&&apiIdMap[(fix.home+"|"+fix.away).toLowerCase()];
+    const pr=predictions[id]||(apiId&&predictions[apiId])||(fix&&predictions[(fix.home+"|"+fix.away).toLowerCase()]);
+    if(d?.[side]!==undefined)return d[side];
+    if(side==="home"&&pr?.home_goals!==undefined)return String(pr.home_goals);
+    if(side==="away"&&pr?.away_goals!==undefined)return String(pr.away_goals);
+    if(side==="home"&&pr?.homeGoals!==undefined)return String(pr.homeGoals);
+    if(side==="away"&&pr?.awayGoals!==undefined)return String(pr.awayGoals);
+    return "";
+  }
   return(<div>
     <div style={{overflowX:"auto",padding:"14px 16px 14px",display:"flex",gap:8,borderBottom:"1px solid #0f0f0f"}}>
       {matchdays.map(m=>(<button key={m.day} onClick={()=>setSelDay(m.day)} style={{background:selDay===m.day?`${G}12`:"#0a0a0a",border:selDay===m.day?`1px solid ${G}`:"1px solid #1a1a1a",color:selDay===m.day?G:"#6b7280",borderRadius:12,padding:"9px 16px",cursor:"pointer",textAlign:"left",flexShrink:0,minWidth:120}}><div style={{fontSize:13,fontWeight:700}}>{m.label}</div><div style={{fontSize:10,marginTop:3,opacity:0.6}}>{m.dates}</div></button>))}
