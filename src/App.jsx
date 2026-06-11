@@ -378,7 +378,7 @@ export default function App(){
     }
   }
 
-  const fetchLive=useCallback(async()=>{try{const d=await apiFetch(`/fixtures?league=${LEAGUE_ID}&season=${SEASON}`);if(!d.response?.length){setApiStatus("fallback");return;}const parsed=parseFix(d.response);
+  const fetchLive=useCallback(async()=>{try{const r=await fetch(`/api/fixtures?league=${LEAGUE_ID}&season=${SEASON}`);const d=await r.json();if(!r.ok)throw new Error(r.status);if(!d.response?.length){setApiStatus("fallback");return;}const parsed=parseFix(d.response);
     // Split group stage and knockout fixtures
     const groupFix=parsed.filter(f=>f.rn<=3);
     const knockoutFix=parsed.filter(f=>f.rn>3);
