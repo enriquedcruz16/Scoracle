@@ -5,7 +5,7 @@ const API_KEY = "b08f6877d56ad565b8dbb49558b764eb";
 const API_BASE = "https://v3.football.api-sports.io";
 const LEAGUE_ID = 1; const SEASON = 2026;
 const LOCK_MINUTES = 15;
-const PTS_EXACT = 10; const PTS_RESULT = 5; const PTS_WINNER = 50; const PTS_BONUS = 10;
+const PTS_EXACT = 15; const PTS_RESULT = 5; const PTS_WINNER = 50; const PTS_BONUS = 10;
 const ADMIN_ID = "0c51030f-a4ce-4e6c-8c4c-87ffba2acae2";
 const G = "#f59e0b";
 
@@ -417,20 +417,20 @@ export default function App(){
   useEffect(()=>{if(!user)return;const id=setInterval(function(){loadAll();},30000);return()=>clearInterval(id);},[user]);
 
   const allFix=matchdays.flatMap(m=>m.fixtures);
-  const totalPts=allFix.reduce((s,fix)=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);return s+(pts(predictions[fix.id],r)||0);},0);
-  const predCount=Object.keys(predictions).length;
-  const totalFix=allFix.length||48;
+  const totalPts=allFix.reduce((s,fix)=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);const staticId=HOME_AWAY_TO_STATIC_ID[(fix.home+"|"+fix.away).toLowerCase()];const pred=predictions[fix.id]||(staticId&&predictions[staticId]);return s+(pts(pred,r)||0);},0);
+  // Only count predictions against real fixture IDs (s_A1 etc), not the home|away duplicate keys
+  const predCount=Object.keys(predictions).filter(k=>k.startsWith("s_")||/^\d+$/.test(k)).length;
+  const totalFix=STATIC_MATCHDAYS.reduce((s,md)=>s+md.fixtures.length,0)+KNOCKOUT_BRACKET.reduce((s,kb)=>s+kb.fixtures.length,0);
   const isAdmin=user?.id===ADMIN_ID;
 
   async function savePred(id,h,a){
     const hg=parseInt(h),ag=parseInt(a);if(isNaN(hg)||isNaN(ag))return;
-    // Find API id for this fixture
+    // Always save against the static ID (s_A1 etc) so it matches existing Supabase rows
     const fix=allFix.find(function(f){return f.id===id;});
-    const apiId=fix&&apiIdMap&&apiIdMap[(fix.home+"|"+fix.away).toLowerCase()];
-    const saveId=apiId||id;
-    setPredictions(p=>({...p,[id]:{homeGoals:hg,awayGoals:ag},...(apiId?{[apiId]:{homeGoals:hg,awayGoals:ag}}:{})}));
+    const staticId=(fix&&HOME_AWAY_TO_STATIC_ID[(fix.home+"|"+fix.away).toLowerCase()])||id;
+    setPredictions(p=>({...p,[staticId]:{homeGoals:hg,awayGoals:ag},[id]:{homeGoals:hg,awayGoals:ag}}));
     setSavedId(id);setConfetti(true);setTimeout(()=>setConfetti(false),1400);setTimeout(()=>setSavedId(null),2200);
-    await supabase.from("predictions").upsert({user_id:user.id,fixture_id:saveId,home_goals:hg,away_goals:ag},{onConflict:"user_id,fixture_id"});
+    await supabase.from("predictions").upsert({user_id:user.id,fixture_id:staticId,home_goals:hg,away_goals:ag},{onConflict:"user_id,fixture_id"});
     loadAll();
   }
   async function saveBonus(id,val){setBonus(p=>({...p,[id]:val}));await supabase.from("bonus_answers").upsert({user_id:user.id,question_id:id,answer:val},{onConflict:"user_id,question_id"});}
@@ -524,7 +524,8 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId,all
       {matchdays.map(m=>(<button key={m.day} onClick={()=>setSelDay(m.day)} style={{background:selDay===m.day?`${G}12`:"#0a0a0a",border:selDay===m.day?`1px solid ${G}`:"1px solid #1a1a1a",color:selDay===m.day?G:"#6b7280",borderRadius:12,padding:"9px 16px",cursor:"pointer",textAlign:"left",flexShrink:0,minWidth:120}}><div style={{fontSize:13,fontWeight:700}}>{m.label}</div><div style={{fontSize:10,marginTop:3,opacity:0.6}}>{m.dates}</div></button>))}
     </div>
     <div style={{padding:16}}>{(md?.fixtures||[]).map(fix=>{
-      const lv=live[fix.id],result=lv||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null),pred=predictions[fix.id],p=pts(pred,result),lk=locked(fix.kickoffISO)||fix.isLive||fix.isDone,isSaved=savedId===fix.id,hv=val(fix.id,"home"),av=val(fix.id,"away"),lm=lockMsg(fix.kickoffISO);
+      const staticId=HOME_AWAY_TO_STATIC_ID[(fix.home+"|"+fix.away).toLowerCase()];
+      const lv=live[fix.id],result=lv||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null),pred=predictions[fix.id]||(staticId&&predictions[staticId]),p=pts(pred,result),lk=locked(fix.kickoffISO)||fix.isLive||fix.isDone,isSaved=savedId===fix.id,hv=val(fix.id,"home"),av=val(fix.id,"away"),lm=lockMsg(fix.kickoffISO);
       return(<div key={fix.id} style={{...S.card,...(isSaved?{borderColor:"#22c55e",boxShadow:"0 0 18px #22c55e2a"}:{}),...(fix.isLive?{borderColor:"#ef444440",boxShadow:"0 0 18px #ef44441a"}:{})}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,gap:8}}>
           <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?fix.group:`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {localDate(fix.kickoffISO)} · {localTime(fix.kickoffISO)}</span>{fix.venue&&<div style={{fontSize:10,color:"#374151",marginTop:2}}>📍 {fix.venue}</div>}{lm&&<div style={{fontSize:10,color:"#f59e0b",marginTop:3,fontWeight:600}}>⏱ {lm}</div>}</div>
@@ -883,8 +884,12 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
 
 
 function StatsTab({allFix,predictions,live,totalPts,predCount,totalFix,bonus,allBonusAnswers,currentUser}){
-  const rm=allFix.reduce((a,fix)=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);if(r)a[fix.id]=r;return a;},{});
-  const played=Object.keys(rm).length,exact=Object.keys(predictions).filter(id=>pts(predictions[id],rm[id])===PTS_EXACT).length,correct=Object.keys(predictions).filter(id=>(pts(predictions[id],rm[id])||0)>=PTS_RESULT).length,acc=predCount>0?Math.round((exact/Math.min(predCount,played||1))*100):0;
+  const rm=allFix.reduce((a,fix)=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);if(r){a[fix.id]=r;const sid=HOME_AWAY_TO_STATIC_ID[(fix.home+"|"+fix.away).toLowerCase()];if(sid)a[sid]=r;}return a;},{});
+  const played=Object.keys(rm).length/2||Object.keys(rm).length; // rm has both api+static keys, divide by 2 isn't right — count distinct fixes
+  const playedCount=allFix.filter(fix=>live[fix.id]!=null||(fix.isDone&&fix.homeGoals!=null)).length;
+  const exact=allFix.filter(fix=>{const sid=HOME_AWAY_TO_STATIC_ID[(fix.home+"|"+fix.away).toLowerCase()];const pred=predictions[fix.id]||(sid&&predictions[sid]);const r=rm[fix.id];return pred&&r&&pts(pred,r)===PTS_EXACT;}).length;
+  const correct=allFix.filter(fix=>{const sid=HOME_AWAY_TO_STATIC_ID[(fix.home+"|"+fix.away).toLowerCase()];const pred=predictions[fix.id]||(sid&&predictions[sid]);const r=rm[fix.id];return pred&&r&&(pts(pred,r)||0)>=PTS_RESULT;}).length;
+  const acc=predCount>0?Math.round((exact/Math.min(predCount,playedCount||1))*100):0;
   const myUserId=currentUser?.id;
   const ub=(allBonusAnswers||[]).filter(b=>b.user_id===myUserId);
   const get=function(k){return ub.find(b=>b.question_id===k)?.answer||"";};
@@ -908,7 +913,7 @@ function StatsTab({allFix,predictions,live,totalPts,predCount,totalFix,bonus,all
   return(<div style={{padding:16}}>
     <div style={S.pageTitle}>My Stats</div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
-      {[{label:"Total Points",value:grandTotal,icon:"🏅",color:"#f59e0b"},{label:"Perfect Scores",value:exact,icon:"🎯",color:"#22c55e"},{label:"Correct Results",value:correct,icon:"✅",color:"#3b82f6"},{label:"Accuracy",value:`${acc}%`,icon:"📈",color:"#a855f7"},{label:"Picks Made",value:`${predCount}/${totalFix}`,icon:"✍️",color:"#ec4899"},{label:"Avg / Match",value:played>0?(totalPts/played).toFixed(1):"0.0",icon:"⚡",color:"#06b6d4"}].map(c=>(<div key={c.label} style={{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:16,textAlign:"center"}}><div style={{width:36,height:36,borderRadius:10,background:c.color+"22",color:c.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,margin:"0 auto 10px"}}>{c.icon}</div><div style={{fontSize:26,fontWeight:800,marginBottom:4}}>{c.value}</div><div style={{fontSize:11,color:"#6b7280"}}>{c.label}</div></div>))}
+      {[{label:"Total Points",value:grandTotal,icon:"🏅",color:"#f59e0b"},{label:"Perfect Scores",value:exact,icon:"🎯",color:"#22c55e"},{label:"Correct Results",value:correct,icon:"✅",color:"#3b82f6"},{label:"Accuracy",value:`${acc}%`,icon:"📈",color:"#a855f7"},{label:"Picks Made",value:`${predCount}/${totalFix}`,icon:"✍️",color:"#ec4899"},{label:"Avg / Match",value:playedCount>0?(totalPts/playedCount).toFixed(1):"0.0",icon:"⚡",color:"#06b6d4"}].map(c=>(<div key={c.label} style={{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:16,textAlign:"center"}}><div style={{width:36,height:36,borderRadius:10,background:c.color+"22",color:c.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,margin:"0 auto 10px"}}>{c.icon}</div><div style={{fontSize:26,fontWeight:800,marginBottom:4}}>{c.value}</div><div style={{fontSize:11,color:"#6b7280"}}>{c.label}</div></div>))}
     </div>
     <div style={{fontSize:15,fontWeight:800,marginBottom:12}}>My Bonus Points</div>
     <div style={{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:14,marginBottom:8}}>
