@@ -938,21 +938,21 @@ function AdvRound({round,bonus,onSave,bonusLocked,downstreamIds}){
   </div>);
 }
 
-function BonusQuestion({q,saved,onSave,teams}){
+function BonusQuestion({q,saved,onSave,teams,bonusLocked}){
   const[draft,setDraft]=useState(saved||"");
   const isDirty=draft&&draft!==saved;
   return(
     <div style={{background:"#080808",border:"1px solid "+(saved?"#22c55e33":"#141414"),borderRadius:14,padding:16,marginBottom:12,transition:"border-color 0.3s"}}>
       <div style={{fontWeight:600,fontSize:14,marginBottom:10}}>{q.q}</div>
-      {q.type==="player"&&<select value={draft} onChange={function(e){setDraft(e.target.value);}} style={{...S.inp,marginBottom:10}}><option value="">Choose a player...</option>{PLAYERS.map(function(p){return <option key={p} value={p}>{p}</option>;})}</select>}
-      {q.type==="team"&&<select value={draft} onChange={function(e){setDraft(e.target.value);}} style={{...S.inp,marginBottom:10}}><option value="">Choose a team...</option>{teams.map(function(t){return <option key={t} value={t}>{FLAGS[t]||""} {t}</option>;})}</select>}
+      {q.type==="player"&&<select value={draft} onChange={function(e){if(!bonusLocked)setDraft(e.target.value);}} disabled={bonusLocked} style={{...S.inp,marginBottom:10,opacity:bonusLocked?0.5:1,cursor:bonusLocked?"default":"pointer"}}><option value="">Choose a player...</option>{PLAYERS.map(function(p){return <option key={p} value={p}>{p}</option>;})}</select>}
+      {q.type==="team"&&<select value={draft} onChange={function(e){if(!bonusLocked)setDraft(e.target.value);}} disabled={bonusLocked} style={{...S.inp,marginBottom:10,opacity:bonusLocked?0.5:1,cursor:bonusLocked?"default":"pointer"}}><option value="">Choose a team...</option>{teams.map(function(t){return <option key={t} value={t}>{FLAGS[t]||""} {t}</option>;})}</select>}
       <div style={{display:"flex",alignItems:"center",gap:8}}>
-        <div style={{flex:1,fontSize:11,color:saved?"#22c55e":"#374151",fontWeight:saved?700:400}}>
-          {saved?"Saved: "+saved:"No answer yet"}
+        <div style={{flex:1,fontSize:11,color:bonusLocked?"#4b5563":saved?"#22c55e":"#374151",fontWeight:saved?700:400}}>
+          {bonusLocked?"Locked":saved?"Saved: "+saved:"No answer yet"}
         </div>
-        <button onClick={function(){if(draft)onSave(q.id,draft);}} disabled={!draft||!isDirty}
-          style={{background:saved&&!isDirty?"linear-gradient(90deg,#22c55e,#16a34a)":draft&&isDirty?"linear-gradient(90deg,#f59e0b,#f97316)":"#0f0f0f",border:draft&&isDirty||saved&&!isDirty?"none":"1px solid #1f1f1f",borderRadius:9,color:saved&&!isDirty?"#fff":draft&&isDirty?"#000":"#374151",fontWeight:800,fontSize:12,padding:"9px 16px",cursor:draft&&isDirty?"pointer":"default",whiteSpace:"nowrap",transition:"all 0.2s",outline:"none"}}>
-          {saved&&!isDirty?"Saved":"Save Pick"}
+        <button onClick={function(){if(draft&&!bonusLocked)onSave(q.id,draft);}} disabled={bonusLocked||!draft||!isDirty}
+          style={{background:bonusLocked?"#0f0f0f":saved&&!isDirty?"linear-gradient(90deg,#22c55e,#16a34a)":draft&&isDirty?"linear-gradient(90deg,#f59e0b,#f97316)":"#0f0f0f",border:!bonusLocked&&(draft&&isDirty||saved&&!isDirty)?"none":"1px solid #1f1f1f",borderRadius:9,color:bonusLocked?"#374151":saved&&!isDirty?"#fff":draft&&isDirty?"#000":"#374151",fontWeight:800,fontSize:12,padding:"9px 16px",cursor:bonusLocked||!isDirty?"default":"pointer",whiteSpace:"nowrap",transition:"all 0.2s",outline:"none"}}>
+          {bonusLocked?"Locked":saved&&!isDirty?"Saved":"Save Pick"}
         </button>
       </div>
     </div>
@@ -960,7 +960,7 @@ function BonusQuestion({q,saved,onSave,teams}){
 }
 
 function BonusTab({bonus,onSave,champion,setChampion,teams,allBonusAnswers,profiles,currentUser,isAdmin}){
-  const bonusLocked=new Date()>=new Date("2026-06-11T13:00:00+01:00");
+  const bonusLocked=new Date()>=new Date("2026-06-11T14:00:00+01:00");
   const[bonusView,setBonusView]=useState("mypicks"); // mypicks | everyone
   const rounds=[
     {id:"r32",label:"Round of 32",count:32,desc:"Pick 32 teams to advance from the group stage",prevId:null,downstream:["r16","qf","sf","final"]},
@@ -1056,40 +1056,48 @@ function BonusTab({bonus,onSave,champion,setChampion,teams,allBonusAnswers,profi
         );
       })}
       {/* Hidden reveal card for html2canvas */}
-      <div id="bonusRevealCard2" style={{position:"fixed",left:"-9999px",top:0,width:520,background:"#0d0d0d",borderRadius:20,overflow:"hidden",fontFamily:"sans-serif"}}>
-        <div style={{background:"linear-gradient(135deg,#1a0f00,#080808)",padding:"16px",textAlign:"center",borderBottom:"1px solid #1f1f1f"}}>
+      <div id="bonusRevealCard2" style={{position:"fixed",left:"-9999px",top:0,width:540,background:"#0d0d0d",borderRadius:20,overflow:"hidden",fontFamily:"sans-serif"}}>
+        <div style={{background:"linear-gradient(135deg,#1a0f00,#080808)",padding:"14px",textAlign:"center",borderBottom:"1px solid #1f1f1f"}}>
           <div style={{fontSize:16,fontWeight:800,letterSpacing:4,color:"#f59e0b",marginBottom:2}}>SCORACLE</div>
-          <div style={{fontSize:11,fontWeight:700,color:"#f9fafb",marginBottom:2}}>Bonus Picks Revealed!</div>
-          <div style={{fontSize:9,color:"#6b7280"}}>{"World Cup 2026 - "+(sortedProfiles.length)+" players"}</div>
+          <div style={{fontSize:11,fontWeight:700,color:"#f9fafb",marginBottom:1}}>Bonus Picks Revealed!</div>
+          <div style={{fontSize:9,color:"#6b7280"}}>{"World Cup 2026 - "+sortedProfiles.length+" players"}</div>
         </div>
         <div style={{padding:12}}>
-          <div style={{display:"grid",gridTemplateColumns:"80px 1fr 1fr 1fr",gap:4,marginBottom:5,padding:"0 4px"}}>
-            <div style={{fontSize:8,fontWeight:800,color:"#6b7280",letterSpacing:1}}>PLAYER</div>
-            <div style={{fontSize:8,fontWeight:800,color:"#f59e0b",letterSpacing:1,textAlign:"center"}}>CHAMPION</div>
-            <div style={{fontSize:8,fontWeight:800,color:"#22c55e",letterSpacing:1,textAlign:"center"}}>GOLDEN BOOT</div>
-            <div style={{fontSize:8,fontWeight:800,color:"#3b82f6",letterSpacing:1,textAlign:"center"}}>MOST GOALS</div>
-          </div>
-          {sortedProfiles.map(function(p){
-            const ub=(allBonusAnswers||[]).filter(b=>b.user_id===p.id);
-            const get=function(k){return ub.find(b=>b.question_id===k)?.answer||"";};
-            const champ=get("champion");const boot=get("topscorer");const goals=get("mostgoals");
-            const isMe=p.id===currentUser?.id;
-            const firstName=p.name.split(" ")[0];
-            return(
-              <div key={p.id} style={{display:"grid",gridTemplateColumns:"80px 1fr 1fr 1fr",gap:4,background:isMe?"rgba(245,158,11,0.06)":"#111",borderRadius:7,padding:"5px 7px",marginBottom:3,border:isMe?"1px solid rgba(245,158,11,0.2)":"none",alignItems:"center",opacity:champ||boot||goals?1:0.35}}>
-                <div style={{fontSize:10,fontWeight:700,color:isMe?"#f59e0b":"#f9fafb",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{firstName}{isMe?" *":""}</div>
-                <div style={{textAlign:"center"}}>
-                  {champ?<div><div style={{fontSize:12}}>{FLAGS[champ]||"🏳"}</div><div style={{fontSize:7,color:isMe?"#f59e0b":"#d1d5db",marginTop:1}}>{champ}</div></div>:<div style={{fontSize:9,color:"#374151"}}>-</div>}
-                </div>
-                <div style={{textAlign:"center"}}>
-                  {boot?<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:2,flexDirection:"column"}}><span style={{fontSize:11}}>{PLAYER_FLAGS[boot]||"🌍"}</span><span style={{fontSize:7,fontWeight:600,color:isMe?"#f59e0b":"#d1d5db",textAlign:"center"}}>{boot.split(" ").slice(-1)[0]}</span></div>:<div style={{fontSize:9,color:"#374151"}}>-</div>}
-                </div>
-                <div style={{textAlign:"center"}}>
-                  {goals?<div><div style={{fontSize:12}}>{FLAGS[goals]||"🏳"}</div><div style={{fontSize:7,color:isMe?"#f59e0b":"#d1d5db",marginTop:1}}>{goals}</div></div>:<div style={{fontSize:9,color:"#374151"}}>-</div>}
-                </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:5}}>
+            {[0,1].map(function(col){return(
+              <div key={col} style={{display:"grid",gridTemplateColumns:"58px 1fr 1fr 1fr",gap:3,padding:"0 3px"}}>
+                <div style={{fontSize:7,fontWeight:800,color:"#6b7280"}}>PLAYER</div>
+                <div style={{fontSize:7,fontWeight:800,color:"#f59e0b",textAlign:"center"}}>WIN</div>
+                <div style={{fontSize:7,fontWeight:800,color:"#22c55e",textAlign:"center"}}>BOOT</div>
+                <div style={{fontSize:7,fontWeight:800,color:"#3b82f6",textAlign:"center"}}>GOALS</div>
               </div>
-            );
-          })}
+            );} )}
+          </div>
+          {(function(){
+            const half=Math.ceil(sortedProfiles.length/2);
+            const left=sortedProfiles.slice(0,half);const right=sortedProfiles.slice(half);
+            function PRow({p}){
+              if(!p)return <div/>;
+              const ub=(allBonusAnswers||[]).filter(function(b){return b.user_id===p.id;});
+              const get=function(k){return ub.find(function(b){return b.question_id===k;})?.answer||"";};
+              const champ=get("champion");const boot=get("topscorer");const goals=get("mostgoals");
+              const isMe=p.id===currentUser?.id;
+              const firstName=p.name.split(" ")[0];
+              const bootSurname=boot?boot.split(" ").slice(-1)[0].substring(0,5):"";
+              return(
+                <div style={{display:"grid",gridTemplateColumns:"58px 1fr 1fr 1fr",gap:3,background:isMe?"rgba(245,158,11,0.06)":"#111",borderRadius:6,padding:"4px 5px",border:isMe?"1px solid rgba(245,158,11,0.2)":"none",alignItems:"center",opacity:champ||boot||goals?1:0.3}}>
+                  <div style={{fontSize:9,fontWeight:700,color:isMe?"#f59e0b":"#f9fafb",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{firstName}{isMe?" *":""}</div>
+                  <div style={{textAlign:"center"}}>{champ?<div><div style={{fontSize:11}}>{FLAGS[champ]||"🏳"}</div><div style={{fontSize:6,color:isMe?"#f59e0b":"#d1d5db",marginTop:1,lineHeight:1}}>{champ.split(" ")[0].substring(0,6)}</div></div>:<div style={{fontSize:8,color:"#374151"}}>-</div>}</div>
+                  <div style={{textAlign:"center"}}>{boot?<div style={{display:"flex",flexDirection:"column",alignItems:"center"}}><span style={{fontSize:11}}>{PLAYER_FLAGS[boot]||"🌍"}</span><span style={{fontSize:6,color:isMe?"#f59e0b":"#d1d5db",lineHeight:1,marginTop:1}}>{bootSurname}</span></div>:<div style={{fontSize:8,color:"#374151"}}>-</div>}</div>
+                  <div style={{textAlign:"center"}}>{goals?<div><div style={{fontSize:11}}>{FLAGS[goals]||"🏳"}</div><div style={{fontSize:6,color:isMe?"#f59e0b":"#d1d5db",marginTop:1,lineHeight:1}}>{goals.split(" ")[0].substring(0,6)}</div></div>:<div style={{fontSize:8,color:"#374151"}}>-</div>}</div>
+                </div>
+              );
+            }
+            return(<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>{left.map(function(p){return<PRow key={p.id} p={p}/>;})}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>{right.map(function(p){return<PRow key={p.id} p={p}/>;})}</div>
+            </div>);
+          })()}
           <div style={{marginTop:10,paddingTop:8,borderTop:"1px solid #111",textAlign:"center",fontSize:8,color:"#374151"}}>scoracle.live - World Cup 2026 - Bonus Picks Revealed</div>
         </div>
       </div>
@@ -1131,7 +1139,7 @@ function BonusTab({bonus,onSave,champion,setChampion,teams,allBonusAnswers,profi
       </div>
     </div>
     {[{id:"topscorer",q:"Who will win the Golden Boot?",type:"player"},{id:"mostgoals",q:"Which team scores most group stage goals?",type:"team"}].map(function(q){
-      return <BonusQuestion key={q.id} q={q} saved={bonus[q.id]||""} onSave={onSave} teams={teams}/>;
+      return <BonusQuestion key={q.id} q={q} saved={bonus[q.id]||""} onSave={onSave} teams={teams} bonusLocked={bonusLocked}/>;
     })}
     <div style={{fontSize:15,fontWeight:800,marginBottom:12,marginTop:24}}>Pick Teams to Advance</div>
     {bonusLocked&&<div style={{background:"#0f0f00",border:"1px solid #f59e0b33",borderRadius:10,padding:"12px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:20}}>🔒</span><span style={{fontSize:12,color:"#f59e0b",fontWeight:600}}>Bonus questions are locked</span></div>}
@@ -1312,43 +1320,51 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
               <button onClick={saveAdminRevealImage} style={{flex:1,background:"linear-gradient(90deg,#22c55e,#16a34a)",border:"none",borderRadius:10,color:"#fff",fontSize:11,fontWeight:700,padding:"10px",cursor:"pointer",outline:"none"}}>Picks Reveal Image</button>
             </div>
             {/* Hidden reveal card for admin - always in DOM */}
-            <div id="bonusRevealCard2" style={{position:"fixed",left:"-9999px",top:0,width:520,background:"#0d0d0d",borderRadius:20,overflow:"hidden",fontFamily:"sans-serif"}}>
-              <div style={{background:"linear-gradient(135deg,#1a0f00,#080808)",padding:"16px",textAlign:"center",borderBottom:"1px solid #1f1f1f"}}>
-                <div style={{fontSize:16,fontWeight:800,letterSpacing:4,color:"#f59e0b",marginBottom:2}}>SCORACLE</div>
-                <div style={{fontSize:11,fontWeight:700,color:"#f9fafb",marginBottom:2}}>Bonus Picks Revealed!</div>
-                <div style={{fontSize:9,color:"#6b7280"}}>{"World Cup 2026 - "+sorted.length+" players"}</div>
+            <div id="bonusRevealCard2" style={{position:"fixed",left:"-9999px",top:0,width:540,background:"#0d0d0d",borderRadius:20,overflow:"hidden",fontFamily:"sans-serif"}}>
+        <div style={{background:"linear-gradient(135deg,#1a0f00,#080808)",padding:"14px",textAlign:"center",borderBottom:"1px solid #1f1f1f"}}>
+          <div style={{fontSize:16,fontWeight:800,letterSpacing:4,color:"#f59e0b",marginBottom:2}}>SCORACLE</div>
+          <div style={{fontSize:11,fontWeight:700,color:"#f9fafb",marginBottom:1}}>Bonus Picks Revealed!</div>
+          <div style={{fontSize:9,color:"#6b7280"}}>{"World Cup 2026 - "+sorted.length+" players"}</div>
+        </div>
+        <div style={{padding:12}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:5}}>
+            {[0,1].map(function(col){return(
+              <div key={col} style={{display:"grid",gridTemplateColumns:"58px 1fr 1fr 1fr",gap:3,padding:"0 3px"}}>
+                <div style={{fontSize:7,fontWeight:800,color:"#6b7280"}}>PLAYER</div>
+                <div style={{fontSize:7,fontWeight:800,color:"#f59e0b",textAlign:"center"}}>WIN</div>
+                <div style={{fontSize:7,fontWeight:800,color:"#22c55e",textAlign:"center"}}>BOOT</div>
+                <div style={{fontSize:7,fontWeight:800,color:"#3b82f6",textAlign:"center"}}>GOALS</div>
               </div>
-              <div style={{padding:12}}>
-                <div style={{display:"grid",gridTemplateColumns:"80px 1fr 1fr 1fr",gap:4,marginBottom:5,padding:"0 4px"}}>
-                  <div style={{fontSize:8,fontWeight:800,color:"#6b7280",letterSpacing:1}}>PLAYER</div>
-                  <div style={{fontSize:8,fontWeight:800,color:"#f59e0b",letterSpacing:1,textAlign:"center"}}>CHAMPION</div>
-                  <div style={{fontSize:8,fontWeight:800,color:"#22c55e",letterSpacing:1,textAlign:"center"}}>GOLDEN BOOT</div>
-                  <div style={{fontSize:8,fontWeight:800,color:"#3b82f6",letterSpacing:1,textAlign:"center"}}>MOST GOALS</div>
+            );} )}
+          </div>
+          {(function(){
+            const half=Math.ceil(sorted.length/2);
+            const left=sorted.slice(0,half);const right=sorted.slice(half);
+            function PRow({p}){
+              if(!p)return <div/>;
+              const ub=(allBonusAnswers||[]).filter(function(b){return b.user_id===p.id;});
+              const get=function(k){return ub.find(function(b){return b.question_id===k;})?.answer||"";};
+              const champ=get("champion");const boot=get("topscorer");const goals=get("mostgoals");
+              const isMe=p.id===ADMIN_ID;
+              const firstName=p.name.split(" ")[0];
+              const bootSurname=boot?boot.split(" ").slice(-1)[0].substring(0,5):"";
+              return(
+                <div style={{display:"grid",gridTemplateColumns:"58px 1fr 1fr 1fr",gap:3,background:isMe?"rgba(245,158,11,0.06)":"#111",borderRadius:6,padding:"4px 5px",border:isMe?"1px solid rgba(245,158,11,0.2)":"none",alignItems:"center",opacity:champ||boot||goals?1:0.3}}>
+                  <div style={{fontSize:9,fontWeight:700,color:isMe?"#f59e0b":"#f9fafb",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{firstName}{isMe?" *":""}</div>
+                  <div style={{textAlign:"center"}}>{champ?<div><div style={{fontSize:11}}>{FLAGS[champ]||"🏳"}</div><div style={{fontSize:6,color:isMe?"#f59e0b":"#d1d5db",marginTop:1,lineHeight:1}}>{champ.split(" ")[0].substring(0,6)}</div></div>:<div style={{fontSize:8,color:"#374151"}}>-</div>}</div>
+                  <div style={{textAlign:"center"}}>{boot?<div style={{display:"flex",flexDirection:"column",alignItems:"center"}}><span style={{fontSize:11}}>{PLAYER_FLAGS[boot]||"🌍"}</span><span style={{fontSize:6,color:isMe?"#f59e0b":"#d1d5db",lineHeight:1,marginTop:1}}>{bootSurname}</span></div>:<div style={{fontSize:8,color:"#374151"}}>-</div>}</div>
+                  <div style={{textAlign:"center"}}>{goals?<div><div style={{fontSize:11}}>{FLAGS[goals]||"🏳"}</div><div style={{fontSize:6,color:isMe?"#f59e0b":"#d1d5db",marginTop:1,lineHeight:1}}>{goals.split(" ")[0].substring(0,6)}</div></div>:<div style={{fontSize:8,color:"#374151"}}>-</div>}</div>
                 </div>
-                {sorted.map(function(p){
-                  const ub=allBonusAnswers.filter(function(b){return b.user_id===p.id;});
-                  const get=function(k){return ub.find(function(b){return b.question_id===k;})?.answer||"";};
-                  const champ=get("champion");const boot=get("topscorer");const goals=get("mostgoals");
-                  const isMe=p.id===ADMIN_ID;
-                  const firstName=p.name.split(" ")[0];
-                  return(
-                    <div key={p.id} style={{display:"grid",gridTemplateColumns:"80px 1fr 1fr 1fr",gap:4,background:isMe?"rgba(245,158,11,0.06)":"#111",borderRadius:7,padding:"5px 7px",marginBottom:3,border:isMe?"1px solid rgba(245,158,11,0.2)":"none",alignItems:"center",opacity:champ||boot||goals?1:0.35}}>
-                      <div style={{fontSize:10,fontWeight:700,color:isMe?"#f59e0b":"#f9fafb",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{firstName}{isMe?" *":""}</div>
-                      <div style={{textAlign:"center"}}>
-                        {champ?<div><div style={{fontSize:12}}>{FLAGS[champ]||"🏳"}</div><div style={{fontSize:7,color:isMe?"#f59e0b":"#d1d5db",marginTop:1}}>{champ}</div></div>:<div style={{fontSize:9,color:"#374151"}}>-</div>}
-                      </div>
-                      <div style={{textAlign:"center"}}>
-                        {boot?<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:2,flexDirection:"column"}}><span style={{fontSize:11}}>{PLAYER_FLAGS[boot]||"🌍"}</span><span style={{fontSize:7,fontWeight:600,color:isMe?"#f59e0b":"#d1d5db",textAlign:"center"}}>{boot.split(" ").slice(-1)[0]}</span></div>:<div style={{fontSize:9,color:"#374151"}}>-</div>}
-                      </div>
-                      <div style={{textAlign:"center"}}>
-                        {goals?<div><div style={{fontSize:12}}>{FLAGS[goals]||"🏳"}</div><div style={{fontSize:7,color:isMe?"#f59e0b":"#d1d5db",marginTop:1}}>{goals}</div></div>:<div style={{fontSize:9,color:"#374151"}}>-</div>}
-                      </div>
-                    </div>
-                  );
-                })}
-                <div style={{marginTop:10,paddingTop:8,borderTop:"1px solid #111",textAlign:"center",fontSize:8,color:"#374151"}}>scoracle.live - World Cup 2026 - Bonus Picks Revealed</div>
-              </div>
-            </div>
+              );
+            }
+            return(<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>{left.map(function(p){return<PRow key={p.id} p={p}/>;})}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>{right.map(function(p){return<PRow key={p.id} p={p}/>;})}</div>
+            </div>);
+          })()}
+          <div style={{marginTop:10,paddingTop:8,borderTop:"1px solid #111",textAlign:"center",fontSize:8,color:"#374151"}}>scoracle.live - World Cup 2026 - Bonus Picks Revealed</div>
+        </div>
+      </div>
             {/* Hidden image card for html2canvas - 2 column layout */}
             <div id="bonusStatusCard" style={{position:"fixed",left:"-9999px",top:0,width:480,background:"#0d0d0d",borderRadius:20,overflow:"hidden",fontFamily:"sans-serif"}}>
               <div style={{background:"linear-gradient(135deg,#1a0f00,#080808)",padding:"20px",textAlign:"center",borderBottom:"1px solid #1f1f1f"}}>
