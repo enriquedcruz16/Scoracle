@@ -1008,7 +1008,7 @@ function BonusQuestion({q,saved,onSave,teams,bonusLocked}){
 }
 
 function BonusTab({bonus,onSave,champion,setChampion,teams,allBonusAnswers,profiles,currentUser,isAdmin}){
-  const bonusLocked=new Date()>=new Date("2026-06-11T14:00:00+01:00");
+  const bonusLocked=new Date()>=new Date("2026-06-11T20:00:00+01:00");
   const[bonusView,setBonusView]=useState("mypicks"); // mypicks | everyone
   const rounds=[
     {id:"r32",label:"Round of 32",count:32,desc:"Pick 32 teams to advance from the group stage",prevId:null,downstream:["r16","qf","sf","final"]},
