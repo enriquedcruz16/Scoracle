@@ -394,22 +394,16 @@ export default function App(){
   }
 
   const fetchLive=useCallback(async()=>{try{const r=await fetch(`/api/fixtures?league=${LEAGUE_ID}&season=${SEASON}`);const d=await r.json();if(!r.ok)throw new Error(r.status);if(!d.response?.length){setApiStatus("fallback");return;}const parsed=parseFix(d.response);
-    // Split group stage and knockout fixtures
-    const groupFix=parsed.filter(f=>f.rn<=3);
+    // Build a home|away -> parsed fixture map for enrichment
+    const apiByPair={};parsed.forEach(f=>{apiByPair[(f.home+"|"+f.away).toLowerCase()]=f;});
+    // Enrich static matchdays with live API data (status, logos, elapsed) but keep static IDs and group labels
+    const enriched=STATIC_MATCHDAYS.map(function(md){return{...md,fixtures:md.fixtures.map(function(fix){const af=apiByPair[(fix.home+"|"+fix.away).toLowerCase()];if(!af)return fix;return{...fix,id:fix.id,homeLogo:af.homeLogo,awayLogo:af.awayLogo,status:af.status,elapsed:af.elapsed,isLive:af.isLive,isDone:af.isDone,homeGoals:af.homeGoals,awayGoals:af.awayGoals};})};});
+    // Add knockout rounds from API if available, otherwise use static bracket
     const knockoutFix=parsed.filter(f=>f.rn>3);
-    // Build matchdays from group stage
-    const mds=buildMD(groupFix);
-    // Add knockout rounds - use API data if available, otherwise use static bracket
-    if(knockoutFix.length>0){
-      const knockoutMDs=buildMD(knockoutFix);
-      knockoutMDs.forEach((md,i)=>{md.day=mds.length+i+1;mds.push(md);});
-    } else {
-      // Merge static knockout bracket
-      KNOCKOUT_BRACKET.forEach(kb=>{kb.day=mds.length+(kb.day-3);mds.push(kb);});
-    }
-    if(mds.length)setMatchdays(mds);
-    const nl={};parsed.forEach(f=>{if((f.isLive||f.isDone)&&f.homeGoals!=null)nl[f.id]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};});
-    // Build a home+away -> API id map so predictions saved against API ids are found
+    const knockoutMDs=knockoutFix.length>0?buildMD(knockoutFix).map((md,i)=>({...md,day:enriched.length+i+1})):KNOCKOUT_BRACKET.map(kb=>({...kb,day:enriched.length+(kb.day-3)}));
+    setMatchdays([...enriched,...knockoutMDs]);
+    const nl={};parsed.forEach(f=>{if((f.isLive||f.isDone)&&f.homeGoals!=null){nl[f.id]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};// Also index by static ID so live scores show on predict tab
+    const sid=HOME_AWAY_TO_STATIC_ID[(f.home+"|"+f.away).toLowerCase()];if(sid)nl[sid]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};}});
     const apiIdMap={};parsed.forEach(function(f){apiIdMap[(f.home+"|"+f.away).toLowerCase()]=f.id;});
     setApiIdMap(apiIdMap);
     setLive(nl);setApiStatus("live");runBonusEngine(nl,parsed);}catch(err){console.error("API fetch error:",err);setApiStatus("fallback");}},[]);
