@@ -486,7 +486,7 @@ export default function App(){
       <nav style={S.botNav}>{NAV.map(n=>(<button key={n.id} onClick={()=>go(n.id)} style={{flex:1,background:"none",border:"none",color:tab===n.id?G:"#374151",padding:"10px 4px 8px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,position:"relative"}}>{tab===n.id&&<div style={{position:"absolute",top:0,left:"12%",width:"76%",height:2,background:G,borderRadius:"0 0 3px 3px"}}/>}<span style={{fontSize:19}}>{n.icon}</span><span style={{fontSize:9,fontWeight:600,letterSpacing:0.5}}>{n.label}</span></button>))}</nav>
 
       <main>
-        {tab==="predict"&&<PredTab matchdays={matchdays} selDay={selDay} setSelDay={setSelDay} predictions={predictions} live={live} onSave={savePred} savedId={savedId}/>}
+        {tab==="predict"&&<PredTab matchdays={matchdays} selDay={selDay} setSelDay={setSelDay} predictions={predictions} live={live} onSave={savePred} savedId={savedId} allFix={allFix} apiIdMap={apiIdMap}/>}
         {tab==="standings"&&<StandTab allFix={allFix} live={live} predictions={predictions}/>}
         {tab==="leaderboard"&&<RankTab allFix={allFix} live={live} allPreds={allPreds} profiles={profiles} currentUser={user} allBonusAnswers={allBonusAnswers}/>}
         {tab==="bonus"&&<BonusTab bonus={bonus} onSave={saveBonus} champion={champion} setChampion={c=>{setChampion(c);saveBonus("champion",c);}} teams={ALL_TEAMS} allBonusAnswers={allBonusAnswers} profiles={profiles} currentUser={user} isAdmin={isAdmin}/>}
@@ -499,7 +499,7 @@ export default function App(){
   );
 }
 
-function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId}){
+function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId,allFix,apiIdMap}){
   const[drafts,setDrafts]=useState({});
   const md=matchdays.find(m=>m.day===selDay)||matchdays[0];
   function val(id,side){
@@ -1142,8 +1142,8 @@ function BonusTab({bonus,onSave,champion,setChampion,teams,allBonusAnswers,profi
               );
             }
             return(<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-              <div style={{display:"flex",flexDirection:"column",gap:3}}>{left.map(function(p){returnrenderPRow(p);})}</div>
-              <div style={{display:"flex",flexDirection:"column",gap:3}}>{right.map(function(p){returnrenderPRow(p);})}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>{left.map(function(p){return renderPRow(p);})}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>{right.map(function(p){return renderPRow(p);})}</div>
             </div>);
           })()}
           <div style={{marginTop:10,paddingTop:8,borderTop:"1px solid #111",textAlign:"center",fontSize:8,color:"#374151"}}>scoracle.live - World Cup 2026 - Bonus Picks Revealed</div>
@@ -1409,8 +1409,8 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
               );
             }
             return(<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-              <div style={{display:"flex",flexDirection:"column",gap:3}}>{left.map(function(p){returnrenderPRow(p);})}</div>
-              <div style={{display:"flex",flexDirection:"column",gap:3}}>{right.map(function(p){returnrenderPRow(p);})}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>{left.map(function(p){return renderPRow(p);})}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>{right.map(function(p){return renderPRow(p);})}</div>
             </div>);
           })()}
           <div style={{marginTop:10,paddingTop:8,borderTop:"1px solid #111",textAlign:"center",fontSize:8,color:"#374151"}}>scoracle.live - World Cup 2026 - Bonus Picks Revealed</div>
