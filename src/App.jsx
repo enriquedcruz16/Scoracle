@@ -194,6 +194,29 @@ const PLAYERS = [
   "Serge Gnabry","Soufiane Rahimi","Takumi Minamino","Thomas Müller","Vinicius Jr",
   "Wout Weghorst","Florian Wirtz","Jamal Musiala","Patrik Schick","Enner Valencia",
 ].sort();
+const PLAYER_FLAGS={
+  "Achraf Hakimi":"🇲🇦","Alexander Isak":"🇸🇪","Alexis Mac Allister":"🇦🇷","Álvaro Morata":"🇪🇸","Andrej Kramarić":"🇭🇷",
+  "Antoine Griezmann":"🇫🇷","Ayoub El Kaabi":"🇲🇦","Ayoze Pérez":"🇪🇸","Bradley Barcola":"🇫🇷","Brian Brobbey":"🇳🇱",
+  "Bruno Fernandes":"🇵🇹","Bukayo Saka":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Callum McGregor":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","Charles De Ketelaere":"🇧🇪","Che Adams":"🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+  "Christian Pulisic":"🇺🇸","Cody Gakpo":"🇳🇱","Cole Palmer":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Cristiano Ronaldo":"🇵🇹","Darwin Núñez":"🇺🇾",
+  "Désiré Doué":"🇫🇷","Diogo Jota":"🇵🇹","Dodi Lukebakio":"🇧🇪","Dominic Solanke":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Donyell Malen":"🇳🇱",
+  "Endrick":"🇧🇷","Erling Haaland":"🇳🇴","Facundo Pellistri":"🇺🇾","Federico Viñas":"🇺🇾","Ferran Torres":"🇪🇸",
+  "Folarin Balogun":"🇺🇸","Gabriel Martinelli":"🇧🇷","Gonçalo Ramos":"🇵🇹","Haji Wright":"🇺🇸","Harry Kane":"🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+  "Heung-min Son":"🇰🇷","Hirving Lozano":"🇲🇽","Hwang Hee-chan":"🇰🇷","Igor Thiago":"🇧🇷","Iliman Ndiaye":"🇸🇳",
+  "Iñaki Williams":"🇧🇮","Ismaïla Sarr":"🇸🇳","Ivan Perišić":"🇭🇷","Jean-Philippe Mateta":"🇫🇷","Jeremy Doku":"🇧🇪",
+  "Jhon Córdoba":"🇨🇴","Jordy Caicedo":"🇪🇨","Jude Bellingham":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Julián Álvarez":"🇦🇷","Julián Quiñones":"🇲🇽",
+  "Kaoru Mitoma":"🇯🇵","Kingsley Coman":"🇫🇷","Kylian Mbappé":"🇫🇷","Lamine Yamal":"🇪🇸","Lautaro Martínez":"🇦🇷",
+  "Leandro Trossard":"🇧🇪","Leroy Sané":"🇩🇪","Lionel Messi":"🇦🇷","Luis Díaz":"🇨🇴","Luiz Henrique":"🇧🇷",
+  "Lyndon Dykes":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","Maghnes Akliouche":"🇫🇷","Marcus Rashford":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Marcus Thuram":"🇫🇷","Marko Livaja":"🇭🇷",
+  "Martin Ødegaard":"🇳🇴","Matheus Cunha":"🇧🇷","Memphis Depay":"🇳🇱","Michael Olise":"🇫🇷","Mikel Oyarzabal":"🇪🇸",
+  "Mohamed Kudus":"🇬🇭","Mohamed Salah":"🇪🇬","Mostafa Mohamed":"🇪🇬","Neymar":"🇧🇷","Nicolas Jackson":"🇸🇳",
+  "Niclas Füllkrug":"🇩🇪","Nico Williams":"🇪🇸","Nicolas Paz":"🇦🇷","Nishan Velupillay":"🇿🇦","Ollie Watkins":"🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+  "Omar Marmoush":"🇪🇬","Oscar Bobb":"🇳🇴","Ousmane Dembélé":"🇫🇷","Oh Hyeon-gyu":"🇰🇷","Phil Foden":"🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+  "Rafael Leão":"🇵🇹","Randal Kolo Muani":"🇫🇷","Raúl Jiménez":"🇲🇽","Rayan Cherki":"🇫🇷",
+  "Ricardo Pepi":"🇺🇸","Richarlison":"🇧🇷","Romelu Lukaku":"🇧🇪","Sadio Mané":"🇸🇳","Santiago Giménez":"🇲🇽",
+  "Serge Gnabry":"🇩🇪","Soufiane Rahimi":"🇲🇦","Takumi Minamino":"🇯🇵","Thomas Müller":"🇩🇪","Vinicius Jr":"🇧🇷",
+  "Wout Weghorst":"🇳🇱","Florian Wirtz":"🇩🇪","Jamal Musiala":"🇩🇪","Patrik Schick":"🇨🇿","Enner Valencia":"🇪🇨",
+};
 const NAV = [{id:"predict",icon:"🎯",label:"Predict"},{id:"standings",icon:"📋",label:"Standings"},{id:"leaderboard",icon:"🏆",label:"Leaderboard"},{id:"bonus",icon:"⭐",label:"Bonus"},{id:"stats",icon:"📊",label:"Stats"}];
 const MENU_EXTRA = [{id:"bracket",icon:"🗂️",label:"My Bracket"},{id:"rules",icon:"📖",label:"Rules"}];
 
@@ -1059,7 +1082,7 @@ function BonusTab({bonus,onSave,champion,setChampion,teams,allBonusAnswers,profi
                   {champ?<div><div style={{fontSize:12}}>{FLAGS[champ]||"🏳"}</div><div style={{fontSize:7,color:isMe?"#f59e0b":"#d1d5db",marginTop:1}}>{champ}</div></div>:<div style={{fontSize:9,color:"#374151"}}>-</div>}
                 </div>
                 <div style={{textAlign:"center"}}>
-                  {boot?<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:2}}><span style={{fontSize:10}}>{FLAGS[boot]||""}</span><span style={{fontSize:8,fontWeight:600,color:isMe?"#f59e0b":"#d1d5db"}}>{boot.split(" ").slice(-1)[0]}</span></div>:<div style={{fontSize:9,color:"#374151"}}>-</div>}
+                  {boot?<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:2,flexDirection:"column"}}><span style={{fontSize:11}}>{PLAYER_FLAGS[boot]||"🌍"}</span><span style={{fontSize:7,fontWeight:600,color:isMe?"#f59e0b":"#d1d5db",textAlign:"center"}}>{boot.split(" ").slice(-1)[0]}</span></div>:<div style={{fontSize:9,color:"#374151"}}>-</div>}
                 </div>
                 <div style={{textAlign:"center"}}>
                   {goals?<div><div style={{fontSize:12}}>{FLAGS[goals]||"🏳"}</div><div style={{fontSize:7,color:isMe?"#f59e0b":"#d1d5db",marginTop:1}}>{goals}</div></div>:<div style={{fontSize:9,color:"#374151"}}>-</div>}
@@ -1315,7 +1338,7 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
                         {champ?<div><div style={{fontSize:12}}>{FLAGS[champ]||"🏳"}</div><div style={{fontSize:7,color:isMe?"#f59e0b":"#d1d5db",marginTop:1}}>{champ}</div></div>:<div style={{fontSize:9,color:"#374151"}}>-</div>}
                       </div>
                       <div style={{textAlign:"center"}}>
-                        {boot?<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:2}}><span style={{fontSize:10}}>{FLAGS[boot]||""}</span><span style={{fontSize:8,fontWeight:600,color:isMe?"#f59e0b":"#d1d5db"}}>{boot.split(" ").slice(-1)[0]}</span></div>:<div style={{fontSize:9,color:"#374151"}}>-</div>}
+                        {boot?<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:2,flexDirection:"column"}}><span style={{fontSize:11}}>{PLAYER_FLAGS[boot]||"🌍"}</span><span style={{fontSize:7,fontWeight:600,color:isMe?"#f59e0b":"#d1d5db",textAlign:"center"}}>{boot.split(" ").slice(-1)[0]}</span></div>:<div style={{fontSize:9,color:"#374151"}}>-</div>}
                       </div>
                       <div style={{textAlign:"center"}}>
                         {goals?<div><div style={{fontSize:12}}>{FLAGS[goals]||"🏳"}</div><div style={{fontSize:7,color:isMe?"#f59e0b":"#d1d5db",marginTop:1}}>{goals}</div></div>:<div style={{fontSize:9,color:"#374151"}}>-</div>}
