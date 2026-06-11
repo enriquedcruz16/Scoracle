@@ -1115,7 +1115,7 @@ function BonusTab({bonus,onSave,champion,setChampion,teams,allBonusAnswers,profi
           {(function(){
             const half=Math.ceil(sortedProfiles.length/2);
             const left=sortedProfiles.slice(0,half);const right=sortedProfiles.slice(half);
-            function PRow({p}){
+            function renderPRow(p){
               if(!p)return <div/>;
               const ub=(allBonusAnswers||[]).filter(function(b){return b.user_id===p.id;});
               const get=function(k){return ub.find(function(b){return b.question_id===k;})?.answer||"";};
@@ -1133,8 +1133,8 @@ function BonusTab({bonus,onSave,champion,setChampion,teams,allBonusAnswers,profi
               );
             }
             return(<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-              <div style={{display:"flex",flexDirection:"column",gap:3}}>{left.map(function(p){return<PRow key={p.id} p={p}/>;})}</div>
-              <div style={{display:"flex",flexDirection:"column",gap:3}}>{right.map(function(p){return<PRow key={p.id} p={p}/>;})}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>{left.map(function(p){returnrenderPRow(p);})}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>{right.map(function(p){returnrenderPRow(p);})}</div>
             </div>);
           })()}
           <div style={{marginTop:10,paddingTop:8,borderTop:"1px solid #111",textAlign:"center",fontSize:8,color:"#374151"}}>scoracle.live - World Cup 2026 - Bonus Picks Revealed</div>
@@ -1382,7 +1382,7 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
           {(function(){
             const half=Math.ceil(sorted.length/2);
             const left=sorted.slice(0,half);const right=sorted.slice(half);
-            function PRow({p}){
+            function renderPRow(p){
               if(!p)return <div/>;
               const ub=(allBonusAnswers||[]).filter(function(b){return b.user_id===p.id;});
               const get=function(k){return ub.find(function(b){return b.question_id===k;})?.answer||"";};
@@ -1400,8 +1400,8 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
               );
             }
             return(<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-              <div style={{display:"flex",flexDirection:"column",gap:3}}>{left.map(function(p){return<PRow key={p.id} p={p}/>;})}</div>
-              <div style={{display:"flex",flexDirection:"column",gap:3}}>{right.map(function(p){return<PRow key={p.id} p={p}/>;})}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>{left.map(function(p){returnrenderPRow(p);})}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>{right.map(function(p){returnrenderPRow(p);})}</div>
             </div>);
           })()}
           <div style={{marginTop:10,paddingTop:8,borderTop:"1px solid #111",textAlign:"center",fontSize:8,color:"#374151"}}>scoracle.live - World Cup 2026 - Bonus Picks Revealed</div>
