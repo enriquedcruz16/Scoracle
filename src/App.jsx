@@ -331,6 +331,11 @@ function Auth({onLogin}){
 }
 
 
+// Build a stable map from "home|away" -> static fixture ID (s_A1 etc)
+// Used to match API numeric IDs back to the static IDs stored in Supabase
+const HOME_AWAY_TO_STATIC_ID={};
+STATIC_MATCHDAYS.forEach(function(md){(md.fixtures||[]).forEach(function(fix){HOME_AWAY_TO_STATIC_ID[(fix.home+"|"+fix.away).toLowerCase()]=fix.id;});});
+
 export default function App(){
   const[user,setUser]=useState(null);const[authLoad,setAuthLoad]=useState(true);
   const[tab,setTab]=useState("predict");const[menuOpen,setMenuOpen]=useState(false);
@@ -505,8 +510,8 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId,all
   function val(id,side){
     const d=drafts[id];
     const fix=allFix.find(function(f){return f.id===id;});
-    const apiId=fix&&apiIdMap&&apiIdMap[(fix.home+"|"+fix.away).toLowerCase()];
-    const pr=predictions[id]||(apiId&&predictions[apiId])||(fix&&predictions[(fix.home+"|"+fix.away).toLowerCase()]);
+    const staticId=fix&&HOME_AWAY_TO_STATIC_ID[(fix.home+"|"+fix.away).toLowerCase()];
+    const pr=predictions[id]||(staticId&&predictions[staticId])||(fix&&predictions[(fix.home+"|"+fix.away).toLowerCase()]);
     if(d?.[side]!==undefined)return d[side];
     if(side==="home"&&pr?.home_goals!==undefined)return String(pr.home_goals);
     if(side==="away"&&pr?.away_goals!==undefined)return String(pr.away_goals);
@@ -686,9 +691,14 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
     });
     return{bp,bBreakdown};
   }
+  // Build a map from home|away -> static fixture id, so we can find predictions stored as s_A1 etc
+  function findPred(myP,fix){
+    const staticId=HOME_AWAY_TO_STATIC_ID[(fix.home+"|"+fix.away).toLowerCase()];
+    return myP.find(x=>x.fixture_id===fix.id)||(staticId&&myP.find(x=>x.fixture_id===staticId));
+  }
   const userTotals=profiles.map(pr=>{
     const myP=allPreds.filter(p=>p.user_id===pr.id);let tp=0,exact=0,correct=0;
-    allFix.forEach(fix=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);if(!r)return;const p=myP.find(x=>x.fixture_id===fix.id);if(!p)return;const sc=pts({homeGoals:p.home_goals,awayGoals:p.away_goals},r);if(sc===PTS_EXACT){tp+=sc;exact++;}else if(sc===PTS_RESULT){tp+=sc;correct++;}});
+    allFix.forEach(fix=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);if(!r)return;const p=findPred(myP,fix);if(!p)return;const sc=pts({homeGoals:p.home_goals,awayGoals:p.away_goals},r);if(sc===PTS_EXACT){tp+=sc;exact++;}else if(sc===PTS_RESULT){tp+=sc;correct++;}});
     const{bp,bBreakdown}=calcBonusPoints(pr.id);
     return{id:pr.id,name:pr.name,pts:tp+bp,matchPts:tp,bonusPts:bp,bBreakdown,exact,correct,preds:myP};
   }).sort((a,b)=>b.pts-a.pts||b.exact-a.exact||b.correct-a.correct||a.name.localeCompare(b.name));
@@ -698,7 +708,7 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
   function getForm(u){
     return last5Fix.map(fix=>{
       const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);
-      const pred=u.preds.find(p=>p.fixture_id===fix.id);
+      const pred=findPred(u.preds,fix);
       if(!pred)return"n";
       const sc=pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals},r);
       return sc===PTS_EXACT?"p":sc===PTS_RESULT?"r":"w";
@@ -746,10 +756,10 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
           <>
             {/* Stats bar first */}
             {result!=null&&(()=>{
-              const ex=userTotals.filter(u=>{const p=u.preds.find(x=>x.fixture_id===fix.id);return p&&pts({homeGoals:p.home_goals,awayGoals:p.away_goals},result)===PTS_EXACT;}).length;
-              const res=userTotals.filter(u=>{const p=u.preds.find(x=>x.fixture_id===fix.id);return p&&pts({homeGoals:p.home_goals,awayGoals:p.away_goals},result)===PTS_RESULT;}).length;
-              const wrong=userTotals.filter(u=>{const p=u.preds.find(x=>x.fixture_id===fix.id);return p&&pts({homeGoals:p.home_goals,awayGoals:p.away_goals},result)===0;}).length;
-              const none=userTotals.filter(u=>!u.preds.find(x=>x.fixture_id===fix.id)).length;
+              const ex=userTotals.filter(u=>{const p=findPred(u.preds,fix);return p&&pts({homeGoals:p.home_goals,awayGoals:p.away_goals},result)===PTS_EXACT;}).length;
+              const res=userTotals.filter(u=>{const p=findPred(u.preds,fix);return p&&pts({homeGoals:p.home_goals,awayGoals:p.away_goals},result)===PTS_RESULT;}).length;
+              const wrong=userTotals.filter(u=>{const p=findPred(u.preds,fix);return p&&pts({homeGoals:p.home_goals,awayGoals:p.away_goals},result)===0;}).length;
+              const none=userTotals.filter(u=>!findPred(u.preds,fix)).length;
               return(
                 <div style={{display:"flex",gap:6,marginBottom:12}}>
                   {[{n:ex,l:"Perfect",c:"#22c55e"},{n:res,l:"Result",c:"#f59e0b"},{n:wrong,l:"Wrong",c:"#ef4444"},{n:none,l:"No pick",c:"#374151"}].map(s=>(
@@ -764,7 +774,7 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
             {/* 6-per-row grid */}
             <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
               {userTotals.map(u=>{
-                const pred=u.preds.find(p=>p.fixture_id===fix.id);
+                const pred=findPred(u.preds,fix);
                 const sc=pred&&result?pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals},result):null;
                 const bg=sc===PTS_EXACT?"rgba(34,197,94,0.1)":sc===PTS_RESULT?"rgba(245,158,11,0.1)":sc===0?"rgba(239,68,68,0.1)":"#111";
                 const border=`1px solid ${sc===PTS_EXACT?"rgba(34,197,94,0.3)":sc===PTS_RESULT?"rgba(245,158,11,0.3)":sc===0?"rgba(239,68,68,0.3)":"#1a1a1a"}`;
@@ -1008,7 +1018,7 @@ function BonusQuestion({q,saved,onSave,teams,bonusLocked}){
 }
 
 function BonusTab({bonus,onSave,champion,setChampion,teams,allBonusAnswers,profiles,currentUser,isAdmin}){
-  const bonusLocked=new Date()>=new Date("2026-06-11T20:00:00+01:00");
+  const bonusLocked=new Date()>=new Date("2026-06-11T14:00:00+01:00");
   const[bonusView,setBonusView]=useState("mypicks"); // mypicks | everyone
   const rounds=[
     {id:"r32",label:"Round of 32",count:32,desc:"Pick 32 teams to advance from the group stage",prevId:null,downstream:["r16","qf","sf","final"]},
