@@ -333,7 +333,7 @@ export default function App(){
   const[predictions,setPredictions]=useState({});const[live,setLive]=useState({});
   const[bonus,setBonus]=useState({});const[champion,setChampion]=useState(""); // loaded from bonus answers below
   const[savedId,setSavedId]=useState(null);const[confetti,setConfetti]=useState(false);
-  const[apiStatus,setApiStatus]=useState("fallback");
+  const[apiStatus,setApiStatus]=useState("fallback");const[apiIdMap,setApiIdMap]=useState({});
   const[allPreds,setAllPreds]=useState([]);const[profiles,setProfiles]=useState([]);const[allBonusAnswers,setAllBonusAnswers]=useState([]);
   const poll=useRef(null);
 
@@ -381,7 +381,11 @@ export default function App(){
       KNOCKOUT_BRACKET.forEach(kb=>{kb.day=mds.length+(kb.day-3);mds.push(kb);});
     }
     if(mds.length)setMatchdays(mds);
-    const nl={};parsed.forEach(f=>{if((f.isLive||f.isDone)&&f.homeGoals!=null)nl[f.id]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};});setLive(nl);setApiStatus("live");runBonusEngine(nl,parsed);}catch{setApiStatus("fallback");}},[]);
+    const nl={};parsed.forEach(f=>{if((f.isLive||f.isDone)&&f.homeGoals!=null)nl[f.id]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};});
+    // Build a home+away -> API id map so predictions saved against API ids are found
+    const apiIdMap={};parsed.forEach(function(f){apiIdMap[(f.home+"|"+f.away).toLowerCase()]=f.id;});
+    setApiIdMap(apiIdMap);
+    setLive(nl);setApiStatus("live");runBonusEngine(nl,parsed);}catch{setApiStatus("fallback");}},[]);
   useEffect(()=>{fetchLive();poll.current=setInterval(fetchLive,30000);return()=>clearInterval(poll.current);},[fetchLive]);
   useEffect(()=>{if(!user)return;const id=setInterval(function(){loadAll();},30000);return()=>clearInterval(id);},[user]);
 
@@ -457,7 +461,7 @@ export default function App(){
         {tab==="stats"&&<StatsTab allFix={allFix} predictions={predictions} live={live} totalPts={totalPts} predCount={predCount} totalFix={totalFix} bonus={bonus} allBonusAnswers={allBonusAnswers} currentUser={user}/>}
         {tab==="rules"&&<RulesTab/>}
         {tab==="bracket"&&<BracketTab predictions={predictions} allFix={allFix} live={live}/>}
-        {tab==="admin"&&isAdmin&&<AdminTab profiles={profiles} allPreds={allPreds} allBonusAnswers={allBonusAnswers} allFix={allFix} live={live} matchdays={matchdays}/>}
+        {tab==="admin"&&isAdmin&&<AdminTab profiles={profiles} allPreds={allPreds} allBonusAnswers={allBonusAnswers} allFix={allFix} live={live} matchdays={matchdays} apiIdMap={apiIdMap}/>}
       </main>
     </div>
   );
@@ -1173,7 +1177,7 @@ function RulesTab(){
   </div>);
 }
 
-function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
+function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiIdMap}){
   const[view,setView]=useState("overview");
   const[expanded,setExpanded]=useState({});
   const totalFix=allFix.length,totalUsers=profiles.length,totalPreds=allPreds.length;
@@ -1188,7 +1192,10 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays}){
         ?<div style={{textAlign:"center",color:"#22c55e",padding:32,fontWeight:600}}>🎉 Everyone has submitted all picks!</div>
         :stats.filter(u=>u.missing>0).map(u=>{
           const submittedIds=allPreds.filter(p=>p.user_id===u.id).map(p=>p.fixture_id);
-          const missingFixes=allFix.filter(f=>!submittedIds.includes(f.id));
+          const missingFixes=allFix.filter(function(f){
+            const apiId=(apiIdMap||{})[(f.home+"|"+f.away).toLowerCase()];
+            return !submittedIds.includes(f.id)&&(!apiId||!submittedIds.includes(apiId));
+          });
           return(<div key={u.id} style={{background:"#080808",border:"1px solid #141414",borderRadius:12,padding:"12px 14px",marginBottom:8}}>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:missingFixes.length>0?10:0}}>
               <div style={{flex:1}}>
