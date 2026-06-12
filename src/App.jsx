@@ -245,6 +245,7 @@ const API_TEAM_NAME_MAP={
   "Czech Republic":"Czechia",
   "Bosnia":"Bosnia-Herzegovina",
   "Bosnia and Herzegovina":"Bosnia-Herzegovina",
+  "Bosnia & Herzegovina":"Bosnia-Herzegovina",
   "Korea Republic":"South Korea",
   "Republic of Korea":"South Korea",
   "Ivory Coast":"Ivory Coast",
