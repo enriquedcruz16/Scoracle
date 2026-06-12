@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/confirmed", "destination": "/confirmed.html" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/api/:path*", "destination": "/api/:path*" },
+    { "source": "/:path*", "destination": "/index.html" }
   ]
 }
