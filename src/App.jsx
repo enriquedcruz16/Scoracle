@@ -8,6 +8,7 @@ const LOCK_MINUTES = 15;
 const PTS_EXACT = 15; const PTS_RESULT = 5; const PTS_WINNER = 50; const PTS_BONUS = 10;
 const ADMIN_ID = "0c51030f-a4ce-4e6c-8c4c-87ffba2acae2";
 const G = "#f59e0b";
+const VAPID_PUBLIC_KEY = process.env.VITE_VAPID_PUBLIC_KEY || "";
 
 const GROUPS_TEAMS = {
   A:["Mexico","South Korea","South Africa","Czechia"],
@@ -357,6 +358,52 @@ STATIC_MATCHDAYS.forEach(function(md){(md.fixtures||[]).forEach(function(fix){HO
 export default function App(){
   const[user,setUser]=useState(null);const[authLoad,setAuthLoad]=useState(true);
   const[tab,setTab]=useState("predict");const[menuOpen,setMenuOpen]=useState(false);
+  const[notifEnabled,setNotifEnabled]=useState(false);
+  const[notifLoading,setNotifLoading]=useState(false);
+
+  // Check if already subscribed on load
+  useEffect(()=>{
+    if(!user||!('serviceWorker' in navigator))return;
+    navigator.serviceWorker.ready.then(async reg=>{
+      const sub=await reg.pushManager.getSubscription();
+      setNotifEnabled(!!sub);
+    });
+  },[user]);
+
+  async function toggleNotifications(){
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)){
+      alert("Push notifications aren't supported on this browser.");return;
+    }
+    setNotifLoading(true);
+    try{
+      const reg=await navigator.serviceWorker.ready;
+      const existing=await reg.pushManager.getSubscription();
+      if(existing){
+        // Unsubscribe
+        await existing.unsubscribe();
+        await supabase.from("push_subscriptions").delete().eq("user_id",user.id);
+        setNotifEnabled(false);
+      } else {
+        // Subscribe
+        const permission=await Notification.requestPermission();
+        if(permission!=="granted"){alert("Please allow notifications in your browser settings.");setNotifLoading(false);return;}
+        const sub=await reg.pushManager.subscribe({
+          userVisibleOnly:true,
+          applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+        await supabase.from("push_subscriptions").upsert({user_id:user.id,subscription:sub.toJSON()},{onConflict:"user_id"});
+        setNotifEnabled(true);
+      }
+    }catch(e){console.error("Notification toggle error:",e);}
+    setNotifLoading(false);
+  }
+
+  function urlBase64ToUint8Array(base64String){
+    const padding="=".repeat((4-base64String.length%4)%4);
+    const base64=(base64String+padding).replace(/-/g,"+").replace(/_/g,"/");
+    const rawData=window.atob(base64);
+    return Uint8Array.from([...rawData].map(c=>c.charCodeAt(0)));
+  }
   const[matchdays,setMatchdays]=useState([...STATIC_MATCHDAYS,...KNOCKOUT_BRACKET]);const[selDay,setSelDay]=useState(1);
   const[predictions,setPredictions]=useState({});const[live,setLive]=useState({});
   const[bonus,setBonus]=useState({});const[champion,setChampion]=useState(""); // loaded from bonus answers below
@@ -477,7 +524,13 @@ export default function App(){
             <div style={{padding:"20px",marginTop:"auto"}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{width:8,height:8,borderRadius:"50%",background:apiStatus==="live"?"#22c55e":"#f59e0b",display:"inline-block"}}/><span style={{fontSize:12,color:"#6b7280"}}>{apiStatus==="live"?"Live data connected":"Static data (pre-tournament)"}</span></div>
               <div style={{fontSize:10,color:"#1f2937",marginTop:2}}>48 teams · 12 groups · 104 matches</div>
-              <button onClick={signOut} style={{marginTop:16,width:"100%",background:"none",border:"1px solid #1f1f1f",color:"#6b7280",borderRadius:8,padding:"10px",cursor:"pointer",fontSize:13,fontWeight:600}}>Sign Out</button>
+              <div style={{marginTop:16,display:"flex",alignItems:"center",justifyContent:"space-between",background:"#0f0f0f",border:"1px solid #1a1a1a",borderRadius:10,padding:"12px 14px"}}>
+                <div><div style={{fontSize:13,fontWeight:600,color:"#f9fafb"}}>🔔 Match Reminders</div><div style={{fontSize:10,color:"#6b7280",marginTop:2}}>{notifEnabled?"You'll get notified before games":"Get notified before each game"}</div></div>
+                <button onClick={toggleNotifications} disabled={notifLoading} style={{width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",background:notifEnabled?"#22c55e":"#374151",position:"relative",transition:"background 0.2s",flexShrink:0}}>
+                  <span style={{position:"absolute",top:2,left:notifEnabled?22:2,width:20,height:20,borderRadius:"50%",background:"#fff",transition:"left 0.2s"}}/>
+                </button>
+              </div>
+              <button onClick={signOut} style={{marginTop:12,width:"100%",background:"none",border:"1px solid #1f1f1f",color:"#6b7280",borderRadius:8,padding:"10px",cursor:"pointer",fontSize:13,fontWeight:600}}>Sign Out</button>
             </div>
           </nav>
         </div>
