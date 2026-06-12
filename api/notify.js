@@ -44,16 +44,22 @@ export default async function handler(req, res) {
   }
 
   const offset = req.query.offset || "1h"; // "24h" or "1h"
+  const isTest = req.query.test === "1";
   const now = Date.now();
   const windowMs = offset === "24h"
     ? { min: 23.5 * 3600 * 1000, max: 24.5 * 3600 * 1000 }
     : { min: 45 * 60 * 1000,     max: 75 * 60 * 1000 };
 
   // Find fixtures kicking off in the target window
-  const upcoming = FIXTURES.filter(f => {
+  let upcoming = FIXTURES.filter(f => {
     const diff = new Date(f.kickoff).getTime() - now;
     return diff >= windowMs.min && diff <= windowMs.max;
   });
+
+  // Test mode: send a dummy notification to verify the pipeline works
+  if (isTest) {
+    upcoming = [{ id: "test", home: "Test", away: "Notification" }];
+  }
 
   if (!upcoming.length) {
     return res.status(200).json({ sent: 0, message: "No fixtures in window" });
