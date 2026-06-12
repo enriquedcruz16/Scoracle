@@ -50,13 +50,15 @@ async function encryptPayload(subscription, payloadStr) {
 
   async function hkdf(salt, ikm, info, length) {
     const key = await crypto.subtle.importKey("raw", ikm, { name: "HKDF" }, false, ["deriveBits"]);
+    const infoBuffer = info instanceof Uint8Array || Buffer.isBuffer(info) ? info : enc.encode(info);
     return new Uint8Array(await crypto.subtle.deriveBits(
-      { name: "HKDF", hash: "SHA-256", salt, info: enc.encode(info) }, key, length * 8
+      { name: "HKDF", hash: "SHA-256", salt, info: infoBuffer }, key, length * 8
     ));
   }
 
   const receiverPublicRaw = Buffer.from(subscription.keys.p256dh, "base64url");
-  const ikmInfo = Buffer.concat([enc.encode("WebPush: info\0"), receiverPublicRaw, localPublicRaw]);
+  const ikmInfoPrefix = Buffer.concat([Buffer.from("WebPush: info"), Buffer.alloc(1)]);
+  const ikmInfo = Buffer.concat([ikmInfoPrefix, receiverPublicRaw, localPublicRaw]);
   const ikm = await (async () => {
     const prk = await crypto.subtle.importKey("raw", sharedBits, { name: "HKDF" }, false, ["deriveBits"]);
     return new Uint8Array(await crypto.subtle.deriveBits(
@@ -64,8 +66,10 @@ async function encryptPayload(subscription, payloadStr) {
     ));
   })();
 
-  const cek = await hkdf(salt, ikm, "Content-Encoding: aes128gcm\0\0\0\0\x10", 16);
-  const nonce = await hkdf(salt, ikm, "Content-Encoding: nonce\0", 12);
+  const cekInfo = Buffer.concat([Buffer.from("Content-Encoding: aes128gcm"), Buffer.alloc(1), Buffer.alloc(4), Buffer.from([16])]);
+  const nonceInfo = Buffer.concat([Buffer.from("Content-Encoding: nonce"), Buffer.alloc(1)]);
+  const cek = await hkdf(salt, ikm, cekInfo, 16);
+  const nonce = await hkdf(salt, ikm, nonceInfo, 12);
 
   const aesKey = await crypto.subtle.importKey("raw", cek, { name: "AES-GCM" }, false, ["encrypt"]);
   const plaintext = Buffer.concat([enc.encode(payloadStr), Buffer.from([2])]);
