@@ -424,7 +424,7 @@ export default function App(){
     const sid=HOME_AWAY_TO_STATIC_ID[(f.home+"|"+f.away).toLowerCase()];if(sid)nl[sid]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};}});
     const apiIdMap={};parsed.forEach(function(f){apiIdMap[(f.home+"|"+f.away).toLowerCase()]=f.id;});
     setApiIdMap(apiIdMap);
-    setLive(nl);setApiStatus("live");runBonusEngine(nl,parsed);}catch(err){console.error("API fetch error:",err);setApiStatus("fallback");}},[]);
+    setLive(nl);setApiStatus("live");hasLive.current=Object.values(nl).some(function(v){return v.isLive;});runBonusEngine(nl,parsed);}catch(err){console.error("API fetch error:",err);setApiStatus("fallback");}},[]);
   const hasLive=useRef(false);
   useEffect(()=>{
     fetchLive();
@@ -435,8 +435,6 @@ export default function App(){
     schedulePoll();
     return()=>clearTimeout(poll.current);
   },[fetchLive]);
-  // Update hasLive ref whenever live state changes
-  useEffect(()=>{hasLive.current=Object.values(live).some(function(v){return v.isLive;});},[live]);
   useEffect(()=>{if(!user)return;const id=setInterval(function(){loadAll();},30000);return()=>clearInterval(id);},[user]);
 
   const allFix=matchdays.flatMap(m=>m.fixtures);
