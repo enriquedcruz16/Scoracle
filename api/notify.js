@@ -1,4 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
+import { webcrypto } from "crypto";
+const { subtle, getRandomValues } = webcrypto;
 
 async function makeVapidJwt(audience, subject, publicKeyB64u, privateKeyB64u) {
   const b64u = (buf) => Buffer.from(buf).toString("base64url");
@@ -17,10 +19,10 @@ async function makeVapidJwt(audience, subject, publicKeyB64u, privateKeyB64u) {
     d: b64u(privRaw),
   };
 
-  const key = await crypto.subtle.importKey(
+  const key = await subtle.importKey(
     "jwk", jwk, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]
   );
-  const sig = await crypto.subtle.sign(
+  const sig = await subtle.sign(
     { name: "ECDSA", hash: "SHA-256" }, key, new TextEncoder().encode(unsigned)
   );
   return `${unsigned}.${b64u(new Uint8Array(sig))}`;
@@ -30,28 +32,28 @@ async function encryptPayload(subscription, payloadStr) {
   const b64u = (buf) => Buffer.from(buf).toString("base64url");
   const enc = new TextEncoder();
 
-  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const salt = getRandomValues(new Uint8Array(16));
 
-  const localKeyPair = await crypto.subtle.generateKey(
+  const localKeyPair = await subtle.generateKey(
     { name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]
   );
-  const localPublicRaw = new Uint8Array(await crypto.subtle.exportKey("raw", localKeyPair.publicKey));
+  const localPublicRaw = new Uint8Array(await subtle.exportKey("raw", localKeyPair.publicKey));
 
-  const receiverPublicKey = await crypto.subtle.importKey(
+  const receiverPublicKey = await subtle.importKey(
     "raw", Buffer.from(subscription.keys.p256dh, "base64url"),
     { name: "ECDH", namedCurve: "P-256" }, false, []
   );
 
-  const sharedBits = await crypto.subtle.deriveBits(
+  const sharedBits = await subtle.deriveBits(
     { name: "ECDH", public: receiverPublicKey }, localKeyPair.privateKey, 256
   );
 
   const authSecret = Buffer.from(subscription.keys.auth, "base64url");
 
   async function hkdf(salt, ikm, info, length) {
-    const key = await crypto.subtle.importKey("raw", ikm, { name: "HKDF" }, false, ["deriveBits"]);
+    const key = await subtle.importKey("raw", ikm, { name: "HKDF" }, false, ["deriveBits"]);
     const infoBuffer = info instanceof Uint8Array || Buffer.isBuffer(info) ? info : enc.encode(info);
-    return new Uint8Array(await crypto.subtle.deriveBits(
+    return new Uint8Array(await subtle.deriveBits(
       { name: "HKDF", hash: "SHA-256", salt, info: infoBuffer }, key, length * 8
     ));
   }
@@ -60,8 +62,8 @@ async function encryptPayload(subscription, payloadStr) {
   const ikmInfoPrefix = Buffer.concat([Buffer.from("WebPush: info"), Buffer.alloc(1)]);
   const ikmInfo = Buffer.concat([ikmInfoPrefix, receiverPublicRaw, localPublicRaw]);
   const ikm = await (async () => {
-    const prk = await crypto.subtle.importKey("raw", sharedBits, { name: "HKDF" }, false, ["deriveBits"]);
-    return new Uint8Array(await crypto.subtle.deriveBits(
+    const prk = await subtle.importKey("raw", sharedBits, { name: "HKDF" }, false, ["deriveBits"]);
+    return new Uint8Array(await subtle.deriveBits(
       { name: "HKDF", hash: "SHA-256", salt: authSecret, info: ikmInfo }, prk, 256
     ));
   })();
@@ -71,9 +73,9 @@ async function encryptPayload(subscription, payloadStr) {
   const cek = await hkdf(salt, ikm, cekInfo, 16);
   const nonce = await hkdf(salt, ikm, nonceInfo, 12);
 
-  const aesKey = await crypto.subtle.importKey("raw", cek, { name: "AES-GCM" }, false, ["encrypt"]);
+  const aesKey = await subtle.importKey("raw", cek, { name: "AES-GCM" }, false, ["encrypt"]);
   const plaintext = Buffer.concat([enc.encode(payloadStr), Buffer.from([2])]);
-  const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: nonce }, aesKey, plaintext));
+  const ciphertext = new Uint8Array(await subtle.encrypt({ name: "AES-GCM", iv: nonce }, aesKey, plaintext));
 
   // RFC 8291 header: salt(16) + rs(4) + idlen(1) + localPublic(65) + ciphertext
   const rs = Buffer.alloc(4); rs.writeUInt32BE(4096);
