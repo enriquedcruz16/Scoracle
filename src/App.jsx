@@ -239,7 +239,25 @@ async function apiFetch(p){
   return r.json();
 }
 const GROUP_NUM_TO_LETTER={"1":"A","2":"B","3":"C","4":"D","5":"E","6":"F","7":"G","8":"H","9":"I","10":"J","11":"K","12":"L"};
-function parseFix(data){return data.map(f=>{const s=f.fixture.status.short,isLive=["1H","HT","2H","ET","BT","P","SUSP","INT"].includes(s),isDone=["FT","AET","PEN"].includes(s),dt=new Date(f.fixture.date),rn=parseInt(((f.league.round||"").match(/(\d+)/)||[0,1])[1]);const rawGroup=(f.league.round||"").replace(/Group Stage - /i,"").trim();const group=GROUP_NUM_TO_LETTER[rawGroup]||rawGroup;return{id:String(f.fixture.id),rn,group,home:f.teams.home.name,away:f.teams.away.name,homeLogo:f.teams.home.logo,awayLogo:f.teams.away.logo,date:dt.toLocaleDateString("en-GB",{month:"short",day:"numeric"}),time:dt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}),kickoffISO:f.fixture.date,status:s,elapsed:f.fixture.status.elapsed,venue:f.fixture.venue?.name,isLive,isDone,homeGoals:f.goals.home,awayGoals:f.goals.away};});}
+// Maps API-Football team names to the names used in static fixtures
+const API_TEAM_NAME_MAP={
+  "Czech Republic":"Czechia",
+  "Bosnia":"Bosnia-Herzegovina",
+  "Bosnia and Herzegovina":"Bosnia-Herzegovina",
+  "Korea Republic":"South Korea",
+  "Republic of Korea":"South Korea",
+  "Ivory Coast":"Ivory Coast",
+  "Côte d'Ivoire":"Ivory Coast",
+  "Cote d'Ivoire":"Ivory Coast",
+  "United States":"USA",
+  "Congo DR":"DR Congo",
+  "DR Congo":"DR Congo",
+  "Türkiye":"Türkiye",
+  "Turkey":"Türkiye",
+  "Curacao":"Curaçao",
+};
+function normaliseTeam(name){return API_TEAM_NAME_MAP[name]||name;}
+function parseFix(data){return data.map(f=>{const s=f.fixture.status.short,isLive=["1H","HT","2H","ET","BT","P","SUSP","INT"].includes(s),isDone=["FT","AET","PEN"].includes(s),dt=new Date(f.fixture.date),rn=parseInt(((f.league.round||"").match(/(\d+)/)||[0,1])[1]);const rawGroup=(f.league.round||"").replace(/Group Stage - /i,"").trim();const group=GROUP_NUM_TO_LETTER[rawGroup]||rawGroup;const home=normaliseTeam(f.teams.home.name),away=normaliseTeam(f.teams.away.name);return{id:String(f.fixture.id),rn,group,home,away,homeLogo:f.teams.home.logo,awayLogo:f.teams.away.logo,date:dt.toLocaleDateString("en-GB",{month:"short",day:"numeric"}),time:dt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}),kickoffISO:f.fixture.date,status:s,elapsed:f.fixture.status.elapsed,venue:f.fixture.venue?.name,isLive,isDone,homeGoals:f.goals.home,awayGoals:f.goals.away};});}
 function buildMD(fixtures){const byR={};fixtures.forEach(f=>{const r=f.rn||1;(byR[r]=byR[r]||[]).push(f);});return Object.entries(byR).sort(([a],[b])=>+a-+b).map(([,fxs],i)=>{const s=[...fxs].sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));return{day:i+1,label:`Matchday ${i+1}`,dates:s[0]?.date+(s.length>1?` – ${s[s.length-1]?.date}`:""),fixtures:s};});}
 function groupTable(gKey,allFix,live,preds){const teams=GROUPS_TEAMS[gKey]||[],t={};teams.forEach(tm=>{t[tm]={team:tm,mp:0,w:0,d:0,l:0,gf:0,ga:0,pts:0};});allFix.filter(f=>(f.group||"").toUpperCase().replace(/GROUP\s*/,"").trim()===gKey).forEach(fix=>{const src=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null)||preds[fix.id];if(!src||src.homeGoals==null)return;const hg=+src.homeGoals,ag=+src.awayGoals,h=t[fix.home],a=t[fix.away];if(!h||!a)return;h.mp++;a.mp++;h.gf+=hg;h.ga+=ag;a.gf+=ag;a.ga+=hg;if(hg>ag){h.w++;h.pts+=3;a.l++;}else if(hg<ag){a.w++;a.pts+=3;h.l++;}else{h.d++;h.pts++;a.d++;a.pts++;}});return Object.values(t).sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga)||b.gf-a.gf);}
 
