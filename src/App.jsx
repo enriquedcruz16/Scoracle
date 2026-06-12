@@ -1342,10 +1342,10 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
       const result=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);
       const predsForMatch=allPreds.filter(p=>p.fixture_id===fix.id);
       const missingUsers=profiles.filter(p=>!predsForMatch.find(x=>x.user_id===p.id));
-      const lockTime=new Date(new Date(fix.kickoffISO).getTime()-60*60000);
+      const lockTime=new Date(new Date(fix.kickoffISO).getTime()-15*60000);
       const lockStr=lockTime.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
       function copyReminder(){
-        const msg=`⚽ Scoracle reminder — ${fix.home} vs ${fix.away} kicks off at ${localTime(fix.kickoffISO)} on ${fix.date}! Get your prediction in before ${lockStr} when it locks. scoracle.live`;
+        const msg=`⚽ Scoracle reminder — ${fix.home} vs ${fix.away} kicks off at ${localTime(fix.kickoffISO)} UK Time on ${fix.date}! Get your prediction in before ${lockStr} UK Time when it locks. scoracle.live`;
         navigator.clipboard.writeText(msg);
       }
       function copyMissing(){
