@@ -8,7 +8,7 @@ const LOCK_MINUTES = 15;
 const PTS_EXACT = 15; const PTS_RESULT = 5; const PTS_WINNER = 50; const PTS_BONUS = 10;
 const ADMIN_ID = "0c51030f-a4ce-4e6c-8c4c-87ffba2acae2";
 const G = "#f59e0b";
-const VAPID_PUBLIC_KEY = process.env.VITE_VAPID_PUBLIC_KEY || "";
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || "";
 
 const GROUPS_TEAMS = {
   A:["Mexico","South Korea","South Africa","Czechia"],
