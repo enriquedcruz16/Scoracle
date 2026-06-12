@@ -425,7 +425,18 @@ export default function App(){
     const apiIdMap={};parsed.forEach(function(f){apiIdMap[(f.home+"|"+f.away).toLowerCase()]=f.id;});
     setApiIdMap(apiIdMap);
     setLive(nl);setApiStatus("live");runBonusEngine(nl,parsed);}catch(err){console.error("API fetch error:",err);setApiStatus("fallback");}},[]);
-  useEffect(()=>{fetchLive();poll.current=setInterval(fetchLive,30000);return()=>clearInterval(poll.current);},[fetchLive]);
+  const hasLive=useRef(false);
+  useEffect(()=>{
+    fetchLive();
+    function schedulePoll(){
+      const interval=hasLive.current?30000:300000; // 30s if live, 5min otherwise
+      poll.current=setTimeout(function(){fetchLive();schedulePoll();},interval);
+    }
+    schedulePoll();
+    return()=>clearTimeout(poll.current);
+  },[fetchLive]);
+  // Update hasLive ref whenever live state changes
+  useEffect(()=>{hasLive.current=Object.values(live).some(function(v){return v.isLive;});},[live]);
   useEffect(()=>{if(!user)return;const id=setInterval(function(){loadAll();},30000);return()=>clearInterval(id);},[user]);
 
   const allFix=matchdays.flatMap(m=>m.fixtures);
