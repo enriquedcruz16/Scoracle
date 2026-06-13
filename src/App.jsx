@@ -783,7 +783,7 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
   }
 
   const liveFix=allFix.filter(f=>f.isLive);
-  const completedFix=allFix.filter(f=>f.isDone&&!f.isLive);
+  const completedFix=allFix.filter(f=>f.isDone&&!f.isLive).sort((a,b)=>new Date(b.kickoffISO)-new Date(a.kickoffISO));
   const upcomingFix=allFix.filter(f=>!f.isLive&&!f.isDone);
 
   const filteredFix=filter==="live"?liveFix:filter==="completed"?completedFix:upcomingFix;
