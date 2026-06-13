@@ -1441,6 +1441,18 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
           const msg="Scoracle reminder - bonus questions close at midnight June 11! Still waiting on: "+incomplete.join(", ")+". Get picks in at scoracle.live";
           navigator.clipboard.writeText(msg);
         }
+        function saveLeaderboardImage(){
+          var card=document.getElementById("leaderboardRevealCard");
+          if(!card||typeof html2canvas==="undefined"){alert("Image generation not available");return;}
+          card.style.left="0";card.style.top="0";card.style.position="absolute";card.style.zIndex="-1";
+          html2canvas(card,{backgroundColor:"#0d0d0d",scale:2,useCORS:true}).then(function(canvas){
+            card.style.left="-9999px";card.style.position="fixed";card.style.zIndex="auto";
+            var link=document.createElement("a");
+            link.download="scoracle-leaderboard.png";
+            link.href=canvas.toDataURL("image/png");
+            link.click();
+          }).catch(function(){alert("Could not generate image.");});
+        }
         return(
           <div style={{marginBottom:16}}>
             <div style={{display:"flex",gap:8,marginBottom:8}}>
@@ -1562,6 +1574,71 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
                 <div style={{marginTop:14,paddingTop:12,borderTop:"1px solid #111",textAlign:"center",fontSize:10,color:"#374151"}}>scoracle.live · World Cup 2026 Prediction Game</div>
               </div>
             </div>
+
+            {/* Leaderboard Image Button */}
+            <div style={{display:"flex",gap:8,marginBottom:8,marginTop:8}}>
+              <button onClick={saveLeaderboardImage} style={{flex:1,background:"linear-gradient(90deg,#3b82f6,#6366f1)",border:"none",borderRadius:10,color:"#fff",fontSize:11,fontWeight:700,padding:"10px",cursor:"pointer",outline:"none"}}>🏆 Leaderboard Image</button>
+            </div>
+
+            {/* Hidden leaderboard reveal card */}
+            {(function(){
+              const lbSorted=[...profiles].map(function(pr){
+                const myP=allPreds.filter(function(p){return p.user_id===pr.id;});
+                let tp=0,exact=0,correct=0;
+                allFix.forEach(function(fix){
+                  const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);
+                  const staticId=HOME_AWAY_TO_STATIC_ID[(fix.home+"|"+fix.away).toLowerCase()];
+                  const pred=myP.find(function(x){return x.fixture_id===fix.id;})||(staticId&&myP.find(function(x){return x.fixture_id===staticId;}));
+                  if(!r||!pred)return;
+                  const sc=pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals},r);
+                  if(sc===PTS_EXACT){tp+=sc;exact++;}else if(sc===PTS_RESULT){tp+=sc;correct++;}
+                });
+                return{id:pr.id,name:pr.name,pts:tp,exact,correct};
+              }).sort(function(a,b){return b.pts-a.pts||b.exact-a.exact||b.correct-a.correct||a.name.localeCompare(b.name);});
+              const half=Math.ceil(lbSorted.length/2);
+              const left=lbSorted.slice(0,half);
+              const right=lbSorted.slice(half);
+              function renderLBRow(p,idx){
+                if(!p)return <div/>;
+                const isMe=p.id===ADMIN_ID;
+                const rank=lbSorted.indexOf(p)+1;
+                const rankColor=rank===1?"#f59e0b":rank===2?"#9ca3af":rank===3?"#b45309":"#4b5563";
+                return(
+                  <div key={p.id} style={{display:"grid",gridTemplateColumns:"32px 1fr 36px 28px",gap:3,background:isMe?"rgba(245,158,11,0.06)":"#111",borderRadius:6,padding:"5px 6px",border:isMe?"1px solid rgba(245,158,11,0.2)":"none",alignItems:"center"}}>
+                    <div style={{fontSize:9,fontWeight:700,color:rankColor}}>{"#"+rank}</div>
+                    <div style={{fontSize:9,fontWeight:700,color:isMe?"#f59e0b":"#f9fafb",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{p.name}{isMe?" *":""}</div>
+                    <div style={{fontSize:10,fontWeight:800,color:"#f59e0b",textAlign:"right"}}>{p.pts}</div>
+                    <div style={{fontSize:9,fontWeight:700,color:p.exact>0?"#22c55e":"#374151",textAlign:"right"}}>{p.exact>0?"🎯"+p.exact:"-"}</div>
+                  </div>
+                );
+              }
+              return(
+                <div id="leaderboardRevealCard" style={{position:"fixed",left:"-9999px",top:0,width:540,background:"#0d0d0d",borderRadius:20,overflow:"hidden",fontFamily:"sans-serif"}}>
+                  <div style={{background:"linear-gradient(135deg,#1a0f00,#080808)",padding:"14px",textAlign:"center",borderBottom:"1px solid #1f1f1f"}}>
+                    <div style={{fontSize:16,fontWeight:800,letterSpacing:4,color:"#f59e0b",marginBottom:2}}>SCORACLE</div>
+                    <div style={{fontSize:11,fontWeight:700,color:"#f9fafb",marginBottom:1}}>Leaderboard Update</div>
+                    <div style={{fontSize:9,color:"#6b7280"}}>{"World Cup 2026 · "+lbSorted.length+" players"}</div>
+                  </div>
+                  <div style={{padding:12}}>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:5}}>
+                      {[0,1].map(function(col){return(
+                        <div key={col} style={{display:"grid",gridTemplateColumns:"32px 1fr 36px 28px",gap:3,padding:"0 3px"}}>
+                          <div style={{fontSize:7,fontWeight:800,color:"#6b7280"}}>#</div>
+                          <div style={{fontSize:7,fontWeight:800,color:"#6b7280"}}>PLAYER</div>
+                          <div style={{fontSize:7,fontWeight:800,color:"#f59e0b",textAlign:"right"}}>PTS</div>
+                          <div style={{fontSize:7,fontWeight:800,color:"#22c55e",textAlign:"right"}}>🎯</div>
+                        </div>
+                      );})}
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                      <div style={{display:"flex",flexDirection:"column",gap:3}}>{left.map(function(p){return renderLBRow(p);})}</div>
+                      <div style={{display:"flex",flexDirection:"column",gap:3}}>{right.map(function(p){return renderLBRow(p);})}</div>
+                    </div>
+                    <div style={{marginTop:10,paddingTop:8,borderTop:"1px solid #111",textAlign:"center",fontSize:8,color:"#374151"}}>scoracle.live - World Cup 2026 - Leaderboard</div>
+                  </div>
+                </div>
+              );
+            })()}
 
           </div>
         );
