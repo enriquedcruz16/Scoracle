@@ -461,7 +461,10 @@ export default function App(){
 
   const fetchLive=useCallback(async()=>{try{const r=await fetch(`/api/fixtures?league=${LEAGUE_ID}&season=${SEASON}`);const d=await r.json();if(!r.ok)throw new Error(r.status);if(!d.response?.length){setApiStatus("fallback");return;}const parsed=parseFix(d.response);
     // Build a home|away -> parsed fixture map for enrichment
-    const apiByPair={};parsed.forEach(f=>{apiByPair[(f.home+"|"+f.away).toLowerCase()]=f;});
+    const apiByPair={};parsed.forEach(f=>{
+  apiByPair[(f.home+"|"+f.away).toLowerCase()]=f;
+  apiByPair[(f.away+"|"+f.home).toLowerCase()]=f;
+});
     // Enrich static matchdays with live API data (status, logos, elapsed) but keep static IDs and group labels
     const enriched=STATIC_MATCHDAYS.map(function(md){return{...md,fixtures:md.fixtures.map(function(fix){const af=apiByPair[(fix.home+"|"+fix.away).toLowerCase()];if(!af)return fix;return{...fix,id:fix.id,homeLogo:af.homeLogo,awayLogo:af.awayLogo,status:af.status,elapsed:af.elapsed,isLive:af.isLive,isDone:af.isDone,homeGoals:af.homeGoals,awayGoals:af.awayGoals};})};});
     // Add knockout rounds from API if available, otherwise use static bracket
