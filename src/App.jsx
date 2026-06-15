@@ -461,12 +461,22 @@ export default function App(){
 
   const fetchLive=useCallback(async()=>{try{const r=await fetch(`/api/fixtures?league=${LEAGUE_ID}&season=${SEASON}`);const d=await r.json();if(!r.ok)throw new Error(r.status);if(!d.response?.length){setApiStatus("fallback");return;}const parsed=parseFix(d.response);
     // Build a home|away -> parsed fixture map for enrichment
-    const apiByPair={};parsed.forEach(f=>{
-  apiByPair[(f.home+"|"+f.away).toLowerCase()]=f;
-  apiByPair[(f.away+"|"+f.home).toLowerCase()]=f;
-});
+    const apiByPair={};parsed.forEach(f=>{apiByPair[(f.home+"|"+f.away).toLowerCase()]=f;});
     // Enrich static matchdays with live API data (status, logos, elapsed) but keep static IDs and group labels
-    const enriched=STATIC_MATCHDAYS.map(function(md){return{...md,fixtures:md.fixtures.map(function(fix){const af=apiByPair[(fix.home+"|"+fix.away).toLowerCase()];if(!af)return fix;return{...fix,id:fix.id,homeLogo:af.homeLogo,awayLogo:af.awayLogo,status:af.status,elapsed:af.elapsed,isLive:af.isLive,isDone:af.isDone,homeGoals:af.homeGoals,awayGoals:af.awayGoals};})};});
+    const enriched=STATIC_MATCHDAYS.map(function(md){return{...md,fixtures:md.fixtures.map(function(fix){
+      const key=(fix.home+"|"+fix.away).toLowerCase();
+      const revKey=(fix.away+"|"+fix.home).toLowerCase();
+      let af=apiByPair[key];
+      let reversed=false;
+      if(!af&&apiByPair[revKey]){af=apiByPair[revKey];reversed=true;}
+      if(!af)return fix;
+      return{...fix,
+        homeLogo:reversed?af.awayLogo:af.homeLogo,
+        awayLogo:reversed?af.homeLogo:af.awayLogo,
+        status:af.status,elapsed:af.elapsed,isLive:af.isLive,isDone:af.isDone,
+        homeGoals:reversed?af.awayGoals:af.homeGoals,
+        awayGoals:reversed?af.homeGoals:af.awayGoals,
+      };})};});
     // Add knockout rounds from API if available, otherwise use static bracket
     const knockoutFix=parsed.filter(f=>f.rn>3);
     const knockoutMDs=knockoutFix.length>0?buildMD(knockoutFix).map((md,i)=>({...md,day:enriched.length+i+1})):KNOCKOUT_BRACKET.map(kb=>({...kb,day:enriched.length+(kb.day-3)}));
