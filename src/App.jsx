@@ -257,6 +257,7 @@ const API_TEAM_NAME_MAP={
   "Türkiye":"Türkiye",
   "Turkey":"Türkiye",
   "Curacao":"Curaçao",
+  "Cape Verde Islands":"Cape Verde",
 };
 function normaliseTeam(name){return API_TEAM_NAME_MAP[name]||name;}
 function parseFix(data){return data.map(f=>{const s=f.fixture.status.short,isLive=["1H","HT","2H","ET","BT","P","SUSP","INT"].includes(s),isDone=["FT","AET","PEN"].includes(s),dt=new Date(f.fixture.date),rn=parseInt(((f.league.round||"").match(/(\d+)/)||[0,1])[1]);const rawGroup=(f.league.round||"").replace(/Group Stage - /i,"").trim();const group=GROUP_NUM_TO_LETTER[rawGroup]||rawGroup;const home=normaliseTeam(f.teams.home.name),away=normaliseTeam(f.teams.away.name);return{id:String(f.fixture.id),rn,group,home,away,homeLogo:f.teams.home.logo,awayLogo:f.teams.away.logo,date:dt.toLocaleDateString("en-GB",{month:"short",day:"numeric"}),time:dt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}),kickoffISO:f.fixture.date,status:s,elapsed:f.fixture.status.elapsed,venue:f.fixture.venue?.name,isLive,isDone,homeGoals:f.goals.home,awayGoals:f.goals.away};});}
