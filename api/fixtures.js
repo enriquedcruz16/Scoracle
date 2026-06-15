@@ -24,10 +24,12 @@ export default async function handler(req, res) {
     const response = await fetch(url, {
       headers: { "x-apisports-key": "b08f6877d56ad565b8dbb49558b764eb" }
     });
+    if (!response.ok) throw new Error(`API error ${response.status}`);
     const data = await response.json();
+    if (!data.response) throw new Error("Empty API response");
 
     // Check if any fixture is currently live to set next TTL
-    const hasLive = (data.response || []).some(f =>
+    const hasLive = data.response.some(f =>
       LIVE_STATUSES.includes(f.fixture?.status?.short)
     );
 
