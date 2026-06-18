@@ -483,7 +483,11 @@ export default function App(){
     const knockoutMDs=knockoutFix.length>0?buildMD(knockoutFix).map((md,i)=>({...md,day:enriched.length+i+1})):KNOCKOUT_BRACKET.map(kb=>({...kb,day:enriched.length+(kb.day-3)}));
     setMatchdays([...enriched,...knockoutMDs]);
     const nl={};parsed.forEach(f=>{if((f.isLive||f.isDone)&&f.homeGoals!=null){nl[f.id]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};// Also index by static ID so live scores show on predict tab
-    const sid=HOME_AWAY_TO_STATIC_ID[(f.home+"|"+f.away).toLowerCase()];if(sid)nl[sid]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};}});
+    const normalKey=(f.home+"|"+f.away).toLowerCase();
+    const reversedKey=(f.away+"|"+f.home).toLowerCase();
+    const sid=HOME_AWAY_TO_STATIC_ID[normalKey]||HOME_AWAY_TO_STATIC_ID[reversedKey];
+    const isReversed=!HOME_AWAY_TO_STATIC_ID[normalKey]&&!!HOME_AWAY_TO_STATIC_ID[reversedKey];
+    if(sid)nl[sid]={homeGoals:isReversed?f.awayGoals:f.homeGoals,awayGoals:isReversed?f.homeGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};}});
     const apiIdMap={};parsed.forEach(function(f){apiIdMap[(f.home+"|"+f.away).toLowerCase()]=f.id;});
     setApiIdMap(apiIdMap);
     setLive(nl);setApiStatus("live");runBonusEngine(nl,parsed);}catch(err){console.error("API fetch error:",err);setApiStatus("fallback");}},[]);
