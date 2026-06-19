@@ -1331,7 +1331,7 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
   return(<div style={{padding:16}}>
     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20}}><div style={S.pageTitle}>⚙️ Admin Dashboard</div><span style={{fontSize:9,fontWeight:800,color:"#000",background:G,borderRadius:4,padding:"2px 6px"}}>ADMIN</span></div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:24}}>{[{label:"Players",value:totalUsers,icon:"👥",color:"#3b82f6"},{label:"Predictions",value:totalPreds,icon:"✍️",color:"#22c55e"},{label:"Avg Picks",value:totalUsers>0?(totalPreds/totalUsers).toFixed(1):0,icon:"📊",color:"#f59e0b"}].map(c=>(<div key={c.label} style={{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:12,textAlign:"center"}}><div style={{fontSize:20,marginBottom:4}}>{c.icon}</div><div style={{fontSize:22,fontWeight:800,color:c.color}}>{c.value}</div><div style={{fontSize:10,color:"#6b7280"}}>{c.label}</div></div>))}</div>
-    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>{[{id:"overview",label:"👥 Players"},{id:"missing",label:"⚠️ Missing"},{id:"matches",label:"⚽ Matches"},{id:"bonus",label:"⭐ Bonus"}].map(t=><button key={t.id} onClick={()=>setView(t.id)} style={{background:view===t.id?`${G}15`:"#0a0a0a",border:view===t.id?`1px solid ${G}`:"1px solid #1a1a1a",color:view===t.id?G:"#6b7280",borderRadius:20,padding:"6px 14px",fontSize:11,fontWeight:700,cursor:"pointer"}}>{t.label}</button>)}</div>
+    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>{[{id:"overview",label:"👥 Players"},{id:"missing",label:"⚠️ Missing"},{id:"matches",label:"⚽ Matches"},{id:"bonus",label:"⭐ Bonus"},{id:"noshows",label:"🚫 No-Shows"}].map(t=><button key={t.id} onClick={()=>setView(t.id)} style={{background:view===t.id?`${G}15`:"#0a0a0a",border:view===t.id?`1px solid ${G}`:"1px solid #1a1a1a",color:view===t.id?G:"#6b7280",borderRadius:20,padding:"6px 14px",fontSize:11,fontWeight:700,cursor:"pointer"}}>{t.label}</button>)}</div>
     {view==="overview"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>{stats.map((u,i)=>(<div key={u.id} style={{display:"flex",alignItems:"center",gap:12,background:"#080808",border:"1px solid #141414",borderRadius:12,padding:"12px 14px"}}><div style={{fontWeight:700,fontSize:13,color:"#6b7280",width:24}}>#{i+1}</div><div style={{flex:1}}><div style={{fontWeight:700,fontSize:14}}>{u.name}</div><div style={{fontSize:11,color:"#6b7280"}}>{u.predCount}/{totalFix} picks · {u.exact} perfect</div></div><div style={{textAlign:"right"}}><div style={{fontSize:18,fontWeight:800,color:G}}>{u.pts}<span style={{fontSize:11,color:"#6b7280"}}> pts</span></div>{u.missing>0&&<div style={{fontSize:10,color:"#ef4444"}}>{u.missing} missing</div>}</div></div>))}</div>}
     {view==="missing"&&<div>
       {stats.filter(u=>u.missing>0).length===0
@@ -1755,6 +1755,36 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
         });
       })()}
     </div>}
+    {view==="noshows"&&(()=>{
+      const completedFix=allFix.filter(fix=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);return r!=null;});
+      const noShowStats=[...profiles].map(p=>{const submittedIds=allPreds.filter(x=>x.user_id===p.id).map(x=>x.fixture_id);const missed=completedFix.filter(f=>{const apiId=(apiIdMap||{})[(f.home+"|"+f.away).toLowerCase()];return!submittedIds.includes(f.id)&&(!apiId||!submittedIds.includes(apiId));});return{...p,missedCount:missed.length,missedGames:missed};}).sort((a,b)=>b.missedCount-a.missedCount||a.name.localeCompare(b.name));
+      function saveNoShowsImage(){var card=document.getElementById("noShowsCard");if(!card||typeof html2canvas==="undefined"){alert("Image generation not available");return;}card.style.left="0";card.style.top="0";card.style.position="absolute";card.style.zIndex="-1";html2canvas(card,{backgroundColor:"#0d0d0d",scale:2,useCORS:true}).then(function(canvas){card.style.left="-9999px";card.style.position="fixed";card.style.zIndex="auto";var link=document.createElement("a");link.download="scoracle-no-shows.png";link.href=canvas.toDataURL("image/png");link.click();}).catch(function(){alert("Could not generate image.");});}
+      return(<div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div style={{fontSize:12,color:"#6b7280"}}>{completedFix.length} games completed</div>
+          <button onClick={saveNoShowsImage} style={{background:"linear-gradient(90deg,#ef4444,#dc2626)",border:"none",borderRadius:10,color:"#fff",fontSize:11,fontWeight:700,padding:"8px 14px",cursor:"pointer",outline:"none"}}>📸 Save Image</button>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {noShowStats.map((u,i)=>{const c=u.missedCount===0?"#22c55e":u.missedCount<=2?"#f59e0b":"#ef4444";return(<div key={u.id} style={{display:"flex",alignItems:"center",gap:12,background:"#080808",border:"1px solid #141414",borderRadius:12,padding:"12px 14px"}}>
+            <div style={{fontWeight:700,fontSize:13,color:"#6b7280",width:24}}>#{i+1}</div>
+            <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14}}>{u.name}</div>{u.missedCount>0&&<div style={{fontSize:10,color:"#6b7280",marginTop:2}}>{u.missedGames.map(f=>`${f.home} vs ${f.away}`).join(", ")}</div>}</div>
+            <div style={{textAlign:"right"}}><div style={{fontSize:16,fontWeight:800,color:c}}>{u.missedCount===0?"✓":u.missedCount}</div><div style={{fontSize:10,color:"#6b7280"}}>missed</div></div>
+          </div>);})}
+        </div>
+        <div id="noShowsCard" style={{position:"fixed",left:"-9999px",top:0,width:540,background:"#0d0d0d",borderRadius:20,overflow:"hidden",fontFamily:"sans-serif"}}>
+          <div style={{background:"linear-gradient(135deg,#1a0f00,#080808)",padding:"14px",textAlign:"center",borderBottom:"1px solid #1f1f1f"}}>
+            <div style={{fontSize:16,fontWeight:800,letterSpacing:4,color:"#f59e0b",marginBottom:2}}>SCORACLE</div>
+            <div style={{fontSize:11,fontWeight:700,color:"#f9fafb",marginBottom:1}}>No-Shows Report</div>
+            <div style={{fontSize:9,color:"#6b7280"}}>{"World Cup 2026 · "+completedFix.length+" games completed"}</div>
+          </div>
+          <div style={{padding:12}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:5}}>{[0,1].map(function(col){return(<div key={col} style={{display:"grid",gridTemplateColumns:"24px 1fr 48px",gap:3,padding:"0 3px"}}><div style={{fontSize:7,fontWeight:800,color:"#6b7280"}}>#</div><div style={{fontSize:7,fontWeight:800,color:"#6b7280"}}>PLAYER</div><div style={{fontSize:7,fontWeight:800,color:"#ef4444",textAlign:"right"}}>MISSED</div></div>);})}</div>
+            {(()=>{const half=Math.ceil(noShowStats.length/2);const left=noShowStats.slice(0,half);const right=noShowStats.slice(half);function renderRow(u,rank){if(!u)return<div/>;const c=u.missedCount===0?"#22c55e":u.missedCount<=2?"#f59e0b":"#ef4444";return(<div key={u.id} style={{display:"grid",gridTemplateColumns:"24px 1fr 48px",gap:3,background:"#111",borderRadius:6,padding:"4px 5px",alignItems:"center",marginBottom:3}}><div style={{fontSize:8,fontWeight:700,color:"#6b7280"}}>{"#"+rank}</div><div style={{fontSize:9,fontWeight:700,color:"#f9fafb",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{u.name.split(" ")[0]}</div><div style={{fontSize:10,fontWeight:800,color:c,textAlign:"right"}}>{u.missedCount===0?"✓":u.missedCount}</div></div>);}return(<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}><div>{left.map(function(u,i){return renderRow(u,i+1);})}</div><div>{right.map(function(u,i){return renderRow(u,half+i+1);})}</div></div>);})()}
+            <div style={{marginTop:10,paddingTop:8,borderTop:"1px solid #111",textAlign:"center",fontSize:8,color:"#374151"}}>scoracle.live · World Cup 2026 · No-Shows Report</div>
+          </div>
+        </div>
+      </div>);
+    })()}
   </div>);
 }
 
