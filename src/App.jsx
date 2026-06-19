@@ -592,7 +592,8 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId,all
   const[drafts,setDrafts]=useState({});
   const md=matchdays.find(m=>m.day===selDay)||matchdays[0];
   const nextFixRef=useRef(null);
-  useEffect(()=>{if(nextFixRef.current)nextFixRef.current.scrollIntoView({behavior:"smooth",block:"start"});},[selDay]);
+  const listTopRef=useRef(null);
+  useEffect(()=>{(nextFixRef.current||listTopRef.current)?.scrollIntoView({behavior:"smooth",block:"start"});},[selDay]);
   function val(id,side){
     const d=drafts[id];
     const fix=allFix.find(function(f){return f.id===id;});
@@ -609,7 +610,7 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId,all
     <div style={{overflowX:"auto",padding:"14px 16px 14px",display:"flex",gap:8,borderBottom:"1px solid #0f0f0f"}}>
       {matchdays.map(m=>(<button key={m.day} onClick={()=>setSelDay(m.day)} style={{background:selDay===m.day?`${G}12`:"#0a0a0a",border:selDay===m.day?`1px solid ${G}`:"1px solid #1a1a1a",color:selDay===m.day?G:"#6b7280",borderRadius:12,padding:"9px 16px",cursor:"pointer",textAlign:"left",flexShrink:0,minWidth:120}}><div style={{fontSize:13,fontWeight:700}}>{m.label}</div><div style={{fontSize:10,marginTop:3,opacity:0.6}}>{m.dates}</div></button>))}
     </div>
-    <div style={{padding:16}}>{(md?.fixtures||[]).map((fix,i,arr)=>{
+    <div ref={listTopRef} style={{padding:16}}>{(md?.fixtures||[]).map((fix,i,arr)=>{
       const staticId=HOME_AWAY_TO_STATIC_ID[(fix.home+"|"+fix.away).toLowerCase()];
       const lv=live[fix.id],result=lv||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null),pred=predictions[fix.id]||(staticId&&predictions[staticId]),p=pts(pred,result),lk=locked(fix.kickoffISO)||fix.isLive||fix.isDone,isSaved=savedId===fix.id,hv=val(fix.id,"home"),av=val(fix.id,"away"),lm=lockMsg(fix.kickoffISO);
       const isNextUpcoming=!lk&&arr.slice(0,i).every(f=>locked(f.kickoffISO)||f.isLive||f.isDone);
