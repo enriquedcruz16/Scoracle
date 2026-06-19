@@ -406,7 +406,7 @@ export default function App(){
     const rawData=window.atob(base64);
     return Uint8Array.from([...rawData].map(c=>c.charCodeAt(0)));
   }
-  const[matchdays,setMatchdays]=useState([...STATIC_MATCHDAYS,...KNOCKOUT_BRACKET]);const[selDay,setSelDay]=useState(1);
+  const[matchdays,setMatchdays]=useState([...STATIC_MATCHDAYS,...KNOCKOUT_BRACKET]);const[selDay,setSelDay]=useState(()=>{const now=Date.now();const allMDs=[...STATIC_MATCHDAYS,...KNOCKOUT_BRACKET];for(const md of allMDs){if((md.fixtures||[]).some(f=>new Date(f.kickoffISO).getTime()>now-2*60*60*1000))return md.day;}return allMDs[allMDs.length-1]?.day||1;});
   const[predictions,setPredictions]=useState({});const[live,setLive]=useState({});
   const[bonus,setBonus]=useState({});const[champion,setChampion]=useState(""); // loaded from bonus answers below
   const[savedId,setSavedId]=useState(null);const[confetti,setConfetti]=useState(false);
