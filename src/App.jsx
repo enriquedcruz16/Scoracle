@@ -761,6 +761,7 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
   const medals=["🥇","🥈","🥉"];
   const[view,setView]=useState("leaderboard"); // leaderboard | breakdown
   const[filter,setFilter]=useState("live"); // live | completed | upcoming
+  useEffect(()=>{window.scrollTo({top:0,behavior:"instant"});},[]);
 
   function calcBonusPoints(userId){
     const ub=(allBonusAnswers||[]).filter(b=>b.user_id===userId);
