@@ -478,9 +478,11 @@ export default function App(){
         homeGoals:reversed?af.awayGoals:af.homeGoals,
         awayGoals:reversed?af.homeGoals:af.awayGoals,
       };})};});
-    // Add knockout rounds from API if available, otherwise use static bracket
+    // Always use static knockout bracket for structure (correct labels + all fixtures).
+    // Enrich each fixture with API live data matched by kickoff timestamp.
     const knockoutFix=parsed.filter(f=>f.rn>3);
-    const knockoutMDs=knockoutFix.length>0?buildMD(knockoutFix).map((md,i)=>({...md,day:enriched.length+i+1})):KNOCKOUT_BRACKET.map(kb=>({...kb,day:enriched.length+(kb.day-3)}));
+    const koByTime={};knockoutFix.forEach(f=>{koByTime[new Date(f.kickoffISO).getTime()]=f;});
+    const knockoutMDs=KNOCKOUT_BRACKET.map(kb=>({...kb,day:enriched.length+(kb.day-3),fixtures:kb.fixtures.map(fix=>{const af=koByTime[new Date(fix.kickoffISO).getTime()];if(!af)return fix;return{...fix,home:af.home||fix.home,away:af.away||fix.away,homeLogo:af.homeLogo||fix.homeLogo,awayLogo:af.awayLogo||fix.awayLogo,status:af.status,elapsed:af.elapsed,isLive:af.isLive,isDone:af.isDone,homeGoals:af.homeGoals,awayGoals:af.awayGoals};})}));
     setMatchdays([...enriched,...knockoutMDs]);
     const nl={};parsed.forEach(f=>{if((f.isLive||f.isDone)&&f.homeGoals!=null){nl[f.id]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};// Also index by static ID so live scores show on predict tab
     const normalKey=(f.home+"|"+f.away).toLowerCase();
@@ -488,6 +490,7 @@ export default function App(){
     const sid=HOME_AWAY_TO_STATIC_ID[normalKey]||HOME_AWAY_TO_STATIC_ID[reversedKey];
     const isReversed=!HOME_AWAY_TO_STATIC_ID[normalKey]&&!!HOME_AWAY_TO_STATIC_ID[reversedKey];
     if(sid)nl[sid]={homeGoals:isReversed?f.awayGoals:f.homeGoals,awayGoals:isReversed?f.homeGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};}});
+    knockoutFix.forEach(f=>{if((f.isLive||f.isDone)&&f.homeGoals!=null){const sf=KNOCKOUT_BRACKET.flatMap(kb=>kb.fixtures).find(s=>new Date(s.kickoffISO).getTime()===new Date(f.kickoffISO).getTime());if(sf)nl[sf.id]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};}});
     const apiIdMap={};parsed.forEach(function(f){apiIdMap[(f.home+"|"+f.away).toLowerCase()]=f.id;});
     setApiIdMap(apiIdMap);
     setLive(nl);setApiStatus("live");runBonusEngine(nl,parsed);}catch(err){console.error("API fetch error:",err);setApiStatus("fallback");}},[]);
