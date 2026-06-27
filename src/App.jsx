@@ -775,9 +775,11 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
     const champResult=ub.find(b=>b.question_id==="champion_result")?.answer||"";
     const bootResult=ub.find(b=>b.question_id==="topscorer_result")?.answer||"";
     const goalsResult=ub.find(b=>b.question_id==="mostgoals_result")?.answer||"";
+    let goalsArr;try{goalsArr=JSON.parse(goalsResult);}catch{goalsArr=null;}
+    const goalsMatch=goalsResult&&(Array.isArray(goalsArr)?goalsArr.includes(get("mostgoals")):get("mostgoals")===goalsResult);
     if(champResult&&get("champion")===champResult){bp+=PTS_WINNER;bBreakdown.winner=PTS_WINNER;}
     if(bootResult&&get("topscorer")===bootResult){bp+=PTS_BONUS;bBreakdown.boot=PTS_BONUS;}
-    if(goalsResult&&get("mostgoals")===goalsResult){bp+=PTS_BONUS;bBreakdown.goals=PTS_BONUS;}
+    if(goalsMatch){bp+=PTS_BONUS;bBreakdown.goals=PTS_BONUS;}
     ["r32","r16","qf","sf","final"].forEach(function(rnd){
       const actual=ub.find(b=>b.question_id==="actual_adv_"+rnd)?.answer||"";
       if(!actual)return;
@@ -990,9 +992,10 @@ function StatsTab({allFix,predictions,live,totalPts,predCount,totalFix,bonus,all
   const champResult=ub.find(b=>b.question_id==="champion_result")?.answer||"";
   const bootResult=ub.find(b=>b.question_id==="topscorer_result")?.answer||"";
   const goalsResult=ub.find(b=>b.question_id==="mostgoals_result")?.answer||"";
+  let goalsArr;try{goalsArr=JSON.parse(goalsResult);}catch{goalsArr=null;}
   const champPts=champResult&&get("champion")===champResult?PTS_WINNER:0;
   const bootPts=bootResult&&get("topscorer")===bootResult?PTS_BONUS:0;
-  const goalsPts=goalsResult&&get("mostgoals")===goalsResult?PTS_BONUS:0;
+  const goalsPts=goalsResult&&(Array.isArray(goalsArr)?goalsArr.includes(get("mostgoals")):get("mostgoals")===goalsResult)?PTS_BONUS:0;
   const advRows=["r32","r16","qf","sf","final"].map(function(rnd){
     const actual=ub.find(b=>b.question_id==="actual_adv_"+rnd)?.answer||"";
     if(!actual)return{rnd,pts:0,correct:0,total:getAdv("adv_"+rnd).length,pending:true};
