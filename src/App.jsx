@@ -509,7 +509,7 @@ export default function App(){
     knockoutFix.forEach(f=>{if((f.isLive||f.isDone)&&f.homeGoals!=null){const sf=KNOCKOUT_BRACKET.flatMap(kb=>kb.fixtures).find(s=>new Date(s.kickoffISO).getTime()===new Date(f.kickoffISO).getTime());if(sf)nl[sf.id]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};}});
     const apiIdMap={};parsed.forEach(function(f){apiIdMap[(f.home+"|"+f.away).toLowerCase()]=f.id;});
     setApiIdMap(apiIdMap);
-    setLive(nl);setApiStatus("live");runBonusEngine(nl,enriched.flatMap(function(md){return md.fixtures;}));}catch(err){console.error("API fetch error:",err);setApiStatus("fallback");}},[]);
+    setLive(nl);setApiStatus("live");runBonusEngine(nl,[...enriched.flatMap(function(md){return md.fixtures;}),...knockoutMDs.flatMap(function(md){return md.fixtures;})]);}catch(err){console.error("API fetch error:",err);setApiStatus("fallback");}},[]);
   useEffect(()=>{fetchLive();poll.current=setInterval(fetchLive,30000);return()=>clearInterval(poll.current);},[fetchLive]);
   useEffect(()=>{if(!user)return;const id=setInterval(function(){loadAll();},30000);return()=>clearInterval(id);},[user]);
 
