@@ -522,7 +522,7 @@ export default function App(){
     knockoutMDs.flatMap(function(md){return md.fixtures;}).forEach(function(fix){if((fix.isLive||fix.isDone)&&fix.homeGoals!=null){nl[fix.id]={homeGoals:fix.homeGoals,awayGoals:fix.awayGoals,isLive:fix.isLive,elapsed:fix.elapsed};}});
     const apiIdMap={};parsed.forEach(function(f){apiIdMap[(f.home+"|"+f.away).toLowerCase()]=f.id;});
     setApiIdMap(apiIdMap);
-    setLive(nl);setApiStatus("live");runBonusEngine(nl,[...enriched.flatMap(function(md){return md.fixtures;}),...knockoutMDs.flatMap(function(md){return md.fixtures;})]);}catch(err){console.error("API fetch error:",err);setApiStatus("fallback");}},[]);
+    setLive(nl);setApiStatus("live");runBonusEngine(nl,[...enriched.flatMap(function(md){return md.fixtures;}),...knockoutMDs.flatMap(function(md){return md.fixtures;})]);}catch(err){console.error("API fetch error:",err);setApiStatus("fallback");}},[user]);
   useEffect(()=>{fetchLive();poll.current=setInterval(fetchLive,30000);return()=>clearInterval(poll.current);},[fetchLive]);
   useEffect(()=>{if(!user)return;const id=setInterval(function(){loadAll();},30000);return()=>clearInterval(id);},[user]);
 
@@ -648,7 +648,7 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId,all
       const isNextUpcoming=!lk&&arr.slice(0,i).every(f=>locked(f.kickoffISO)||f.isLive||f.isDone);
       return(<div key={fix.id} ref={isNextUpcoming?nextFixRef:null} style={{...S.card,scrollMarginTop:"80px",...(isSaved?{borderColor:"#22c55e",boxShadow:"0 0 18px #22c55e2a"}:{}),...(fix.isLive?{borderColor:"#ef444440",boxShadow:"0 0 18px #ef44441a"}:{})}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,gap:8}}>
-          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?(KO_LABEL[fix.group]||fix.group):`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {fix.time}</span>{fix.venue&&<div style={{fontSize:10,color:"#374151",marginTop:2}}>📍 {fix.venue}</div>}{lm&&<div style={{fontSize:10,color:"#f59e0b",marginTop:3,fontWeight:600}}>⏱ {lm}</div>}</div>
+          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?(KO_LABEL[fix.group]||fix.group):`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {localDate(fix.kickoffISO)} · {localTime(fix.kickoffISO)}</span>{fix.venue&&<div style={{fontSize:10,color:"#374151",marginTop:2}}>📍 {fix.venue}</div>}{lm&&<div style={{fontSize:10,color:"#f59e0b",marginTop:3,fontWeight:600}}>⏱ {lm}</div>}</div>
           <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}><SPill status={fix.status} elapsed={fix.elapsed}/>{p!==null&&<span style={{fontSize:11,fontWeight:700,color:"#fff",padding:"3px 8px",borderRadius:20,background:p===PTS_EXACT?"#22c55e":p===PTS_RESULT?"#f59e0b":"#ef4444"}}>{p===PTS_EXACT?`✓ +${PTS_EXACT}`:p===PTS_RESULT?`~ +${PTS_RESULT}`:`✗ +0`}</span>}</div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
@@ -864,7 +864,7 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
     return(
       <div style={{background:"#080808",border:`1px solid ${fix.isLive?"rgba(239,68,68,0.3)":"#141414"}`,borderRadius:16,padding:16,marginBottom:12,boxShadow:fix.isLive?"0 0 16px rgba(239,68,68,0.06)":"none"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?(KO_LABEL[fix.group]||fix.group):`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {fix.time}</span></div>
+          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?(KO_LABEL[fix.group]||fix.group):`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {localDate(fix.kickoffISO)} · {localTime(fix.kickoffISO)}</span></div>
           <SPill status={fix.status} elapsed={fix.elapsed}/>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
