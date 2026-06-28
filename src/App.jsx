@@ -972,7 +972,12 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontWeight:700,fontSize:13}}>{p.name}{p.id===currentUser.id&&" (You)"}</div>
                 <div style={{fontSize:10,color:"#6b7280",marginTop:1}}>{p.exact} perfect · {p.correct} result</div>
-                {form.length>0&&<div style={{display:"flex",gap:3,marginTop:4}}>{form.map((f,fi)=><FormDot key={fi} type={f}/>)}</div>}
+                {(form.length>0||p.bonusPts>0)&&(
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4}}>
+                    {form.length>0&&<div style={{display:"flex",gap:3}}>{form.map((f,fi)=><FormDot key={fi} type={f}/>)}</div>}
+                    {p.bonusPts>0&&<span style={{fontSize:9,fontWeight:800,color:"#a855f7",background:"rgba(168,85,247,0.1)",border:"1px solid rgba(168,85,247,0.2)",borderRadius:10,padding:"1px 6px"}}>⭐ +{p.bonusPts} bonus</span>}
+                  </div>
+                )}
               </div>
               <div style={{fontSize:18,fontWeight:800,color:G,flexShrink:0}}>{p.pts}<span style={{fontSize:10,color:"#6b7280"}}> pts</span></div>
             </div>
@@ -1196,6 +1201,8 @@ function BonusTab({bonus,onSave,champion,setChampion,teams,allBonusAnswers,profi
 
   function EveryonePicks(){
     const[expanded,setExpanded]=useState({});
+    const adminBonus=(allBonusAnswers||[]).filter(function(b){return b.user_id===ADMIN_ID;});
+    const adminGet=function(k){return(adminBonus.find(function(b){return b.question_id===k;})||{}).answer||"";};
     return(<div>
       <button onClick={saveRevealImg} style={{width:"100%",background:"linear-gradient(90deg,#f59e0b,#f97316)",border:"none",borderRadius:10,color:"#000",fontSize:12,fontWeight:800,padding:"11px",cursor:"pointer",marginBottom:16,outline:"none"}}>Save as Image</button>
       {sortedProfiles.map(function(p){
@@ -1235,6 +1242,16 @@ function BonusTab({bonus,onSave,champion,setChampion,teams,allBonusAnswers,profi
             </div>
             {isExp&&(
               <div style={{borderTop:"1px solid #111",padding:"12px 14px",background:"#050505"}}>
+                <div style={{fontSize:9,fontWeight:800,color:"#6b7280",letterSpacing:1,marginBottom:8}}>SPECIAL PICKS</div>
+                {[{label:"🏆 Champion",k:"champion",rk:"champion_result",pts:PTS_WINNER},{label:"👟 Top Scorer",k:"topscorer",rk:"topscorer_result",pts:PTS_BONUS},{label:"⚽ Most Group Goals",k:"mostgoals",rk:"mostgoals_result",pts:PTS_BONUS}].map(function(s){
+                  const pick=get(s.k);const result=adminGet(s.rk);
+                  let ok=false;if(result){if(s.rk==="mostgoals_result"){let a;try{a=JSON.parse(result);}catch{a=null;}ok=Array.isArray(a)?a.includes(pick):pick===result;}else{ok=pick===result;}}
+                  return(<div key={s.label} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                    <div><div style={{fontSize:10,color:"#6b7280"}}>{s.label}</div><div style={{fontSize:12,fontWeight:700,color:pick?"#f9fafb":"#374151"}}>{pick||"No pick"}</div></div>
+                    {result?<span style={{fontSize:11,fontWeight:700,color:ok?"#22c55e":"#ef4444",background:ok?"#052e16":"#1f0707",padding:"3px 8px",borderRadius:8}}>{ok?`✓ +${s.pts}`:"✗ +0"}</span>:<span style={{fontSize:10,color:"#374151"}}>—</span>}
+                  </div>);
+                })}
+                <div style={{borderTop:"1px solid #111",paddingTop:10,marginBottom:8,fontSize:9,fontWeight:800,color:"#6b7280",letterSpacing:1}}>ADVANCEMENT PICKS</div>
                 {[{l:"R32",k:"adv_r32",t:32},{l:"R16",k:"adv_r16",t:16},{l:"QF",k:"adv_qf",t:8},{l:"SF",k:"adv_sf",t:4},{l:"Final",k:"adv_final",t:2}].map(function(r){
                   const arr=getAdv(r.k);
                   return(<div key={r.l} style={{marginBottom:10}}>
