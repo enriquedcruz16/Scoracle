@@ -1474,7 +1474,8 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
       const lockTime=new Date(new Date(fix.kickoffISO).getTime()-15*60000);
       const lockStr=lockTime.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
       function copyReminder(){
-        const msg=`⚽ Scoracle reminder — ${fix.home} vs ${fix.away} kicks off at ${localTime(fix.kickoffISO)} UK Time on ${fix.date}! Get your prediction in before ${lockStr} UK Time when it locks. scoracle.live`;
+        const roundLabel=fix.isKnockout?(KO_LABEL[fix.group]||fix.group):`Group ${fix.group}`;
+        const msg=`⚽ Scoracle reminder — ${fix.home} vs ${fix.away} (${roundLabel}) kicks off at ${localTime(fix.kickoffISO)} on ${fix.date}! Get your prediction in before ${lockStr} when it locks. scoracle.live`;
         navigator.clipboard.writeText(msg);
       }
       function copyMissing(){
@@ -1487,7 +1488,7 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
         <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
           <div style={{flex:1}}>
             <div style={{fontSize:13,fontWeight:700}}>{fix.home} vs {fix.away}</div>
-            <div style={{fontSize:11,color:"#6b7280"}}>{localDate(fix.kickoffISO)} · {localTime(fix.kickoffISO)} · Group {fix.group}</div>
+            <div style={{fontSize:11,color:"#6b7280"}}>{localDate(fix.kickoffISO)} · {localTime(fix.kickoffISO)} · {fix.isKnockout?(KO_LABEL[fix.group]||fix.group):`Group ${fix.group}`}</div>
             <div style={{fontSize:11,color:"#6b7280"}}>{predsForMatch.length}/{totalUsers} predictions · {missingUsers.length} missing</div>
           </div>
           <div style={{textAlign:"right",flexShrink:0}}>
