@@ -144,7 +144,7 @@ const KNOCKOUT_BRACKET = [
     {id:"k_r32_m85",mNum:85,group:"R32",home:"1J",away:"2H",date:"Jul 3",time:"02:00",venue:"Hard Rock Stadium, Miami",kickoffISO:"2026-07-02T21:00:00-04:00",isKnockout:true},
     {id:"k_r32_m86",mNum:86,group:"R32",home:"1B",away:"3rd-EFGIJ",date:"Jul 3",time:"20:00",venue:"Estadio BBVA, Monterrey",kickoffISO:"2026-07-03T15:00:00-04:00",isKnockout:true},
     {id:"k_r32_m87",mNum:87,group:"R32",home:"2G",away:"2D",date:"Jul 4",time:"00:00",venue:"AT&T Stadium, Dallas",kickoffISO:"2026-07-03T19:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m88",mNum:88,group:"R32",home:"1K",away:"3rd-DEIJL",date:"Jul 4",time:"02:00",venue:"AT&T Stadium, Dallas",kickoffISO:"2026-07-03T21:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m88",mNum:88,group:"R32",home:"1K",away:"2L",date:"Jul 4",time:"02:00",venue:"AT&T Stadium, Dallas",kickoffISO:"2026-07-03T21:00:00-04:00",isKnockout:true},
   ]},
   {day:5,label:"Round of 16",dates:"Jul 4–7",fixtures:[
     {id:"k_r16_m89",mNum:89,group:"R16",home:"W M74",away:"W M77",date:"Jul 4",time:"22:00",venue:"Lincoln Financial Field, Philadelphia",kickoffISO:"2026-07-04T17:00:00-04:00",isKnockout:true},
@@ -483,10 +483,9 @@ export default function App(){
         homeGoals:reversed?af.awayGoals:af.homeGoals,
         awayGoals:reversed?af.homeGoals:af.awayGoals,
       };})};});
-    // Always use static knockout bracket for structure (correct labels + all fixtures).
-    // Enrich each fixture with API live data matched by kickoff timestamp.
+    // Always use static knockout bracket for structure. Enrich with API data matched by resolved team-name pair.
     const knockoutFix=parsed.filter(f=>f.rn>3);
-    const koByTime={};knockoutFix.forEach(f=>{koByTime[new Date(f.kickoffISO).getTime()]=f;});
+    const apiKOByPair={};knockoutFix.forEach(f=>{apiKOByPair[(f.home+"|"+f.away).toLowerCase()]=f;});
     // Compute group standings from enriched data so we can resolve 1X/2X placeholder slots
     const fxDone=enriched.flatMap(function(md){return md.fixtures;}).map(function(f){return f.isDone||f.homeGoals!=null?{...f,isDone:true}:f;});
     const koStandings=calcBracketStandings({},fxDone,{});
@@ -498,7 +497,9 @@ export default function App(){
     thirdSlotsKO.forEach(function(slot){const groups=slot.replace('3rd-','').split('');const pick=best8KO.find(function(t){return groups.includes(t.group)&&!usedKOT.has(t.team);});if(pick){usedKOT.add(pick.team);thirdMapKO[slot]=pick.team;}});
     const SLOT_RE=/^([12])([A-L])$/;
     function resSlot(slot){const m=SLOT_RE.exec(slot);if(m){const rows=koStandings[m[2]];return(rows&&rows[m[1]==="1"?0:1]?.team)||slot;}if(THIRD_RE.test(slot))return thirdMapKO[slot]||slot;return slot;}
-    const knockoutMDs=KNOCKOUT_BRACKET.map(kb=>({...kb,day:enriched.length+(kb.day-3),fixtures:kb.fixtures.map(fix=>{const af=koByTime[new Date(fix.kickoffISO).getTime()];let home=fix.home,away=fix.away,homeLogo=fix.homeLogo,awayLogo=fix.awayLogo,status=fix.status,elapsed=fix.elapsed,isLive=fix.isLive,isDone=fix.isDone,homeGoals=fix.homeGoals,awayGoals=fix.awayGoals;if(af){home=af.home||home;away=af.away||away;homeLogo=af.homeLogo||homeLogo;awayLogo=af.awayLogo||awayLogo;status=af.status;elapsed=af.elapsed;isLive=af.isLive;isDone=af.isDone;homeGoals=af.homeGoals;awayGoals=af.awayGoals;}return{...fix,home:resSlot(home),away:resSlot(away),homeLogo,awayLogo,status,elapsed,isLive,isDone,homeGoals,awayGoals};})}));
+    // Build knockout matchdays: static bracket is structural source; enrich logos/status/scores via pair match.
+    // Never overwrite id, kickoffISO, date, time, venue, or team names from API.
+    const knockoutMDs=KNOCKOUT_BRACKET.map(kb=>({...kb,day:enriched.length+(kb.day-3),fixtures:kb.fixtures.map(fix=>{const resolvedHome=resSlot(fix.home),resolvedAway=resSlot(fix.away);const pairKey=(resolvedHome+"|"+resolvedAway).toLowerCase(),revKey=(resolvedAway+"|"+resolvedHome).toLowerCase();let af=apiKOByPair[pairKey];let reversed=false;if(!af&&apiKOByPair[revKey]){af=apiKOByPair[revKey];reversed=true;}if(!af)return{...fix,home:resolvedHome,away:resolvedAway};return{...fix,home:resolvedHome,away:resolvedAway,homeLogo:reversed?af.awayLogo:af.homeLogo,awayLogo:reversed?af.homeLogo:af.awayLogo,status:af.status,elapsed:af.elapsed,isLive:af.isLive,isDone:af.isDone,homeGoals:reversed?af.awayGoals:af.homeGoals,awayGoals:reversed?af.homeGoals:af.awayGoals};})}));
     setMatchdays([...enriched,...knockoutMDs]);
     const nl={};parsed.forEach(f=>{if((f.isLive||f.isDone)&&f.homeGoals!=null){nl[f.id]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};// Also index by static ID so live scores show on predict tab
     const normalKey=(f.home+"|"+f.away).toLowerCase();
@@ -506,7 +507,8 @@ export default function App(){
     const sid=HOME_AWAY_TO_STATIC_ID[normalKey]||HOME_AWAY_TO_STATIC_ID[reversedKey];
     const isReversed=!HOME_AWAY_TO_STATIC_ID[normalKey]&&!!HOME_AWAY_TO_STATIC_ID[reversedKey];
     if(sid)nl[sid]={homeGoals:isReversed?f.awayGoals:f.homeGoals,awayGoals:isReversed?f.homeGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};}});
-    knockoutFix.forEach(f=>{if((f.isLive||f.isDone)&&f.homeGoals!=null){const sf=KNOCKOUT_BRACKET.flatMap(kb=>kb.fixtures).find(s=>new Date(s.kickoffISO).getTime()===new Date(f.kickoffISO).getTime());if(sf)nl[sf.id]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};}});
+    // Index knockout live scores by static bracket ID (already resolved via pair matching above)
+    knockoutMDs.flatMap(function(md){return md.fixtures;}).forEach(function(fix){if((fix.isLive||fix.isDone)&&fix.homeGoals!=null){nl[fix.id]={homeGoals:fix.homeGoals,awayGoals:fix.awayGoals,isLive:fix.isLive,elapsed:fix.elapsed};}});
     const apiIdMap={};parsed.forEach(function(f){apiIdMap[(f.home+"|"+f.away).toLowerCase()]=f.id;});
     setApiIdMap(apiIdMap);
     setLive(nl);setApiStatus("live");runBonusEngine(nl,[...enriched.flatMap(function(md){return md.fixtures;}),...knockoutMDs.flatMap(function(md){return md.fixtures;})]);}catch(err){console.error("API fetch error:",err);setApiStatus("fallback");}},[]);
@@ -784,22 +786,23 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
 
   function calcBonusPoints(userId){
     const ub=(allBonusAnswers||[]).filter(b=>b.user_id===userId);
-    const all=(allBonusAnswers||[]);
+    const adminBonus=(allBonusAnswers||[]).filter(b=>b.user_id===ADMIN_ID);
+    const adminGet=function(k){return adminBonus.find(b=>b.question_id===k)?.answer||"";};
     const get=function(k){return ub.find(b=>b.question_id===k)?.answer||"";};
     const getAdv=function(k){try{return JSON.parse(get(k)||"[]");}catch{return[];}};
     let bp=0,bBreakdown={winner:0,boot:0,goals:0,adv:0};
-    // Result answers are global (same for everyone) — search all rows, not just this user's
-    const champResult=all.find(b=>b.question_id==="champion_result")?.answer||"";
-    const bootResult=all.find(b=>b.question_id==="topscorer_result")?.answer||"";
-    const goalsResult=all.find(b=>b.question_id==="mostgoals_result")?.answer||"";
+    // Result answers are written by the admin — always read from admin's rows
+    const champResult=adminGet("champion_result");
+    const bootResult=adminGet("topscorer_result");
+    const goalsResult=adminGet("mostgoals_result");
     let goalsArr;try{goalsArr=JSON.parse(goalsResult);}catch{goalsArr=null;}
     const goalsMatch=goalsResult&&(Array.isArray(goalsArr)?goalsArr.includes(get("mostgoals")):get("mostgoals")===goalsResult);
     if(champResult&&get("champion")===champResult){bp+=PTS_WINNER;bBreakdown.winner=PTS_WINNER;}
     if(bootResult&&get("topscorer")===bootResult){bp+=PTS_BONUS;bBreakdown.boot=PTS_BONUS;}
     if(goalsMatch){bp+=PTS_BONUS;bBreakdown.goals=PTS_BONUS;}
     ["r32","r16","qf","sf","final"].forEach(function(rnd){
-      // actual_adv_* is global — find any row with this question_id across all users
-      const actual=all.find(b=>b.question_id==="actual_adv_"+rnd)?.answer||"";
+      // actual_adv_* is written by the admin (runBonusEngine runs under their session)
+      const actual=adminGet("actual_adv_"+rnd);
       if(!actual)return;
       try{const actualTeams=JSON.parse(actual);const userPicks=getAdv("adv_"+rnd);const correct=userPicks.filter(function(t){return actualTeams.includes(t);}).length;bp+=correct*PTS_BONUS;bBreakdown.adv+=correct*PTS_BONUS;}catch{}
     });
@@ -1005,19 +1008,20 @@ function StatsTab({allFix,predictions,live,totalPts,predCount,totalFix,bonus,all
   const acc=predCount>0?Math.round((exact/Math.min(predCount,playedCount||1))*100):0;
   const myUserId=currentUser?.id;
   const ub=(allBonusAnswers||[]).filter(b=>b.user_id===myUserId);
-  const all=(allBonusAnswers||[]);
+  const adminBonus=(allBonusAnswers||[]).filter(b=>b.user_id===ADMIN_ID);
+  const adminGet=function(k){return adminBonus.find(b=>b.question_id===k)?.answer||"";};
   const get=function(k){return ub.find(b=>b.question_id===k)?.answer||"";};
   const getAdv=function(k){try{return JSON.parse(get(k)||"[]");}catch{return[];}};
-  // Result answers are global — search all rows
-  const champResult=all.find(b=>b.question_id==="champion_result")?.answer||"";
-  const bootResult=all.find(b=>b.question_id==="topscorer_result")?.answer||"";
-  const goalsResult=all.find(b=>b.question_id==="mostgoals_result")?.answer||"";
+  // Result answers are written by the admin — always read from admin's rows
+  const champResult=adminGet("champion_result");
+  const bootResult=adminGet("topscorer_result");
+  const goalsResult=adminGet("mostgoals_result");
   let goalsArr;try{goalsArr=JSON.parse(goalsResult);}catch{goalsArr=null;}
   const champPts=champResult&&get("champion")===champResult?PTS_WINNER:0;
   const bootPts=bootResult&&get("topscorer")===bootResult?PTS_BONUS:0;
   const goalsPts=goalsResult&&(Array.isArray(goalsArr)?goalsArr.includes(get("mostgoals")):get("mostgoals")===goalsResult)?PTS_BONUS:0;
   const advRows=["r32","r16","qf","sf","final"].map(function(rnd){
-    const actual=all.find(b=>b.question_id==="actual_adv_"+rnd)?.answer||"";
+    const actual=adminGet("actual_adv_"+rnd);
     if(!actual)return{rnd,pts:0,correct:0,total:getAdv("adv_"+rnd).length,pending:true};
     try{const actualTeams=JSON.parse(actual);const userPicks=getAdv("adv_"+rnd);const correct=userPicks.filter(function(t){return actualTeams.includes(t);}).length;return{rnd,pts:correct*PTS_BONUS,correct,total:userPicks.length,pending:false};}
     catch{return{rnd,pts:0,correct:0,total:0,pending:true};}
