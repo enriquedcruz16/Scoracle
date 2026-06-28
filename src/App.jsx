@@ -128,47 +128,47 @@ const STATIC_MATCHDAYS = [
 // QF pairings: M97=W89+W90, M98=W91+W92, M99=W93+W94, M100=W95+W96
 // SF: M101=W97+W98, M102=W99+W100
 const KNOCKOUT_BRACKET = [
-  {day:4,label:"Round of 32",dates:"Jun 28 – Jul 3",fixtures:[
-    {id:"k_r32_m73",mNum:73,group:"R32",home:"2A",away:"2B",date:"Jun 28",time:"15:00",venue:"SoFi Stadium, Los Angeles",kickoffISO:"2026-06-28T15:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m74",mNum:74,group:"R32",home:"1E",away:"3rd-ABCDF",date:"Jun 28",time:"19:00",venue:"Rose Bowl, Pasadena",kickoffISO:"2026-06-28T19:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m75",mNum:75,group:"R32",home:"1F",away:"2C",date:"Jun 29",time:"15:00",venue:"Levi's Stadium, San Francisco",kickoffISO:"2026-06-29T15:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m76",mNum:76,group:"R32",home:"1C",away:"2F",date:"Jun 29",time:"19:00",venue:"SoFi Stadium, Los Angeles",kickoffISO:"2026-06-29T19:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m77",mNum:77,group:"R32",home:"1I",away:"3rd-CDFGH",date:"Jun 30",time:"15:00",venue:"MetLife Stadium, New York",kickoffISO:"2026-06-30T15:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m78",mNum:78,group:"R32",home:"2E",away:"2I",date:"Jun 30",time:"19:00",venue:"Estadio Azteca, Mexico City",kickoffISO:"2026-06-30T19:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m79",mNum:79,group:"R32",home:"1A",away:"3rd-CEFHI",date:"Jun 30",time:"21:00",venue:"Estadio Azteca, Mexico City",kickoffISO:"2026-06-30T21:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m80",mNum:80,group:"R32",home:"1L",away:"3rd-EHIJK",date:"Jul 1",time:"15:00",venue:"BC Place, Vancouver",kickoffISO:"2026-07-01T15:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m81",mNum:81,group:"R32",home:"2K",away:"2L",date:"Jul 1",time:"19:00",venue:"Lumen Field, Seattle",kickoffISO:"2026-07-01T19:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m82",mNum:82,group:"R32",home:"1H",away:"2J",date:"Jul 1",time:"21:00",venue:"Allegiant Stadium, Las Vegas",kickoffISO:"2026-07-01T21:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m83",mNum:83,group:"R32",home:"1D",away:"3rd-BEFIJ",date:"Jul 2",time:"15:00",venue:"SoFi Stadium, Los Angeles",kickoffISO:"2026-07-02T15:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m84",mNum:84,group:"R32",home:"1G",away:"3rd-AEHIJ",date:"Jul 2",time:"19:00",venue:"Arrowhead Stadium, Kansas City",kickoffISO:"2026-07-02T19:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m85",mNum:85,group:"R32",home:"1J",away:"2H",date:"Jul 2",time:"21:00",venue:"Hard Rock Stadium, Miami",kickoffISO:"2026-07-02T21:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m86",mNum:86,group:"R32",home:"1B",away:"3rd-EFGIJ",date:"Jul 3",time:"15:00",venue:"Estadio BBVA, Monterrey",kickoffISO:"2026-07-03T15:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m87",mNum:87,group:"R32",home:"2G",away:"2D",date:"Jul 3",time:"19:00",venue:"AT&T Stadium, Dallas",kickoffISO:"2026-07-03T19:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m88",mNum:88,group:"R32",home:"1K",away:"2D",date:"Jul 3",time:"21:00",venue:"AT&T Stadium, Dallas",kickoffISO:"2026-07-03T21:00:00-04:00",isKnockout:true},
+  {day:4,label:"Round of 32",dates:"Jun 28 – Jul 4",fixtures:[
+    {id:"k_r32_m73",mNum:73,group:"R32",home:"2A",away:"2B",date:"Jun 28",time:"20:00",venue:"SoFi Stadium, Los Angeles",kickoffISO:"2026-06-28T15:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m74",mNum:74,group:"R32",home:"1E",away:"3rd-ABCDF",date:"Jun 29",time:"00:00",venue:"Rose Bowl, Pasadena",kickoffISO:"2026-06-28T19:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m75",mNum:75,group:"R32",home:"1F",away:"2C",date:"Jun 29",time:"20:00",venue:"Levi's Stadium, San Francisco",kickoffISO:"2026-06-29T15:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m76",mNum:76,group:"R32",home:"1C",away:"2F",date:"Jun 30",time:"00:00",venue:"SoFi Stadium, Los Angeles",kickoffISO:"2026-06-29T19:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m77",mNum:77,group:"R32",home:"1I",away:"3rd-CDFGH",date:"Jun 30",time:"20:00",venue:"MetLife Stadium, New York",kickoffISO:"2026-06-30T15:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m78",mNum:78,group:"R32",home:"2E",away:"2I",date:"Jul 1",time:"00:00",venue:"Estadio Azteca, Mexico City",kickoffISO:"2026-06-30T19:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m79",mNum:79,group:"R32",home:"1A",away:"3rd-CEFHI",date:"Jul 1",time:"02:00",venue:"Estadio Azteca, Mexico City",kickoffISO:"2026-06-30T21:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m80",mNum:80,group:"R32",home:"1L",away:"3rd-EHIJK",date:"Jul 1",time:"20:00",venue:"BC Place, Vancouver",kickoffISO:"2026-07-01T15:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m81",mNum:81,group:"R32",home:"2K",away:"2L",date:"Jul 2",time:"00:00",venue:"Lumen Field, Seattle",kickoffISO:"2026-07-01T19:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m82",mNum:82,group:"R32",home:"1H",away:"2J",date:"Jul 2",time:"02:00",venue:"Allegiant Stadium, Las Vegas",kickoffISO:"2026-07-01T21:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m83",mNum:83,group:"R32",home:"1D",away:"3rd-BEFIJ",date:"Jul 2",time:"20:00",venue:"SoFi Stadium, Los Angeles",kickoffISO:"2026-07-02T15:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m84",mNum:84,group:"R32",home:"1G",away:"3rd-AEHIJ",date:"Jul 3",time:"00:00",venue:"Arrowhead Stadium, Kansas City",kickoffISO:"2026-07-02T19:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m85",mNum:85,group:"R32",home:"1J",away:"2H",date:"Jul 3",time:"02:00",venue:"Hard Rock Stadium, Miami",kickoffISO:"2026-07-02T21:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m86",mNum:86,group:"R32",home:"1B",away:"3rd-EFGIJ",date:"Jul 3",time:"20:00",venue:"Estadio BBVA, Monterrey",kickoffISO:"2026-07-03T15:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m87",mNum:87,group:"R32",home:"2G",away:"2D",date:"Jul 4",time:"00:00",venue:"AT&T Stadium, Dallas",kickoffISO:"2026-07-03T19:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m88",mNum:88,group:"R32",home:"1K",away:"3rd-DEIJL",date:"Jul 4",time:"02:00",venue:"AT&T Stadium, Dallas",kickoffISO:"2026-07-03T21:00:00-04:00",isKnockout:true},
   ]},
   {day:5,label:"Round of 16",dates:"Jul 4–7",fixtures:[
-    {id:"k_r16_m89",mNum:89,group:"R16",home:"W M74",away:"W M77",date:"Jul 4",time:"17:00",venue:"Lincoln Financial Field, Philadelphia",kickoffISO:"2026-07-04T17:00:00-04:00",isKnockout:true},
-    {id:"k_r16_m90",mNum:90,group:"R16",home:"W M73",away:"W M75",date:"Jul 4",time:"13:00",venue:"NRG Stadium, Houston",kickoffISO:"2026-07-04T13:00:00-04:00",isKnockout:true},
-    {id:"k_r16_m91",mNum:91,group:"R16",home:"W M76",away:"W M78",date:"Jul 5",time:"16:00",venue:"MetLife Stadium, New York",kickoffISO:"2026-07-05T16:00:00-04:00",isKnockout:true},
-    {id:"k_r16_m92",mNum:92,group:"R16",home:"W M79",away:"W M80",date:"Jul 5",time:"20:00",venue:"Estadio Azteca, Mexico City",kickoffISO:"2026-07-05T20:00:00-04:00",isKnockout:true},
-    {id:"k_r16_m93",mNum:93,group:"R16",home:"W M83",away:"W M84",date:"Jul 6",time:"15:00",venue:"AT&T Stadium, Dallas",kickoffISO:"2026-07-06T15:00:00-04:00",isKnockout:true},
-    {id:"k_r16_m94",mNum:94,group:"R16",home:"W M81",away:"W M82",date:"Jul 6",time:"20:00",venue:"Lumen Field, Seattle",kickoffISO:"2026-07-06T20:00:00-04:00",isKnockout:true},
-    {id:"k_r16_m95",mNum:95,group:"R16",home:"W M86",away:"W M88",date:"Jul 7",time:"12:00",venue:"Mercedes-Benz Stadium, Atlanta",kickoffISO:"2026-07-07T12:00:00-04:00",isKnockout:true},
-    {id:"k_r16_m96",mNum:96,group:"R16",home:"W M85",away:"W M87",date:"Jul 7",time:"16:00",venue:"BC Place, Vancouver",kickoffISO:"2026-07-07T16:00:00-04:00",isKnockout:true},
+    {id:"k_r16_m89",mNum:89,group:"R16",home:"W M74",away:"W M77",date:"Jul 4",time:"22:00",venue:"Lincoln Financial Field, Philadelphia",kickoffISO:"2026-07-04T17:00:00-04:00",isKnockout:true},
+    {id:"k_r16_m90",mNum:90,group:"R16",home:"W M73",away:"W M75",date:"Jul 4",time:"18:00",venue:"NRG Stadium, Houston",kickoffISO:"2026-07-04T13:00:00-04:00",isKnockout:true},
+    {id:"k_r16_m91",mNum:91,group:"R16",home:"W M76",away:"W M78",date:"Jul 5",time:"21:00",venue:"MetLife Stadium, New York",kickoffISO:"2026-07-05T16:00:00-04:00",isKnockout:true},
+    {id:"k_r16_m92",mNum:92,group:"R16",home:"W M79",away:"W M80",date:"Jul 6",time:"01:00",venue:"Estadio Azteca, Mexico City",kickoffISO:"2026-07-05T20:00:00-04:00",isKnockout:true},
+    {id:"k_r16_m93",mNum:93,group:"R16",home:"W M83",away:"W M84",date:"Jul 6",time:"20:00",venue:"AT&T Stadium, Dallas",kickoffISO:"2026-07-06T15:00:00-04:00",isKnockout:true},
+    {id:"k_r16_m94",mNum:94,group:"R16",home:"W M81",away:"W M82",date:"Jul 7",time:"01:00",venue:"Lumen Field, Seattle",kickoffISO:"2026-07-06T20:00:00-04:00",isKnockout:true},
+    {id:"k_r16_m95",mNum:95,group:"R16",home:"W M86",away:"W M88",date:"Jul 7",time:"17:00",venue:"Mercedes-Benz Stadium, Atlanta",kickoffISO:"2026-07-07T12:00:00-04:00",isKnockout:true},
+    {id:"k_r16_m96",mNum:96,group:"R16",home:"W M85",away:"W M87",date:"Jul 7",time:"21:00",venue:"BC Place, Vancouver",kickoffISO:"2026-07-07T16:00:00-04:00",isKnockout:true},
   ]},
-  {day:6,label:"Quarter-Finals",dates:"Jul 9–11",fixtures:[
-    {id:"k_qf_m97",mNum:97,group:"QF",home:"W M89",away:"W M90",date:"Jul 9",time:"16:00",venue:"Gillette Stadium, Boston",kickoffISO:"2026-07-09T16:00:00-04:00",isKnockout:true},
-    {id:"k_qf_m98",mNum:98,group:"QF",home:"W M91",away:"W M92",date:"Jul 10",time:"15:00",venue:"SoFi Stadium, Los Angeles",kickoffISO:"2026-07-10T15:00:00-04:00",isKnockout:true},
-    {id:"k_qf_m99",mNum:99,group:"QF",home:"W M93",away:"W M94",date:"Jul 11",time:"17:00",venue:"Hard Rock Stadium, Miami",kickoffISO:"2026-07-11T17:00:00-04:00",isKnockout:true},
-    {id:"k_qf_m100",mNum:100,group:"QF",home:"W M95",away:"W M96",date:"Jul 11",time:"21:00",venue:"Arrowhead Stadium, Kansas City",kickoffISO:"2026-07-11T21:00:00-04:00",isKnockout:true},
+  {day:6,label:"Quarter-Finals",dates:"Jul 9–12",fixtures:[
+    {id:"k_qf_m97",mNum:97,group:"QF",home:"W M89",away:"W M90",date:"Jul 9",time:"21:00",venue:"Gillette Stadium, Boston",kickoffISO:"2026-07-09T16:00:00-04:00",isKnockout:true},
+    {id:"k_qf_m98",mNum:98,group:"QF",home:"W M91",away:"W M92",date:"Jul 10",time:"20:00",venue:"SoFi Stadium, Los Angeles",kickoffISO:"2026-07-10T15:00:00-04:00",isKnockout:true},
+    {id:"k_qf_m99",mNum:99,group:"QF",home:"W M93",away:"W M94",date:"Jul 11",time:"22:00",venue:"Hard Rock Stadium, Miami",kickoffISO:"2026-07-11T17:00:00-04:00",isKnockout:true},
+    {id:"k_qf_m100",mNum:100,group:"QF",home:"W M95",away:"W M96",date:"Jul 12",time:"02:00",venue:"Arrowhead Stadium, Kansas City",kickoffISO:"2026-07-11T21:00:00-04:00",isKnockout:true},
   ]},
   {day:7,label:"Semi-Finals",dates:"Jul 14–15",fixtures:[
-    {id:"k_sf_m101",mNum:101,group:"SF",home:"W M97",away:"W M98",date:"Jul 14",time:"15:00",venue:"AT&T Stadium, Dallas",kickoffISO:"2026-07-14T15:00:00-04:00",isKnockout:true},
-    {id:"k_sf_m102",mNum:102,group:"SF",home:"W M99",away:"W M100",date:"Jul 15",time:"15:00",venue:"Mercedes-Benz Stadium, Atlanta",kickoffISO:"2026-07-15T15:00:00-04:00",isKnockout:true},
+    {id:"k_sf_m101",mNum:101,group:"SF",home:"W M97",away:"W M98",date:"Jul 14",time:"20:00",venue:"AT&T Stadium, Dallas",kickoffISO:"2026-07-14T15:00:00-04:00",isKnockout:true},
+    {id:"k_sf_m102",mNum:102,group:"SF",home:"W M99",away:"W M100",date:"Jul 15",time:"20:00",venue:"Mercedes-Benz Stadium, Atlanta",kickoffISO:"2026-07-15T15:00:00-04:00",isKnockout:true},
   ]},
   {day:8,label:"3rd Place & Final",dates:"Jul 18–19",fixtures:[
-    {id:"k_3rd_m103",mNum:103,group:"3rd Place",home:"L M101",away:"L M102",date:"Jul 18",time:"17:00",venue:"Hard Rock Stadium, Miami",kickoffISO:"2026-07-18T17:00:00-04:00",isKnockout:true},
-    {id:"k_final_m104",mNum:104,group:"Final",home:"W M101",away:"W M102",date:"Jul 19",time:"15:00",venue:"MetLife Stadium, New Jersey",kickoffISO:"2026-07-19T15:00:00-04:00",isKnockout:true},
+    {id:"k_3rd_m103",mNum:103,group:"3rd Place",home:"L M101",away:"L M102",date:"Jul 18",time:"22:00",venue:"Hard Rock Stadium, Miami",kickoffISO:"2026-07-18T17:00:00-04:00",isKnockout:true},
+    {id:"k_final_m104",mNum:104,group:"Final",home:"W M101",away:"W M102",date:"Jul 19",time:"20:00",venue:"MetLife Stadium, New Jersey",kickoffISO:"2026-07-19T15:00:00-04:00",isKnockout:true},
   ]},
 ];
 
@@ -490,8 +490,14 @@ export default function App(){
     // Compute group standings from enriched data so we can resolve 1X/2X placeholder slots
     const fxDone=enriched.flatMap(function(md){return md.fixtures;}).map(function(f){return f.isDone||f.homeGoals!=null?{...f,isDone:true}:f;});
     const koStandings=calcBracketStandings({},fxDone,{});
+    // Pre-assign 3rd-place slots in restrictiveness order (fewest eligible groups first) to avoid duplicates
+    const THIRD_RE=/^3rd-([A-L]+)$/;
+    const allThirdsKO=getBest3rd(koStandings);const best8KO=allThirdsKO.slice(0,8);
+    const thirdSlotsKO=Array.from(new Set(KNOCKOUT_BRACKET.flatMap(function(kb){return kb.fixtures;}).flatMap(function(f){return[f.home,f.away];}).filter(function(s){return THIRD_RE.test(s);}))).sort(function(a,b){return a.replace('3rd-','').length-b.replace('3rd-','').length;});
+    const usedKOT=new Set();const thirdMapKO={};
+    thirdSlotsKO.forEach(function(slot){const groups=slot.replace('3rd-','').split('');const pick=best8KO.find(function(t){return groups.includes(t.group)&&!usedKOT.has(t.team);});if(pick){usedKOT.add(pick.team);thirdMapKO[slot]=pick.team;}});
     const SLOT_RE=/^([12])([A-L])$/;
-    function resSlot(slot){const m=SLOT_RE.exec(slot);if(!m)return slot;const rows=koStandings[m[2]];return(rows&&rows[m[1]==="1"?0:1]?.team)||slot;}
+    function resSlot(slot){const m=SLOT_RE.exec(slot);if(m){const rows=koStandings[m[2]];return(rows&&rows[m[1]==="1"?0:1]?.team)||slot;}if(THIRD_RE.test(slot))return thirdMapKO[slot]||slot;return slot;}
     const knockoutMDs=KNOCKOUT_BRACKET.map(kb=>({...kb,day:enriched.length+(kb.day-3),fixtures:kb.fixtures.map(fix=>{const af=koByTime[new Date(fix.kickoffISO).getTime()];let home=fix.home,away=fix.away,homeLogo=fix.homeLogo,awayLogo=fix.awayLogo,status=fix.status,elapsed=fix.elapsed,isLive=fix.isLive,isDone=fix.isDone,homeGoals=fix.homeGoals,awayGoals=fix.awayGoals;if(af){home=af.home||home;away=af.away||away;homeLogo=af.homeLogo||homeLogo;awayLogo=af.awayLogo||awayLogo;status=af.status;elapsed=af.elapsed;isLive=af.isLive;isDone=af.isDone;homeGoals=af.homeGoals;awayGoals=af.awayGoals;}return{...fix,home:resSlot(home),away:resSlot(away),homeLogo,awayLogo,status,elapsed,isLive,isDone,homeGoals,awayGoals};})}));
     setMatchdays([...enriched,...knockoutMDs]);
     const nl={};parsed.forEach(f=>{if((f.isLive||f.isDone)&&f.homeGoals!=null){nl[f.id]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};// Also index by static ID so live scores show on predict tab
@@ -778,19 +784,22 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
 
   function calcBonusPoints(userId){
     const ub=(allBonusAnswers||[]).filter(b=>b.user_id===userId);
+    const all=(allBonusAnswers||[]);
     const get=function(k){return ub.find(b=>b.question_id===k)?.answer||"";};
     const getAdv=function(k){try{return JSON.parse(get(k)||"[]");}catch{return[];}};
     let bp=0,bBreakdown={winner:0,boot:0,goals:0,adv:0};
-    const champResult=ub.find(b=>b.question_id==="champion_result")?.answer||"";
-    const bootResult=ub.find(b=>b.question_id==="topscorer_result")?.answer||"";
-    const goalsResult=ub.find(b=>b.question_id==="mostgoals_result")?.answer||"";
+    // Result answers are global (same for everyone) — search all rows, not just this user's
+    const champResult=all.find(b=>b.question_id==="champion_result")?.answer||"";
+    const bootResult=all.find(b=>b.question_id==="topscorer_result")?.answer||"";
+    const goalsResult=all.find(b=>b.question_id==="mostgoals_result")?.answer||"";
     let goalsArr;try{goalsArr=JSON.parse(goalsResult);}catch{goalsArr=null;}
     const goalsMatch=goalsResult&&(Array.isArray(goalsArr)?goalsArr.includes(get("mostgoals")):get("mostgoals")===goalsResult);
     if(champResult&&get("champion")===champResult){bp+=PTS_WINNER;bBreakdown.winner=PTS_WINNER;}
     if(bootResult&&get("topscorer")===bootResult){bp+=PTS_BONUS;bBreakdown.boot=PTS_BONUS;}
     if(goalsMatch){bp+=PTS_BONUS;bBreakdown.goals=PTS_BONUS;}
     ["r32","r16","qf","sf","final"].forEach(function(rnd){
-      const actual=ub.find(b=>b.question_id==="actual_adv_"+rnd)?.answer||"";
+      // actual_adv_* is global — find any row with this question_id across all users
+      const actual=all.find(b=>b.question_id==="actual_adv_"+rnd)?.answer||"";
       if(!actual)return;
       try{const actualTeams=JSON.parse(actual);const userPicks=getAdv("adv_"+rnd);const correct=userPicks.filter(function(t){return actualTeams.includes(t);}).length;bp+=correct*PTS_BONUS;bBreakdown.adv+=correct*PTS_BONUS;}catch{}
     });
@@ -996,17 +1005,19 @@ function StatsTab({allFix,predictions,live,totalPts,predCount,totalFix,bonus,all
   const acc=predCount>0?Math.round((exact/Math.min(predCount,playedCount||1))*100):0;
   const myUserId=currentUser?.id;
   const ub=(allBonusAnswers||[]).filter(b=>b.user_id===myUserId);
+  const all=(allBonusAnswers||[]);
   const get=function(k){return ub.find(b=>b.question_id===k)?.answer||"";};
   const getAdv=function(k){try{return JSON.parse(get(k)||"[]");}catch{return[];}};
-  const champResult=ub.find(b=>b.question_id==="champion_result")?.answer||"";
-  const bootResult=ub.find(b=>b.question_id==="topscorer_result")?.answer||"";
-  const goalsResult=ub.find(b=>b.question_id==="mostgoals_result")?.answer||"";
+  // Result answers are global — search all rows
+  const champResult=all.find(b=>b.question_id==="champion_result")?.answer||"";
+  const bootResult=all.find(b=>b.question_id==="topscorer_result")?.answer||"";
+  const goalsResult=all.find(b=>b.question_id==="mostgoals_result")?.answer||"";
   let goalsArr;try{goalsArr=JSON.parse(goalsResult);}catch{goalsArr=null;}
   const champPts=champResult&&get("champion")===champResult?PTS_WINNER:0;
   const bootPts=bootResult&&get("topscorer")===bootResult?PTS_BONUS:0;
   const goalsPts=goalsResult&&(Array.isArray(goalsArr)?goalsArr.includes(get("mostgoals")):get("mostgoals")===goalsResult)?PTS_BONUS:0;
   const advRows=["r32","r16","qf","sf","final"].map(function(rnd){
-    const actual=ub.find(b=>b.question_id==="actual_adv_"+rnd)?.answer||"";
+    const actual=all.find(b=>b.question_id==="actual_adv_"+rnd)?.answer||"";
     if(!actual)return{rnd,pts:0,correct:0,total:getAdv("adv_"+rnd).length,pending:true};
     try{const actualTeams=JSON.parse(actual);const userPicks=getAdv("adv_"+rnd);const correct=userPicks.filter(function(t){return actualTeams.includes(t);}).length;return{rnd,pts:correct*PTS_BONUS,correct,total:userPicks.length,pending:false};}
     catch{return{rnd,pts:0,correct:0,total:0,pending:true};}
