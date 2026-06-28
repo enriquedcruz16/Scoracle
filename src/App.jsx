@@ -626,7 +626,9 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId,all
   const md=matchdays.find(m=>m.day===selDay)||matchdays[0];
   const nextFixRef=useRef(null);
   const listTopRef=useRef(null);
+  const tabBarRef=useRef(null);
   useEffect(()=>{(nextFixRef.current||listTopRef.current)?.scrollIntoView({behavior:"smooth",block:"start"});},[selDay]);
+  useEffect(()=>{if(!tabBarRef.current)return;const btn=tabBarRef.current.querySelector('[data-day="'+selDay+'"]');if(!btn)return;const c=tabBarRef.current;c.scrollTo({left:btn.offsetLeft-(c.offsetWidth-btn.offsetWidth)/2,behavior:"smooth"});},[selDay]);
   function val(id,side){
     const d=drafts[id];
     const fix=allFix.find(function(f){return f.id===id;});
@@ -640,8 +642,8 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId,all
     return "";
   }
   return(<div>
-    <div style={{overflowX:"auto",padding:"14px 16px 14px",display:"flex",gap:8,borderBottom:"1px solid #0f0f0f",position:"sticky",top:80,zIndex:50,background:"#080808"}}>
-      {matchdays.map(m=>(<button key={m.day} onClick={()=>setSelDay(m.day)} style={{background:selDay===m.day?`${G}12`:"#0a0a0a",border:selDay===m.day?`1px solid ${G}`:"1px solid #1a1a1a",color:selDay===m.day?G:"#6b7280",borderRadius:12,padding:"9px 16px",cursor:"pointer",textAlign:"left",flexShrink:0,minWidth:120}}><div style={{fontSize:13,fontWeight:700}}>{m.label}</div><div style={{fontSize:10,marginTop:3,opacity:0.6}}>{m.dates}</div></button>))}
+    <div ref={tabBarRef} style={{overflowX:"auto",padding:"14px 16px 14px",display:"flex",gap:8,borderBottom:"1px solid #0f0f0f",position:"sticky",top:80,zIndex:50,background:"#080808"}}>
+      {matchdays.map(m=>(<button key={m.day} data-day={m.day} onClick={()=>setSelDay(m.day)} style={{background:selDay===m.day?`${G}12`:"#0a0a0a",border:selDay===m.day?`1px solid ${G}`:"1px solid #1a1a1a",color:selDay===m.day?G:"#6b7280",borderRadius:12,padding:"9px 16px",cursor:"pointer",textAlign:"left",flexShrink:0,minWidth:120}}><div style={{fontSize:13,fontWeight:700}}>{m.label}</div><div style={{fontSize:10,marginTop:3,opacity:0.6}}>{m.dates}</div></button>))}
     </div>
     <div ref={listTopRef} style={{padding:16,scrollMarginTop:"152px"}}>{(md?.fixtures||[]).map((fix,i,arr)=>{
       const staticId=HOME_AWAY_TO_STATIC_ID[(fix.home+"|"+fix.away).toLowerCase()];
@@ -1223,8 +1225,11 @@ function BonusTab({bonus,onSave,champion,setChampion,teams,allBonusAnswers,profi
               </div>
               <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
                 {[{l:"R32",k:"adv_r32",t:32},{l:"R16",k:"adv_r16",t:16},{l:"QF",k:"adv_qf",t:8},{l:"SF",k:"adv_sf",t:4},{l:"Final",k:"adv_final",t:2}].map(function(r){
-                  const arr=getAdv(r.k);const full=arr.length===r.t;const empty=arr.length===0;
-                  return(<span key={r.l} style={{fontSize:10,fontWeight:700,color:full?"#22c55e":empty?"#374151":"#f59e0b"}}>{r.l}: {arr.length}/{r.t}</span>);
+                  const arr=getAdv(r.k);const empty=arr.length===0;
+                  const ae=(allBonusAnswers||[]).find(function(b){return b.question_id===r.k.replace('adv_','actual_adv_');});let at=null;try{at=ae?JSON.parse(ae.answer):null;}catch{}
+                  const correct=at?arr.filter(function(t){return at.includes(t);}).length:null;
+                  const color=correct!==null?(correct===arr.length&&arr.length>0?"#22c55e":correct>0?"#f59e0b":"#ef4444"):empty?"#374151":"#f59e0b";
+                  return(<span key={r.l} style={{fontSize:10,fontWeight:700,color:color}}>{r.l}: {correct!==null?correct+"/"+arr.length+" · +"+correct*PTS_BONUS:arr.length+"/"+r.t}</span>);
                 })}
               </div>
             </div>
@@ -1233,7 +1238,12 @@ function BonusTab({bonus,onSave,champion,setChampion,teams,allBonusAnswers,profi
                 {[{l:"R32",k:"adv_r32",t:32},{l:"R16",k:"adv_r16",t:16},{l:"QF",k:"adv_qf",t:8},{l:"SF",k:"adv_sf",t:4},{l:"Final",k:"adv_final",t:2}].map(function(r){
                   const arr=getAdv(r.k);
                   return(<div key={r.l} style={{marginBottom:10}}>
-                    <div style={{fontSize:10,fontWeight:800,color:"#6b7280",letterSpacing:1,marginBottom:5}}>{r.l} PICKS ({arr.length}/{r.t})</div>
+                    {(()=>{const ae=(allBonusAnswers||[]).find(function(b){return b.question_id===r.k.replace('adv_','actual_adv_');});let at=null;try{at=ae?JSON.parse(ae.answer):null;}catch{}
+                    const correct=at?arr.filter(function(t){return at.includes(t);}).length:null;
+                    return(<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+                      <div style={{fontSize:10,fontWeight:800,color:"#6b7280",letterSpacing:1}}>{r.l} PICKS ({arr.length}/{r.t})</div>
+                      {at&&<span style={{fontSize:11,fontWeight:700,color:G}}>{correct}/{arr.length} correct · +{correct*PTS_BONUS}</span>}
+                    </div>);})()}
                     {arr.length===0?<div style={{fontSize:11,color:"#374151"}}>No picks saved</div>:
                     (()=>{const ae=(allBonusAnswers||[]).find(function(b){return b.question_id===r.k.replace('adv_','actual_adv_');});let at=null;try{at=ae?JSON.parse(ae.answer):null;}catch{}return(
                     <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
@@ -1368,6 +1378,40 @@ function RulesTab(){
   </div>);
 }
 
+function AdminResultsSetter({allBonusAnswers,teams}){
+  const adminBonus=(allBonusAnswers||[]).filter(function(b){return b.user_id===ADMIN_ID;});
+  const getResult=function(k){return(adminBonus.find(function(b){return b.question_id===k;})||{}).answer||"";};
+  const goalsRaw=getResult("mostgoals_result");
+  function parseGoals(raw){try{const a=JSON.parse(raw);return Array.isArray(a)?a:(raw?[raw]:[]);}catch{return raw?[raw]:[];}}
+  const[goalsSel,setGoalsSel]=useState(function(){return parseGoals(goalsRaw);});
+  const[saving,setSaving]=useState(false);
+  const[saved,setSaved]=useState(false);
+  async function saveGoals(){
+    setSaving(true);
+    await supabase.from("bonus_answers").upsert({user_id:ADMIN_ID,question_id:"mostgoals_result",answer:JSON.stringify(goalsSel)},{onConflict:"user_id,question_id"});
+    setSaving(false);setSaved(true);setTimeout(function(){setSaved(false);},2000);
+  }
+  return(
+    <div style={{background:"#080808",border:"1px solid #1f1f1f",borderRadius:14,padding:"14px",marginBottom:14}}>
+      <div style={{fontSize:11,fontWeight:800,color:G,letterSpacing:1,marginBottom:10}}>SET MOST GROUP GOALS RESULT</div>
+      <div style={{fontSize:10,color:"#6b7280",marginBottom:8}}>Select all teams tied for most group stage goals — all pickers of any selected team receive +{PTS_BONUS} pts</div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}>
+        {teams.map(function(t){const sel=goalsSel.includes(t);return(
+          <button key={t} onClick={function(){setGoalsSel(function(s){return sel?s.filter(function(x){return x!==t;}):[...s,t];});}}
+            style={{display:"flex",alignItems:"center",gap:4,background:sel?"#052e16":"#111",border:"1px solid "+(sel?"#22c55e44":"#1f1f1f"),borderRadius:8,padding:"4px 8px",cursor:"pointer",outline:"none"}}>
+            <span style={{fontSize:13}}>{FLAGS[t]||"🏳"}</span>
+            <span style={{fontSize:10,fontWeight:600,color:sel?"#22c55e":"#9ca3af"}}>{t}</span>
+          </button>
+        );})}
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <div style={{flex:1,fontSize:10,color:goalsSel.length?"#f9fafb":"#374151"}}>{goalsSel.length?"Selected: "+goalsSel.join(", "):"No teams selected"}</div>
+        <button onClick={saveGoals} disabled={saving} style={{background:saved?"#22c55e":G,border:"none",borderRadius:8,color:"#000",fontSize:11,fontWeight:800,padding:"8px 16px",cursor:"pointer",outline:"none"}}>{saving?"Saving…":saved?"Saved ✓":"Save"}</button>
+      </div>
+    </div>
+  );
+}
+
 function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiIdMap}){
   const[view,setView]=useState("overview");
   const[expanded,setExpanded]=useState({});
@@ -1376,7 +1420,7 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
   return(<div style={{padding:16}}>
     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20}}><div style={S.pageTitle}>⚙️ Admin Dashboard</div><span style={{fontSize:9,fontWeight:800,color:"#000",background:G,borderRadius:4,padding:"2px 6px"}}>ADMIN</span></div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:24}}>{[{label:"Players",value:totalUsers,icon:"👥",color:"#3b82f6"},{label:"Predictions",value:totalPreds,icon:"✍️",color:"#22c55e"},{label:"Avg Picks",value:totalUsers>0?(totalPreds/totalUsers).toFixed(1):0,icon:"📊",color:"#f59e0b"}].map(c=>(<div key={c.label} style={{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:12,textAlign:"center"}}><div style={{fontSize:20,marginBottom:4}}>{c.icon}</div><div style={{fontSize:22,fontWeight:800,color:c.color}}>{c.value}</div><div style={{fontSize:10,color:"#6b7280"}}>{c.label}</div></div>))}</div>
-    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>{[{id:"overview",label:"👥 Players"},{id:"missing",label:"⚠️ Missing"},{id:"matches",label:"⚽ Matches"},{id:"bonus",label:"⭐ Bonus"},{id:"noshows",label:"🚫 No-Shows"},{id:"bonusreview",label:"🔍 Bonus Review"}].map(t=><button key={t.id} onClick={()=>setView(t.id)} style={{background:view===t.id?`${G}15`:"#0a0a0a",border:view===t.id?`1px solid ${G}`:"1px solid #1a1a1a",color:view===t.id?G:"#6b7280",borderRadius:20,padding:"6px 14px",fontSize:11,fontWeight:700,cursor:"pointer"}}>{t.label}</button>)}</div>
+    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>{[{id:"overview",label:"👥 Players"},{id:"missing",label:"⚠️ Missing"},{id:"matches",label:"⚽ Matches"},{id:"bonus",label:"⭐ Bonus"},{id:"noshows",label:"🚫 No-Shows"},{id:"bonusreview",label:"🔍 Bonus Review"},{id:"results",label:"🏅 Set Results"}].map(t=><button key={t.id} onClick={()=>setView(t.id)} style={{background:view===t.id?`${G}15`:"#0a0a0a",border:view===t.id?`1px solid ${G}`:"1px solid #1a1a1a",color:view===t.id?G:"#6b7280",borderRadius:20,padding:"6px 14px",fontSize:11,fontWeight:700,cursor:"pointer"}}>{t.label}</button>)}</div>
     {view==="overview"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>{stats.map((u,i)=>(<div key={u.id} style={{display:"flex",alignItems:"center",gap:12,background:"#080808",border:"1px solid #141414",borderRadius:12,padding:"12px 14px"}}><div style={{fontWeight:700,fontSize:13,color:"#6b7280",width:24}}>#{i+1}</div><div style={{flex:1}}><div style={{fontWeight:700,fontSize:14}}>{u.name}</div><div style={{fontSize:11,color:"#6b7280"}}>{u.predCount}/{totalFix} picks · {u.exact} perfect</div></div><div style={{textAlign:"right"}}><div style={{fontSize:18,fontWeight:800,color:G}}>{u.pts}<span style={{fontSize:11,color:"#6b7280"}}> pts</span></div>{u.missing>0&&<div style={{fontSize:10,color:"#ef4444"}}>{u.missing} missing</div>}</div></div>))}</div>}
     {view==="missing"&&<div>
       {stats.filter(u=>u.missing>0).length===0
@@ -1835,6 +1879,7 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
         </div>
       </div>);
     })()}
+    {view==="results"&&<AdminResultsSetter allBonusAnswers={allBonusAnswers} teams={ALL_TEAMS}/>}
     {view==="bonusreview"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>
       {profiles.map(function(p){
         const ub=(allBonusAnswers||[]).filter(function(b){return b.user_id===p.id;});
