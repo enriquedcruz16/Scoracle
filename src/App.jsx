@@ -144,7 +144,7 @@ const KNOCKOUT_BRACKET = [
     {id:"k_r32_m85",mNum:85,group:"R32",home:"1J",away:"2H",date:"Jul 2",time:"21:00",venue:"Hard Rock Stadium, Miami",kickoffISO:"2026-07-02T21:00:00-04:00",isKnockout:true},
     {id:"k_r32_m86",mNum:86,group:"R32",home:"1B",away:"3rd-EFGIJ",date:"Jul 3",time:"15:00",venue:"Estadio BBVA, Monterrey",kickoffISO:"2026-07-03T15:00:00-04:00",isKnockout:true},
     {id:"k_r32_m87",mNum:87,group:"R32",home:"2G",away:"2D",date:"Jul 3",time:"19:00",venue:"AT&T Stadium, Dallas",kickoffISO:"2026-07-03T19:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m88",mNum:88,group:"R32",home:"1K",away:"2D",date:"Jul 3",time:"21:00",venue:"AT&T Stadium, Dallas",kickoffISO:"2026-07-03T21:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m88",mNum:88,group:"R32",home:"1K",away:"3rd-DEIJL",date:"Jul 3",time:"21:00",venue:"AT&T Stadium, Dallas",kickoffISO:"2026-07-03T21:00:00-04:00",isKnockout:true},
   ]},
   {day:5,label:"Round of 16",dates:"Jul 4–7",fixtures:[
     {id:"k_r16_m89",mNum:89,group:"R16",home:"W M74",away:"W M77",date:"Jul 4",time:"17:00",venue:"Lincoln Financial Field, Philadelphia",kickoffISO:"2026-07-04T17:00:00-04:00",isKnockout:true},
@@ -490,8 +490,14 @@ export default function App(){
     // Compute group standings from enriched data so we can resolve 1X/2X placeholder slots
     const fxDone=enriched.flatMap(function(md){return md.fixtures;}).map(function(f){return f.isDone||f.homeGoals!=null?{...f,isDone:true}:f;});
     const koStandings=calcBracketStandings({},fxDone,{});
+    // Pre-assign 3rd-place slots in restrictiveness order (fewest eligible groups first) to avoid duplicates
+    const THIRD_RE=/^3rd-([A-L]+)$/;
+    const allThirdsKO=getBest3rd(koStandings);const best8KO=allThirdsKO.slice(0,8);
+    const thirdSlotsKO=Array.from(new Set(KNOCKOUT_BRACKET.flatMap(function(kb){return kb.fixtures;}).flatMap(function(f){return[f.home,f.away];}).filter(function(s){return THIRD_RE.test(s);}))).sort(function(a,b){return a.replace('3rd-','').length-b.replace('3rd-','').length;});
+    const usedKOT=new Set();const thirdMapKO={};
+    thirdSlotsKO.forEach(function(slot){const groups=slot.replace('3rd-','').split('');const pick=best8KO.find(function(t){return groups.includes(t.group)&&!usedKOT.has(t.team);});if(pick){usedKOT.add(pick.team);thirdMapKO[slot]=pick.team;}});
     const SLOT_RE=/^([12])([A-L])$/;
-    function resSlot(slot){const m=SLOT_RE.exec(slot);if(!m)return slot;const rows=koStandings[m[2]];return(rows&&rows[m[1]==="1"?0:1]?.team)||slot;}
+    function resSlot(slot){const m=SLOT_RE.exec(slot);if(m){const rows=koStandings[m[2]];return(rows&&rows[m[1]==="1"?0:1]?.team)||slot;}if(THIRD_RE.test(slot))return thirdMapKO[slot]||slot;return slot;}
     const knockoutMDs=KNOCKOUT_BRACKET.map(kb=>({...kb,day:enriched.length+(kb.day-3),fixtures:kb.fixtures.map(fix=>{const af=koByTime[new Date(fix.kickoffISO).getTime()];let home=fix.home,away=fix.away,homeLogo=fix.homeLogo,awayLogo=fix.awayLogo,status=fix.status,elapsed=fix.elapsed,isLive=fix.isLive,isDone=fix.isDone,homeGoals=fix.homeGoals,awayGoals=fix.awayGoals;if(af){home=af.home||home;away=af.away||away;homeLogo=af.homeLogo||homeLogo;awayLogo=af.awayLogo||awayLogo;status=af.status;elapsed=af.elapsed;isLive=af.isLive;isDone=af.isDone;homeGoals=af.homeGoals;awayGoals=af.awayGoals;}return{...fix,home:resSlot(home),away:resSlot(away),homeLogo,awayLogo,status,elapsed,isLive,isDone,homeGoals,awayGoals};})}));
     setMatchdays([...enriched,...knockoutMDs]);
     const nl={};parsed.forEach(f=>{if((f.isLive||f.isDone)&&f.homeGoals!=null){nl[f.id]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};// Also index by static ID so live scores show on predict tab
@@ -778,19 +784,22 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
 
   function calcBonusPoints(userId){
     const ub=(allBonusAnswers||[]).filter(b=>b.user_id===userId);
+    const all=(allBonusAnswers||[]);
     const get=function(k){return ub.find(b=>b.question_id===k)?.answer||"";};
     const getAdv=function(k){try{return JSON.parse(get(k)||"[]");}catch{return[];}};
     let bp=0,bBreakdown={winner:0,boot:0,goals:0,adv:0};
-    const champResult=ub.find(b=>b.question_id==="champion_result")?.answer||"";
-    const bootResult=ub.find(b=>b.question_id==="topscorer_result")?.answer||"";
-    const goalsResult=ub.find(b=>b.question_id==="mostgoals_result")?.answer||"";
+    // Result answers are global (same for everyone) — search all rows, not just this user's
+    const champResult=all.find(b=>b.question_id==="champion_result")?.answer||"";
+    const bootResult=all.find(b=>b.question_id==="topscorer_result")?.answer||"";
+    const goalsResult=all.find(b=>b.question_id==="mostgoals_result")?.answer||"";
     let goalsArr;try{goalsArr=JSON.parse(goalsResult);}catch{goalsArr=null;}
     const goalsMatch=goalsResult&&(Array.isArray(goalsArr)?goalsArr.includes(get("mostgoals")):get("mostgoals")===goalsResult);
     if(champResult&&get("champion")===champResult){bp+=PTS_WINNER;bBreakdown.winner=PTS_WINNER;}
     if(bootResult&&get("topscorer")===bootResult){bp+=PTS_BONUS;bBreakdown.boot=PTS_BONUS;}
     if(goalsMatch){bp+=PTS_BONUS;bBreakdown.goals=PTS_BONUS;}
     ["r32","r16","qf","sf","final"].forEach(function(rnd){
-      const actual=ub.find(b=>b.question_id==="actual_adv_"+rnd)?.answer||"";
+      // actual_adv_* is global — find any row with this question_id across all users
+      const actual=all.find(b=>b.question_id==="actual_adv_"+rnd)?.answer||"";
       if(!actual)return;
       try{const actualTeams=JSON.parse(actual);const userPicks=getAdv("adv_"+rnd);const correct=userPicks.filter(function(t){return actualTeams.includes(t);}).length;bp+=correct*PTS_BONUS;bBreakdown.adv+=correct*PTS_BONUS;}catch{}
     });
@@ -996,17 +1005,19 @@ function StatsTab({allFix,predictions,live,totalPts,predCount,totalFix,bonus,all
   const acc=predCount>0?Math.round((exact/Math.min(predCount,playedCount||1))*100):0;
   const myUserId=currentUser?.id;
   const ub=(allBonusAnswers||[]).filter(b=>b.user_id===myUserId);
+  const all=(allBonusAnswers||[]);
   const get=function(k){return ub.find(b=>b.question_id===k)?.answer||"";};
   const getAdv=function(k){try{return JSON.parse(get(k)||"[]");}catch{return[];}};
-  const champResult=ub.find(b=>b.question_id==="champion_result")?.answer||"";
-  const bootResult=ub.find(b=>b.question_id==="topscorer_result")?.answer||"";
-  const goalsResult=ub.find(b=>b.question_id==="mostgoals_result")?.answer||"";
+  // Result answers are global — search all rows
+  const champResult=all.find(b=>b.question_id==="champion_result")?.answer||"";
+  const bootResult=all.find(b=>b.question_id==="topscorer_result")?.answer||"";
+  const goalsResult=all.find(b=>b.question_id==="mostgoals_result")?.answer||"";
   let goalsArr;try{goalsArr=JSON.parse(goalsResult);}catch{goalsArr=null;}
   const champPts=champResult&&get("champion")===champResult?PTS_WINNER:0;
   const bootPts=bootResult&&get("topscorer")===bootResult?PTS_BONUS:0;
   const goalsPts=goalsResult&&(Array.isArray(goalsArr)?goalsArr.includes(get("mostgoals")):get("mostgoals")===goalsResult)?PTS_BONUS:0;
   const advRows=["r32","r16","qf","sf","final"].map(function(rnd){
-    const actual=ub.find(b=>b.question_id==="actual_adv_"+rnd)?.answer||"";
+    const actual=all.find(b=>b.question_id==="actual_adv_"+rnd)?.answer||"";
     if(!actual)return{rnd,pts:0,correct:0,total:getAdv("adv_"+rnd).length,pending:true};
     try{const actualTeams=JSON.parse(actual);const userPicks=getAdv("adv_"+rnd);const correct=userPicks.filter(function(t){return actualTeams.includes(t);}).length;return{rnd,pts:correct*PTS_BONUS,correct,total:userPicks.length,pending:false};}
     catch{return{rnd,pts:0,correct:0,total:0,pending:true};}
