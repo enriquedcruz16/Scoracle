@@ -444,13 +444,17 @@ export default function App(){
   }
   async function runBonusEngine(currentLive,currentAllFix){
     if(!user)return;const lv=currentLive||live;const fx=currentAllFix||allFix;
-    const groupsDone=["A","B","C","D","E","F","G","H","I","J","K","L"].every(function(g){return fx.filter(function(f){return(f.group||"").toUpperCase().replace(/GROUP/i,"").trim()===g&&!f.isKnockout;}).every(function(f){return f.isDone;});});
+    // Group stage is done if R32 has kicked off, or all group fixtures are marked done
+    const r32Start=new Date("2026-06-28T15:00:00-04:00");
+    const groupsDone=new Date()>=r32Start||["A","B","C","D","E","F","G","H","I","J","K","L"].every(function(g){return fx.filter(function(f){return(f.group||"").toUpperCase().replace(/GROUP/i,"").trim()===g&&!f.isKnockout;}).every(function(f){return f.isDone;});});
     if(groupsDone){
-      const standings=calcBracketStandings({},fx,lv);const r32Teams=[];
+      // Force isDone on any enriched fixture that has goals — handles API name-mismatch edge cases
+      const fxForStandings=fx.map(function(f){return f.isDone||f.homeGoals!=null?{...f,isDone:true}:f;});
+      const standings=calcBracketStandings({},fxForStandings,lv);const r32Teams=[];
       Object.values(standings).forEach(function(rows){r32Teams.push(rows[0]?.team);r32Teams.push(rows[1]?.team);});
       const best3rd=getBest3rd(standings).slice(0,8).map(function(t){return t.team;});
       const allR32=[...r32Teams,...best3rd].filter(Boolean);
-      if(allR32.length===32){await supabase.from("bonus_answers").upsert({user_id:user.id,question_id:"actual_adv_r32",answer:JSON.stringify(allR32)},{onConflict:"user_id,question_id"});}
+      if(allR32.length>0){await supabase.from("bonus_answers").upsert({user_id:user.id,question_id:"actual_adv_r32",answer:JSON.stringify(allR32)},{onConflict:"user_id,question_id"});}
     }
     var koRounds=[{id:"r16",group:"R32"},{id:"qf",group:"R16"},{id:"sf",group:"QF"},{id:"final",group:"SF"}];
     for(var i=0;i<koRounds.length;i++){
@@ -483,7 +487,12 @@ export default function App(){
     // Enrich each fixture with API live data matched by kickoff timestamp.
     const knockoutFix=parsed.filter(f=>f.rn>3);
     const koByTime={};knockoutFix.forEach(f=>{koByTime[new Date(f.kickoffISO).getTime()]=f;});
-    const knockoutMDs=KNOCKOUT_BRACKET.map(kb=>({...kb,day:enriched.length+(kb.day-3),fixtures:kb.fixtures.map(fix=>{const af=koByTime[new Date(fix.kickoffISO).getTime()];if(!af)return fix;return{...fix,home:af.home||fix.home,away:af.away||fix.away,homeLogo:af.homeLogo||fix.homeLogo,awayLogo:af.awayLogo||fix.awayLogo,status:af.status,elapsed:af.elapsed,isLive:af.isLive,isDone:af.isDone,homeGoals:af.homeGoals,awayGoals:af.awayGoals};})}));
+    // Compute group standings from enriched data so we can resolve 1X/2X placeholder slots
+    const fxDone=enriched.flatMap(function(md){return md.fixtures;}).map(function(f){return f.isDone||f.homeGoals!=null?{...f,isDone:true}:f;});
+    const koStandings=calcBracketStandings({},fxDone,{});
+    const SLOT_RE=/^([12])([A-L])$/;
+    function resSlot(slot){const m=SLOT_RE.exec(slot);if(!m)return slot;const rows=koStandings[m[2]];return(rows&&rows[m[1]==="1"?0:1]?.team)||slot;}
+    const knockoutMDs=KNOCKOUT_BRACKET.map(kb=>({...kb,day:enriched.length+(kb.day-3),fixtures:kb.fixtures.map(fix=>{const af=koByTime[new Date(fix.kickoffISO).getTime()];let home=fix.home,away=fix.away,homeLogo=fix.homeLogo,awayLogo=fix.awayLogo,status=fix.status,elapsed=fix.elapsed,isLive=fix.isLive,isDone=fix.isDone,homeGoals=fix.homeGoals,awayGoals=fix.awayGoals;if(af){home=af.home||home;away=af.away||away;homeLogo=af.homeLogo||homeLogo;awayLogo=af.awayLogo||awayLogo;status=af.status;elapsed=af.elapsed;isLive=af.isLive;isDone=af.isDone;homeGoals=af.homeGoals;awayGoals=af.awayGoals;}return{...fix,home:resSlot(home),away:resSlot(away),homeLogo,awayLogo,status,elapsed,isLive,isDone,homeGoals,awayGoals};})}));
     setMatchdays([...enriched,...knockoutMDs]);
     const nl={};parsed.forEach(f=>{if((f.isLive||f.isDone)&&f.homeGoals!=null){nl[f.id]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};// Also index by static ID so live scores show on predict tab
     const normalKey=(f.home+"|"+f.away).toLowerCase();
