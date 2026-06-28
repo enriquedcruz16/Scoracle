@@ -129,13 +129,13 @@ const STATIC_MATCHDAYS = [
 // SF: M101=W97+W98, M102=W99+W100
 const KNOCKOUT_BRACKET = [
   {day:4,label:"Round of 32",dates:"Jun 28 – Jul 4",fixtures:[
-    {id:"k_r32_m73",mNum:73,group:"R32",home:"2A",away:"2B",date:"Jun 28",time:"23:00",venue:"SoFi Stadium, Los Angeles",kickoffISO:"2026-06-28T18:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m73",mNum:73,group:"R32",home:"2A",away:"2B",date:"Jun 28",time:"20:00",venue:"SoFi Stadium, Los Angeles",kickoffISO:"2026-06-28T15:00:00-04:00",isKnockout:true},
     {id:"k_r32_m76",mNum:76,group:"R32",home:"1C",away:"2F",date:"Jun 29",time:"18:00",venue:"NRG Stadium, Houston",kickoffISO:"2026-06-29T13:00:00-04:00",isKnockout:true},
     {id:"k_r32_m74",mNum:74,group:"R32",home:"1E",away:"3rd-ABCDF",date:"Jun 29",time:"21:30",venue:"Gillette Stadium, Foxborough",kickoffISO:"2026-06-29T16:30:00-04:00",isKnockout:true},
-    {id:"k_r32_m75",mNum:75,group:"R32",home:"1F",away:"2C",date:"Jun 30",time:"03:00",venue:"Estadio BBVA, Monterrey",kickoffISO:"2026-06-29T22:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m75",mNum:75,group:"R32",home:"1F",away:"2C",date:"Jun 30",time:"04:00",venue:"Estadio BBVA, Monterrey",kickoffISO:"2026-06-29T23:00:00-04:00",isKnockout:true},
     {id:"k_r32_m78",mNum:78,group:"R32",home:"2E",away:"2I",date:"Jun 30",time:"19:00",venue:"AT&T Stadium, Arlington",kickoffISO:"2026-06-30T14:00:00-04:00",isKnockout:true},
     {id:"k_r32_m77",mNum:77,group:"R32",home:"1I",away:"3rd-CDFGH",date:"Jun 30",time:"22:00",venue:"MetLife Stadium, New York",kickoffISO:"2026-06-30T17:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m79",mNum:79,group:"R32",home:"1A",away:"3rd-CEFHI",date:"Jul 1",time:"03:00",venue:"Estadio Azteca, Mexico City",kickoffISO:"2026-06-30T22:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m79",mNum:79,group:"R32",home:"1A",away:"3rd-CEFHI",date:"Jul 1",time:"04:00",venue:"Estadio Azteca, Mexico City",kickoffISO:"2026-06-30T23:00:00-04:00",isKnockout:true},
     {id:"k_r32_m80",mNum:80,group:"R32",home:"1L",away:"3rd-EHIJK",date:"Jul 1",time:"17:00",venue:"Mercedes-Benz Stadium, Atlanta",kickoffISO:"2026-07-01T12:00:00-04:00",isKnockout:true},
     {id:"k_r32_m82",mNum:82,group:"R32",home:"1G",away:"3rd-BCIJK",date:"Jul 1",time:"21:00",venue:"Lumen Field, Seattle",kickoffISO:"2026-07-01T16:00:00-04:00",isKnockout:true},
     {id:"k_r32_m81",mNum:81,group:"R32",home:"1D",away:"3rd-BCEFH",date:"Jul 2",time:"04:00",venue:"Levi's Stadium, Santa Clara",kickoffISO:"2026-07-01T23:00:00-04:00",isKnockout:true},
@@ -528,6 +528,7 @@ export default function App(){
 
   const allFix=matchdays.flatMap(m=>m.fixtures);
   const totalPts=allFix.reduce((s,fix)=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);const staticId=HOME_AWAY_TO_STATIC_ID[(fix.home+"|"+fix.away).toLowerCase()];const pred=predictions[fix.id]||(staticId&&predictions[staticId]);return s+(pts(pred,r)||0);},0);
+  const myBonusPts=(function(){if(!user||!allBonusAnswers||!allBonusAnswers.length)return 0;const ub=allBonusAnswers.filter(function(b){return b.user_id===user.id;});const adminBonus=allBonusAnswers.filter(function(b){return b.user_id===ADMIN_ID;});const adminGet=function(k){return(adminBonus.find(function(b){return b.question_id===k;})||{}).answer||"";};const get=function(k){return(ub.find(function(b){return b.question_id===k;})||{}).answer||"";};let bp=0;const champResult=adminGet("champion_result");const bootResult=adminGet("topscorer_result");const goalsResult=adminGet("mostgoals_result");let goalsArr;try{goalsArr=JSON.parse(goalsResult);}catch(e){goalsArr=null;}const goalsMatch=goalsResult&&(Array.isArray(goalsArr)?goalsArr.includes(get("mostgoals")):get("mostgoals")===goalsResult);if(champResult&&get("champion")===champResult)bp+=PTS_WINNER;if(bootResult&&get("topscorer")===bootResult)bp+=PTS_BONUS;if(goalsMatch)bp+=PTS_BONUS;["r32","r16","qf","sf","final"].forEach(function(rnd){const actual=adminGet("actual_adv_"+rnd);if(!actual)return;try{const actualTeams=JSON.parse(actual);const userPicks=JSON.parse(get("adv_"+rnd)||"[]");const correct=userPicks.filter(function(t){return actualTeams.includes(t);}).length;bp+=correct*PTS_BONUS;}catch(e){}});return bp;})();
   // Only count predictions against real fixture IDs (s_A1 etc), not the home|away duplicate keys
   const predCount=Object.keys(predictions).filter(k=>k.startsWith("s_")||/^\d+$/.test(k)).length;
   const totalFix=STATIC_MATCHDAYS.reduce((s,md)=>s+md.fixtures.length,0)+KNOCKOUT_BRACKET.reduce((s,kb)=>s+kb.fixtures.length,0);
@@ -597,7 +598,7 @@ export default function App(){
             <div><div style={{fontSize:17,fontWeight:800,letterSpacing:3,color:G}}>SCORACLE</div><div style={{fontSize:9,color:"#374151",letterSpacing:0.5}}>World Cup 2026 · {user.name}</div></div>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <div style={{background:"#0d0d0d",border:"1px solid #1f1f1f",borderRadius:10,padding:"5px 12px",textAlign:"center"}}><span style={{display:"block",fontSize:16,fontWeight:800,color:G}}>{totalPts}</span><span style={{fontSize:9,color:"#6b7280",letterSpacing:1}}>PTS</span></div>
+            <div style={{background:"#0d0d0d",border:"1px solid #1f1f1f",borderRadius:10,padding:"5px 12px",textAlign:"center"}}><span style={{display:"block",fontSize:16,fontWeight:800,color:G}}>{totalPts+myBonusPts}</span><span style={{fontSize:9,color:"#6b7280",letterSpacing:1}}>PTS</span></div>
             <span style={{width:8,height:8,borderRadius:"50%",background:apiStatus==="live"?"#22c55e":"#f59e0b",display:"inline-block",flexShrink:0}}/>
           </div>
         </div>
@@ -639,14 +640,14 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId,all
     return "";
   }
   return(<div>
-    <div style={{overflowX:"auto",padding:"14px 16px 14px",display:"flex",gap:8,borderBottom:"1px solid #0f0f0f"}}>
+    <div style={{overflowX:"auto",padding:"14px 16px 14px",display:"flex",gap:8,borderBottom:"1px solid #0f0f0f",position:"sticky",top:80,zIndex:50,background:"#080808"}}>
       {matchdays.map(m=>(<button key={m.day} onClick={()=>setSelDay(m.day)} style={{background:selDay===m.day?`${G}12`:"#0a0a0a",border:selDay===m.day?`1px solid ${G}`:"1px solid #1a1a1a",color:selDay===m.day?G:"#6b7280",borderRadius:12,padding:"9px 16px",cursor:"pointer",textAlign:"left",flexShrink:0,minWidth:120}}><div style={{fontSize:13,fontWeight:700}}>{m.label}</div><div style={{fontSize:10,marginTop:3,opacity:0.6}}>{m.dates}</div></button>))}
     </div>
-    <div ref={listTopRef} style={{padding:16,scrollMarginTop:"80px"}}>{(md?.fixtures||[]).map((fix,i,arr)=>{
+    <div ref={listTopRef} style={{padding:16,scrollMarginTop:"152px"}}>{(md?.fixtures||[]).map((fix,i,arr)=>{
       const staticId=HOME_AWAY_TO_STATIC_ID[(fix.home+"|"+fix.away).toLowerCase()];
       const lv=live[fix.id],result=lv||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null),pred=predictions[fix.id]||(staticId&&predictions[staticId]),p=pts(pred,result),lk=locked(fix.kickoffISO)||fix.isLive||fix.isDone,isSaved=savedId===fix.id,hv=val(fix.id,"home"),av=val(fix.id,"away"),lm=lockMsg(fix.kickoffISO);
       const isNextUpcoming=!lk&&arr.slice(0,i).every(f=>locked(f.kickoffISO)||f.isLive||f.isDone);
-      return(<div key={fix.id} ref={isNextUpcoming?nextFixRef:null} style={{...S.card,scrollMarginTop:"80px",...(isSaved?{borderColor:"#22c55e",boxShadow:"0 0 18px #22c55e2a"}:{}),...(fix.isLive?{borderColor:"#ef444440",boxShadow:"0 0 18px #ef44441a"}:{})}}>
+      return(<div key={fix.id} ref={isNextUpcoming?nextFixRef:null} style={{...S.card,scrollMarginTop:"152px",...(isSaved?{borderColor:"#22c55e",boxShadow:"0 0 18px #22c55e2a"}:{}),...(fix.isLive?{borderColor:"#ef444440",boxShadow:"0 0 18px #ef44441a"}:{})}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,gap:8}}>
           <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?(KO_LABEL[fix.group]||fix.group):`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {localDate(fix.kickoffISO)} · {localTime(fix.kickoffISO)}</span>{fix.venue&&<div style={{fontSize:10,color:"#374151",marginTop:2}}>📍 {fix.venue}</div>}{lm&&<div style={{fontSize:10,color:"#f59e0b",marginTop:3,fontWeight:600}}>⏱ {lm}</div>}</div>
           <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}><SPill status={fix.status} elapsed={fix.elapsed}/>{p!==null&&<span style={{fontSize:11,fontWeight:700,color:"#fff",padding:"3px 8px",borderRadius:20,background:p===PTS_EXACT?"#22c55e":p===PTS_RESULT?"#f59e0b":"#ef4444"}}>{p===PTS_EXACT?`✓ +${PTS_EXACT}`:p===PTS_RESULT?`~ +${PTS_RESULT}`:`✗ +0`}</span>}</div>
@@ -1659,7 +1660,12 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
                   const sc=pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals},r);
                   if(sc===PTS_EXACT){tp+=sc;exact++;}else if(sc===PTS_RESULT){tp+=sc;correct++;}
                 });
-                return{id:pr.id,name:pr.name,pts:tp,exact,correct};
+                const ub=(allBonusAnswers||[]).filter(function(b){return b.user_id===pr.id;});
+                const adminBonus=(allBonusAnswers||[]).filter(function(b){return b.user_id===ADMIN_ID;});
+                const adminGet=function(k){return(adminBonus.find(function(b){return b.question_id===k;})||{}).answer||"";};
+                const get=function(k){return(ub.find(function(b){return b.question_id===k;})||{}).answer||"";};
+                let bp=0;const champResult=adminGet("champion_result");const bootResult=adminGet("topscorer_result");const goalsResult=adminGet("mostgoals_result");let goalsArr;try{goalsArr=JSON.parse(goalsResult);}catch(e){goalsArr=null;}const goalsMatch=goalsResult&&(Array.isArray(goalsArr)?goalsArr.includes(get("mostgoals")):get("mostgoals")===goalsResult);if(champResult&&get("champion")===champResult)bp+=PTS_WINNER;if(bootResult&&get("topscorer")===bootResult)bp+=PTS_BONUS;if(goalsMatch)bp+=PTS_BONUS;["r32","r16","qf","sf","final"].forEach(function(rnd){const actual=adminGet("actual_adv_"+rnd);if(!actual)return;try{const actualTeams=JSON.parse(actual);const userPicks=JSON.parse(get("adv_"+rnd)||"[]");const correct=userPicks.filter(function(t){return actualTeams.includes(t);}).length;bp+=correct*PTS_BONUS;}catch(e){}});
+                return{id:pr.id,name:pr.name,pts:tp+bp,exact,correct};
               }).sort(function(a,b){return b.pts-a.pts||b.exact-a.exact||b.correct-a.correct||a.name.localeCompare(b.name);});
               const half=Math.ceil(lbSorted.length/2);
               const left=lbSorted.slice(0,half);
