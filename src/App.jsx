@@ -130,21 +130,21 @@ const STATIC_MATCHDAYS = [
 const KNOCKOUT_BRACKET = [
   {day:4,label:"Round of 32",dates:"Jun 28 – Jul 4",fixtures:[
     {id:"k_r32_m73",mNum:73,group:"R32",home:"2A",away:"2B",date:"Jun 28",time:"23:00",venue:"SoFi Stadium, Los Angeles",kickoffISO:"2026-06-28T18:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m76",mNum:76,group:"R32",home:"1C",away:"2F",date:"Jun 29",time:"18:00",venue:"NRG Stadium, Houston",kickoffISO:"2026-06-29T13:00:00-04:00",isKnockout:true},
     {id:"k_r32_m74",mNum:74,group:"R32",home:"1E",away:"3rd-ABCDF",date:"Jun 29",time:"21:30",venue:"Gillette Stadium, Foxborough",kickoffISO:"2026-06-29T16:30:00-04:00",isKnockout:true},
     {id:"k_r32_m75",mNum:75,group:"R32",home:"1F",away:"2C",date:"Jun 30",time:"03:00",venue:"Estadio BBVA, Monterrey",kickoffISO:"2026-06-29T22:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m76",mNum:76,group:"R32",home:"1C",away:"2F",date:"Jun 29",time:"18:00",venue:"NRG Stadium, Houston",kickoffISO:"2026-06-29T13:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m77",mNum:77,group:"R32",home:"1I",away:"3rd-CDFGH",date:"Jun 30",time:"22:00",venue:"MetLife Stadium, New York",kickoffISO:"2026-06-30T17:00:00-04:00",isKnockout:true},
     {id:"k_r32_m78",mNum:78,group:"R32",home:"2E",away:"2I",date:"Jun 30",time:"19:00",venue:"AT&T Stadium, Arlington",kickoffISO:"2026-06-30T14:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m77",mNum:77,group:"R32",home:"1I",away:"3rd-CDFGH",date:"Jun 30",time:"22:00",venue:"MetLife Stadium, New York",kickoffISO:"2026-06-30T17:00:00-04:00",isKnockout:true},
     {id:"k_r32_m79",mNum:79,group:"R32",home:"1A",away:"3rd-CEFHI",date:"Jul 1",time:"03:00",venue:"Estadio Azteca, Mexico City",kickoffISO:"2026-06-30T22:00:00-04:00",isKnockout:true},
     {id:"k_r32_m80",mNum:80,group:"R32",home:"1L",away:"3rd-EHIJK",date:"Jul 1",time:"17:00",venue:"Mercedes-Benz Stadium, Atlanta",kickoffISO:"2026-07-01T12:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m81",mNum:81,group:"R32",home:"1D",away:"3rd-BCEFH",date:"Jul 2",time:"04:00",venue:"Levi's Stadium, Santa Clara",kickoffISO:"2026-07-01T23:00:00-04:00",isKnockout:true},
     {id:"k_r32_m82",mNum:82,group:"R32",home:"1G",away:"3rd-BCIJK",date:"Jul 1",time:"21:00",venue:"Lumen Field, Seattle",kickoffISO:"2026-07-01T16:00:00-04:00",isKnockout:true},
-    {id:"k_r32_m83",mNum:83,group:"R32",home:"2K",away:"2L",date:"Jul 3",time:"00:00",venue:"BMO Field, Toronto",kickoffISO:"2026-07-02T19:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m81",mNum:81,group:"R32",home:"1D",away:"3rd-BCEFH",date:"Jul 2",time:"04:00",venue:"Levi's Stadium, Santa Clara",kickoffISO:"2026-07-01T23:00:00-04:00",isKnockout:true},
     {id:"k_r32_m84",mNum:84,group:"R32",home:"1H",away:"2J",date:"Jul 2",time:"20:00",venue:"SoFi Stadium, Los Angeles",kickoffISO:"2026-07-02T15:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m83",mNum:83,group:"R32",home:"2K",away:"2L",date:"Jul 3",time:"00:00",venue:"BMO Field, Toronto",kickoffISO:"2026-07-02T19:00:00-04:00",isKnockout:true},
     {id:"k_r32_m85",mNum:85,group:"R32",home:"1B",away:"3rd-ACDFGJ",date:"Jul 3",time:"04:00",venue:"BC Place, Vancouver",kickoffISO:"2026-07-02T23:00:00-04:00",isKnockout:true},
+    {id:"k_r32_m88",mNum:88,group:"R32",home:"2D",away:"2G",date:"Jul 3",time:"19:00",venue:"AT&T Stadium, Arlington",kickoffISO:"2026-07-03T14:00:00-04:00",isKnockout:true},
     {id:"k_r32_m86",mNum:86,group:"R32",home:"1J",away:"2H",date:"Jul 3",time:"23:00",venue:"Hard Rock Stadium, Miami",kickoffISO:"2026-07-03T18:00:00-04:00",isKnockout:true},
     {id:"k_r32_m87",mNum:87,group:"R32",home:"1K",away:"3rd-DEIJL",date:"Jul 4",time:"02:30",venue:"Arrowhead Stadium, Kansas City",kickoffISO:"2026-07-03T21:30:00-04:00",isKnockout:true},
-    {id:"k_r32_m88",mNum:88,group:"R32",home:"2D",away:"2G",date:"Jul 3",time:"19:00",venue:"AT&T Stadium, Arlington",kickoffISO:"2026-07-03T14:00:00-04:00",isKnockout:true},
   ]},
   {day:5,label:"Round of 16",dates:"Jul 4–7",fixtures:[
     {id:"k_r16_m89",mNum:89,group:"R16",home:"W M74",away:"W M77",date:"Jul 4",time:"22:00",venue:"Lincoln Financial Field, Philadelphia",kickoffISO:"2026-07-04T17:00:00-04:00",isKnockout:true},
@@ -648,7 +648,7 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId,all
       const isNextUpcoming=!lk&&arr.slice(0,i).every(f=>locked(f.kickoffISO)||f.isLive||f.isDone);
       return(<div key={fix.id} ref={isNextUpcoming?nextFixRef:null} style={{...S.card,scrollMarginTop:"80px",...(isSaved?{borderColor:"#22c55e",boxShadow:"0 0 18px #22c55e2a"}:{}),...(fix.isLive?{borderColor:"#ef444440",boxShadow:"0 0 18px #ef44441a"}:{})}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,gap:8}}>
-          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?(KO_LABEL[fix.group]||fix.group):`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {localDate(fix.kickoffISO)} · {localTime(fix.kickoffISO)}</span>{fix.venue&&<div style={{fontSize:10,color:"#374151",marginTop:2}}>📍 {fix.venue}</div>}{lm&&<div style={{fontSize:10,color:"#f59e0b",marginTop:3,fontWeight:600}}>⏱ {lm}</div>}</div>
+          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?(KO_LABEL[fix.group]||fix.group):`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {fix.time}</span>{fix.venue&&<div style={{fontSize:10,color:"#374151",marginTop:2}}>📍 {fix.venue}</div>}{lm&&<div style={{fontSize:10,color:"#f59e0b",marginTop:3,fontWeight:600}}>⏱ {lm}</div>}</div>
           <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}><SPill status={fix.status} elapsed={fix.elapsed}/>{p!==null&&<span style={{fontSize:11,fontWeight:700,color:"#fff",padding:"3px 8px",borderRadius:20,background:p===PTS_EXACT?"#22c55e":p===PTS_RESULT?"#f59e0b":"#ef4444"}}>{p===PTS_EXACT?`✓ +${PTS_EXACT}`:p===PTS_RESULT?`~ +${PTS_RESULT}`:`✗ +0`}</span>}</div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
@@ -864,7 +864,7 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
     return(
       <div style={{background:"#080808",border:`1px solid ${fix.isLive?"rgba(239,68,68,0.3)":"#141414"}`,borderRadius:16,padding:16,marginBottom:12,boxShadow:fix.isLive?"0 0 16px rgba(239,68,68,0.06)":"none"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?(KO_LABEL[fix.group]||fix.group):`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {localDate(fix.kickoffISO)} · {localTime(fix.kickoffISO)}</span></div>
+          <div><span style={{fontSize:10,fontWeight:800,color:fix.isKnockout?"#a855f7":G,letterSpacing:1}}>{fix.isKnockout?(KO_LABEL[fix.group]||fix.group):`Group ${fix.group}`}</span><span style={{fontSize:11,color:"#4b5563"}}> · {fix.date} · {fix.time}</span></div>
           <SPill status={fix.status} elapsed={fix.elapsed}/>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
