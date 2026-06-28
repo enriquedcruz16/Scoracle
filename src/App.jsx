@@ -671,13 +671,14 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId,all
         {(()=>{
           const hasPred=!!pred;
           const isDirty=hv!==""&&av!==""&&(String(hv)!==String(pred?.homeGoals)||String(av)!==String(pred?.awayGoals));
-          const btnBg=lk?"#0f0f0f":isSaved||(!isDirty&&hasPred)?"linear-gradient(90deg,#22c55e,#16a34a)":`linear-gradient(90deg,${G},#f97316)`;
-          const btnColor=lk?"#374151":isSaved||(!isDirty&&hasPred)?"#fff":"#000";
-          const btnBorder=lk?"1px solid #1a1a1a":"none";
-          const btnLabel=lk?(fix.isLive?"🔴 Live — Locked":fix.isDone?"✓ Final Result":"🔒 Locked"):isSaved?"✓ Saved!":!isDirty&&hasPred?"✓ Saved":"Save Pick";
+          const isDrawKO=fix.isKnockout&&hv!==""&&av!==""&&String(hv)===String(av);
+          const btnBg=lk?"#0f0f0f":isDrawKO?"#1a0a0a":isSaved||(!isDirty&&hasPred)?"linear-gradient(90deg,#22c55e,#16a34a)":`linear-gradient(90deg,${G},#f97316)`;
+          const btnColor=lk?"#374151":isDrawKO?"#ef4444":isSaved||(!isDirty&&hasPred)?"#fff":"#000";
+          const btnBorder=lk?"1px solid #1a1a1a":isDrawKO?"1px solid #ef444433":"none";
+          const btnLabel=lk?(fix.isLive?"🔴 Live — Locked":fix.isDone?"✓ Final Result":"🔒 Locked"):isDrawKO?"No draws in knockouts":isSaved?"✓ Saved!":!isDirty&&hasPred?"✓ Saved":"Save Pick";
           return(
-            <button onClick={()=>onSave(fix.id,hv,av)} disabled={lk||(!isDirty&&hasPred&&!isSaved)}
-              style={{width:"100%",background:btnBg,border:btnBorder,borderRadius:10,color:btnColor,fontWeight:800,fontSize:13,padding:"11px",cursor:lk||(!isDirty&&hasPred)?"default":"pointer",letterSpacing:0.5,transition:"all 0.3s",outline:"none"}}>
+            <button onClick={()=>onSave(fix.id,hv,av)} disabled={lk||isDrawKO||(!isDirty&&hasPred&&!isSaved)}
+              style={{width:"100%",background:btnBg,border:btnBorder,borderRadius:10,color:btnColor,fontWeight:800,fontSize:13,padding:"11px",cursor:lk||isDrawKO||(!isDirty&&hasPred)?"default":"pointer",letterSpacing:0.5,transition:"all 0.3s",outline:"none"}}>
               {btnLabel}
             </button>
           );
