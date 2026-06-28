@@ -260,12 +260,12 @@ const API_TEAM_NAME_MAP={
   "Cape Verde Islands":"Cape Verde",
 };
 function normaliseTeam(name){return API_TEAM_NAME_MAP[name]||name;}
-function parseFix(data){return data.map(f=>{const s=f.fixture.status.short,isLive=["1H","HT","2H","ET","BT","P","SUSP","INT"].includes(s),isDone=["FT","AET","PEN"].includes(s),dt=new Date(f.fixture.date),rn=parseInt(((f.league.round||"").match(/(\d+)/)||[0,1])[1]);const rawGroup=(f.league.round||"").replace(/Group Stage - /i,"").trim();const group=GROUP_NUM_TO_LETTER[rawGroup]||rawGroup;const home=normaliseTeam(f.teams.home.name),away=normaliseTeam(f.teams.away.name);return{id:String(f.fixture.id),rn,group,home,away,homeLogo:f.teams.home.logo,awayLogo:f.teams.away.logo,date:dt.toLocaleDateString("en-GB",{month:"short",day:"numeric"}),time:dt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}),kickoffISO:f.fixture.date,status:s,elapsed:f.fixture.status.elapsed,venue:f.fixture.venue?.name,isLive,isDone,homeGoals:f.goals.home,awayGoals:f.goals.away};});}
+function parseFix(data){return data.map(f=>{const s=f.fixture.status.short,isLive=["1H","HT","2H","ET","BT","P","SUSP","INT"].includes(s),isDone=["FT","AET","PEN"].includes(s),dt=new Date(f.fixture.date),rn=parseInt(((f.league.round||"").match(/(\d+)/)||[0,1])[1]);const rawGroup=(f.league.round||"").replace(/Group Stage - /i,"").trim();const group=GROUP_NUM_TO_LETTER[rawGroup]||rawGroup;const home=normaliseTeam(f.teams.home.name),away=normaliseTeam(f.teams.away.name);const penH=s==="PEN"&&f.score?.penalty?.home!=null?f.score.penalty.home:0;const penA=s==="PEN"&&f.score?.penalty?.away!=null?f.score.penalty.away:0;return{id:String(f.fixture.id),rn,group,home,away,homeLogo:f.teams.home.logo,awayLogo:f.teams.away.logo,date:dt.toLocaleDateString("en-GB",{month:"short",day:"numeric"}),time:dt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}),kickoffISO:f.fixture.date,status:s,elapsed:f.fixture.status.elapsed,venue:f.fixture.venue?.name,isLive,isDone,homeGoals:f.goals.home!=null?f.goals.home+penH:f.goals.home,awayGoals:f.goals.away!=null?f.goals.away+penA:f.goals.away,wentToPens:s==="PEN",aetHome:s==="PEN"?f.goals.home:null,aetAway:s==="PEN"?f.goals.away:null};});}
 function buildMD(fixtures){const byR={};fixtures.forEach(f=>{const r=f.rn||1;(byR[r]=byR[r]||[]).push(f);});return Object.entries(byR).sort(([a],[b])=>+a-+b).map(([,fxs],i)=>{const s=[...fxs].sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));return{day:i+1,label:`Matchday ${i+1}`,dates:s[0]?.date+(s.length>1?` – ${s[s.length-1]?.date}`:""),fixtures:s};});}
 function groupTable(gKey,allFix,live,preds){const teams=GROUPS_TEAMS[gKey]||[],t={};teams.forEach(tm=>{t[tm]={team:tm,mp:0,w:0,d:0,l:0,gf:0,ga:0,pts:0};});allFix.filter(f=>(f.group||"").toUpperCase().replace(/GROUP\s*/,"").trim()===gKey).forEach(fix=>{const src=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null)||preds[fix.id];if(!src||src.homeGoals==null)return;const hg=+src.homeGoals,ag=+src.awayGoals,h=t[fix.home],a=t[fix.away];if(!h||!a)return;h.mp++;a.mp++;h.gf+=hg;h.ga+=ag;a.gf+=ag;a.ga+=hg;if(hg>ag){h.w++;h.pts+=3;a.l++;}else if(hg<ag){a.w++;a.pts+=3;h.l++;}else{h.d++;h.pts++;a.d++;a.pts++;}});return Object.values(t).sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga)||b.gf-a.gf);}
 
 const KO_LABEL={"R32":"Round of 32","R16":"Round of 16","QF":"Quarter-Final","SF":"Semi-Final","Final":"Final","3rd":"3rd Place"};
-function SPill({status,elapsed}){if(["1H","2H","ET"].includes(status))return <span style={{...S.pill,background:"#ef4444",animation:"pulse 1.5s infinite"}}>🔴 {elapsed}'</span>;if(status==="HT")return <span style={{...S.pill,background:"#f59e0b",color:"#000"}}>HT</span>;if(["FT","AET","PEN"].includes(status))return <span style={{...S.pill,background:"#1f2937"}}>FT</span>;return null;}
+function SPill({status,elapsed}){if(["1H","2H","ET"].includes(status))return <span style={{...S.pill,background:"#ef4444",animation:"pulse 1.5s infinite"}}>🔴 {elapsed}'</span>;if(status==="HT")return <span style={{...S.pill,background:"#f59e0b",color:"#000"}}>HT</span>;if(status==="PEN")return <span style={{...S.pill,background:"#1f2937"}}>PEN</span>;if(["FT","AET"].includes(status))return <span style={{...S.pill,background:"#1f2937"}}>FT</span>;return null;}
 
 function PWAPrompt(){const[show,setShow]=useState(false);const[dp,setDp]=useState(null);useEffect(()=>{window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();setDp(e);setTimeout(()=>setShow(true),4000);});},[]);if(!show)return null;return(<div style={S.pwaBar}><span style={{fontSize:20}}>⚽</span><div style={{flex:1}}><div style={{fontWeight:700,fontSize:13}}>Install Scoracle</div><div style={{fontSize:11,color:"#6b7280"}}>Add to home screen</div></div><button onClick={async()=>{if(dp){await dp.prompt();setShow(false);}}} style={S.pwaBtn}>Install</button><button onClick={()=>setShow(false)} style={S.pwaDismiss}>✕</button></div>);}
 
@@ -484,6 +484,7 @@ export default function App(){
         status:af.status,elapsed:af.elapsed,isLive:af.isLive,isDone:af.isDone,
         homeGoals:reversed?af.awayGoals:af.homeGoals,
         awayGoals:reversed?af.homeGoals:af.awayGoals,
+        wentToPens:af.wentToPens||false,aetHome:reversed?af.aetAway:af.aetHome,aetAway:reversed?af.aetHome:af.aetAway,
       };})};});
     // Always use static knockout bracket for structure. Enrich with API data matched by resolved team-name pair.
     const knockoutFix=parsed.filter(f=>f.rn>3);
@@ -510,16 +511,16 @@ export default function App(){
     function resSlot(slot){const m=SLOT_RE.exec(slot);if(m){const rows=koStandings[m[2]];return(rows&&rows[m[1]==="1"?0:1]?.team)||slot;}if(THIRD_RE.test(slot))return thirdMapKO[slot]||slot;return slot;}
     // Build knockout matchdays: static bracket is structural source; enrich logos/status/scores via pair match.
     // Never overwrite id, kickoffISO, date, time, venue, or team names from API.
-    const knockoutMDs=KNOCKOUT_BRACKET.map(kb=>({...kb,day:enriched.length+(kb.day-3),fixtures:kb.fixtures.map(fix=>{const resolvedHome=resSlot(fix.home),resolvedAway=resSlot(fix.away);const pairKey=(resolvedHome+"|"+resolvedAway).toLowerCase(),revKey=(resolvedAway+"|"+resolvedHome).toLowerCase();let af=apiKOByPair[pairKey];let reversed=false;if(!af&&apiKOByPair[revKey]){af=apiKOByPair[revKey];reversed=true;}if(!af)return{...fix,home:resolvedHome,away:resolvedAway};return{...fix,home:resolvedHome,away:resolvedAway,homeLogo:reversed?af.awayLogo:af.homeLogo,awayLogo:reversed?af.homeLogo:af.awayLogo,status:af.status,elapsed:af.elapsed,isLive:af.isLive,isDone:af.isDone,homeGoals:reversed?af.awayGoals:af.homeGoals,awayGoals:reversed?af.homeGoals:af.awayGoals};})}));
+    const knockoutMDs=KNOCKOUT_BRACKET.map(kb=>({...kb,day:enriched.length+(kb.day-3),fixtures:kb.fixtures.map(fix=>{const resolvedHome=resSlot(fix.home),resolvedAway=resSlot(fix.away);const pairKey=(resolvedHome+"|"+resolvedAway).toLowerCase(),revKey=(resolvedAway+"|"+resolvedHome).toLowerCase();let af=apiKOByPair[pairKey];let reversed=false;if(!af&&apiKOByPair[revKey]){af=apiKOByPair[revKey];reversed=true;}if(!af)return{...fix,home:resolvedHome,away:resolvedAway};return{...fix,home:resolvedHome,away:resolvedAway,homeLogo:reversed?af.awayLogo:af.homeLogo,awayLogo:reversed?af.homeLogo:af.awayLogo,status:af.status,elapsed:af.elapsed,isLive:af.isLive,isDone:af.isDone,homeGoals:reversed?af.awayGoals:af.homeGoals,awayGoals:reversed?af.homeGoals:af.awayGoals,wentToPens:af.wentToPens||false,aetHome:reversed?af.aetAway:af.aetHome,aetAway:reversed?af.aetHome:af.aetAway};})}));
     setMatchdays([...enriched,...knockoutMDs]);
-    const nl={};parsed.forEach(f=>{if((f.isLive||f.isDone)&&f.homeGoals!=null){nl[f.id]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};// Also index by static ID so live scores show on predict tab
+    const nl={};parsed.forEach(f=>{if((f.isLive||f.isDone)&&f.homeGoals!=null){nl[f.id]={homeGoals:f.homeGoals,awayGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed,wentToPens:f.wentToPens||false,aetHome:f.aetHome,aetAway:f.aetAway};// Also index by static ID so live scores show on predict tab
     const normalKey=(f.home+"|"+f.away).toLowerCase();
     const reversedKey=(f.away+"|"+f.home).toLowerCase();
     const sid=HOME_AWAY_TO_STATIC_ID[normalKey]||HOME_AWAY_TO_STATIC_ID[reversedKey];
     const isReversed=!HOME_AWAY_TO_STATIC_ID[normalKey]&&!!HOME_AWAY_TO_STATIC_ID[reversedKey];
-    if(sid)nl[sid]={homeGoals:isReversed?f.awayGoals:f.homeGoals,awayGoals:isReversed?f.homeGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed};}});
+    if(sid)nl[sid]={homeGoals:isReversed?f.awayGoals:f.homeGoals,awayGoals:isReversed?f.homeGoals:f.awayGoals,isLive:f.isLive,elapsed:f.elapsed,wentToPens:f.wentToPens||false,aetHome:isReversed?f.aetAway:f.aetHome,aetAway:isReversed?f.aetHome:f.aetAway};}});
     // Index knockout live scores by static bracket ID (already resolved via pair matching above)
-    knockoutMDs.flatMap(function(md){return md.fixtures;}).forEach(function(fix){if((fix.isLive||fix.isDone)&&fix.homeGoals!=null){nl[fix.id]={homeGoals:fix.homeGoals,awayGoals:fix.awayGoals,isLive:fix.isLive,elapsed:fix.elapsed};}});
+    knockoutMDs.flatMap(function(md){return md.fixtures;}).forEach(function(fix){if((fix.isLive||fix.isDone)&&fix.homeGoals!=null){nl[fix.id]={homeGoals:fix.homeGoals,awayGoals:fix.awayGoals,isLive:fix.isLive,elapsed:fix.elapsed,wentToPens:fix.wentToPens||false,aetHome:fix.aetHome,aetAway:fix.aetAway};}});
     const apiIdMap={};parsed.forEach(function(f){apiIdMap[(f.home+"|"+f.away).toLowerCase()]=f.id;});
     setApiIdMap(apiIdMap);
     setLive(nl);setApiStatus("live");runBonusEngine(nl,[...enriched.flatMap(function(md){return md.fixtures;}),...knockoutMDs.flatMap(function(md){return md.fixtures;})]);}catch(err){console.error("API fetch error:",err);setApiStatus("fallback");}},[user]);
@@ -657,7 +658,7 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId,all
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
           <div style={{flex:1,display:"flex",alignItems:"center",gap:8}}>{fix.homeLogo?<img src={fix.homeLogo} alt="" style={{width:32,height:32,objectFit:"contain",borderRadius:4}}/>:<span style={{fontSize:26}}>{FLAGS[fix.home]||"🏳️"}</span>}<span style={{fontSize:12,fontWeight:600,lineHeight:1.3}}>{fix.home}</span></div>
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,minWidth:110}}>
-            {result!=null&&<div style={{textAlign:"center"}}><span style={{fontSize:22,fontWeight:800,color:fix.isLive?"#ef4444":"#f59e0b"}}>{result.homeGoals} – {result.awayGoals}</span><div style={{fontSize:10,color:"#6b7280",fontWeight:700}}>{fix.isLive?`${fix.elapsed}'`:"FT"}</div></div>}
+            {result!=null&&<div style={{textAlign:"center"}}><span style={{fontSize:22,fontWeight:800,color:fix.isLive?"#ef4444":"#f59e0b"}}>{result.homeGoals} – {result.awayGoals}</span>{result.wentToPens&&<div style={{fontSize:9,color:"#6b7280"}}>({result.aetHome}–{result.aetAway} AET)</div>}<div style={{fontSize:10,color:"#6b7280",fontWeight:700}}>{fix.isLive?`${fix.elapsed}'`:result.wentToPens?"PEN":"FT"}</div></div>}
             <div style={{display:"flex",alignItems:"center",gap:6}}>
               <input type="number" min="0" max="20" value={hv} onChange={e=>setDrafts(p=>({...p,[fix.id]:{...p[fix.id],home:e.target.value}}))} style={{width:44,height:44,background:"#111",border:"1px solid #1f1f1f",borderRadius:10,color:"#f9fafb",fontSize:20,fontWeight:700,textAlign:"center",outline:"none",WebkitAppearance:"none",opacity:lk?0.35:1,cursor:lk?"not-allowed":"text"}} disabled={lk} placeholder="–"/>
               <span style={{fontSize:20,fontWeight:700,color:"#374151"}}>:</span>
@@ -710,7 +711,7 @@ function StandTab({allFix,live,predictions}){
   const doneFix=knockoutFix.filter(function(f){return f.isDone&&!f.isLive;});
   const upcomingFix=knockoutFix.filter(function(f){return !f.isLive&&!f.isDone;});
   function KOMatch({fix}){
-    const result=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);
+    const result=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals,wentToPens:fix.wentToPens||false,aetHome:fix.aetHome,aetAway:fix.aetAway}:null);
     const homeWon=result&&result.homeGoals>result.awayGoals;const awayWon=result&&result.awayGoals>result.homeGoals;
     return(<div style={{background:"#080808",border:fix.isLive?"1px solid rgba(239,68,68,0.3)":"1px solid #141414",borderRadius:14,padding:14,marginBottom:8}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
@@ -720,7 +721,7 @@ function StandTab({allFix,live,predictions}){
       <div style={{display:"flex",alignItems:"center",gap:8}}>
         <div style={{flex:1,display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:20}}>{FLAGS[fix.home]||"🏳"}</span><span style={{fontSize:13,fontWeight:700,color:result?(homeWon?"#f59e0b":"#4b5563"):"#f9fafb"}}>{fix.home}</span></div>
         <div style={{textAlign:"center",minWidth:76}}>
-          {result!=null?<span style={{fontSize:24,fontWeight:800,display:"block",color:fix.isLive?"#ef4444":"#f9fafb"}}>{result.homeGoals} - {result.awayGoals}</span>:<span style={{fontSize:15,fontWeight:700,color:"#374151",display:"block"}}>vs</span>}
+          {result!=null?<><span style={{fontSize:24,fontWeight:800,display:"block",color:fix.isLive?"#ef4444":"#f9fafb"}}>{result.homeGoals} - {result.awayGoals}</span>{result.wentToPens&&<span style={{fontSize:9,color:"#6b7280",display:"block"}}>({result.aetHome}–{result.aetAway} AET)</span>}</>:<span style={{fontSize:15,fontWeight:700,color:"#374151",display:"block"}}>vs</span>}
           {!result&&<span style={{fontSize:9,color:"#4b5563"}}>{localTime(fix.kickoffISO)}</span>}
           {fix.isLive&&<span style={{fontSize:9,color:"#ef4444",fontWeight:700}}>{fix.elapsed}'</span>}
         </div>
@@ -862,7 +863,7 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
   }
 
   function MatchCard({fix}){
-    const result=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);
+    const result=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals,wentToPens:fix.wentToPens||false,aetHome:fix.aetHome,aetAway:fix.aetAway}:null);
     const isUpcoming=!locked(fix.kickoffISO)&&!fix.isLive&&!fix.isDone;
     return(
       <div style={{background:"#080808",border:`1px solid ${fix.isLive?"rgba(239,68,68,0.3)":"#141414"}`,borderRadius:16,padding:16,marginBottom:12,boxShadow:fix.isLive?"0 0 16px rgba(239,68,68,0.06)":"none"}}>
@@ -873,7 +874,7 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
           <div style={{flex:1,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:20}}>{FLAGS[fix.home]||"🏳️"}</span><span style={{fontSize:13,fontWeight:600}}>{fix.home}</span></div>
           <div style={{textAlign:"center",minWidth:80}}>
-            {result!=null?<span style={{fontSize:26,fontWeight:800,display:"block",color:fix.isLive?"#ef4444":G}}>{result.homeGoals} – {result.awayGoals}</span>:<span style={{fontSize:16,fontWeight:700,color:"#374151",display:"block"}}>vs</span>}
+            {result!=null?<><span style={{fontSize:26,fontWeight:800,display:"block",color:fix.isLive?"#ef4444":G}}>{result.homeGoals} – {result.awayGoals}</span>{result.wentToPens&&<div style={{fontSize:9,color:"#6b7280"}}>({result.aetHome}–{result.aetAway} AET)</div>}</>:<span style={{fontSize:16,fontWeight:700,color:"#374151",display:"block"}}>vs</span>}
             {fix.isLive&&<div style={{fontSize:10,color:"#ef4444",fontWeight:700}}>{fix.elapsed}'</div>}
           </div>
           <div style={{flex:1,display:"flex",alignItems:"center",gap:8,justifyContent:"flex-end"}}><span style={{fontSize:13,fontWeight:600,textAlign:"right"}}>{fix.away}</span><span style={{fontSize:20}}>{FLAGS[fix.away]||"🏳️"}</span></div>
@@ -1468,7 +1469,7 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
       }
     </div>}
     {view==="matches"&&<div>{matchdays.map(md=>(<div key={md.day}><div style={{fontSize:13,fontWeight:800,color:"#6b7280",letterSpacing:1,marginBottom:8,marginTop:16}}>{md.label.toUpperCase()}</div>{md.fixtures.map(fix=>{
-      const result=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);
+      const result=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals,wentToPens:fix.wentToPens||false,aetHome:fix.aetHome,aetAway:fix.aetAway}:null);
       const predsForMatch=allPreds.filter(p=>p.fixture_id===fix.id);
       const missingUsers=profiles.filter(p=>!predsForMatch.find(x=>x.user_id===p.id));
       const lockTime=new Date(new Date(fix.kickoffISO).getTime()-15*60000);
@@ -1491,7 +1492,7 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
             <div style={{fontSize:11,color:"#6b7280"}}>{predsForMatch.length}/{totalUsers} predictions · {missingUsers.length} missing</div>
           </div>
           <div style={{textAlign:"right",flexShrink:0}}>
-            {result!=null?<div style={{fontSize:16,fontWeight:800,color:G}}>{result.homeGoals}–{result.awayGoals}</div>:<div style={{fontSize:11,color:"#374151"}}>No result yet</div>}
+            {result!=null?<><div style={{fontSize:16,fontWeight:800,color:G}}>{result.homeGoals}–{result.awayGoals}</div>{result.wentToPens&&<div style={{fontSize:9,color:"#6b7280"}}>({result.aetHome}–{result.aetAway} AET)</div>}</>:<div style={{fontSize:11,color:"#374151"}}>No result yet</div>}
             <SPill status={fix.status} elapsed={fix.elapsed}/>
           </div>
         </div>
