@@ -234,33 +234,38 @@ function pts(pred,res){
   // Knockout: stage-by-stage scoring
   const ft90H=res.ftHome!=null?res.ftHome:res.homeGoals,ft90A=res.ftAway!=null?res.ftAway:res.awayGoals;
   if([ph,pa,ft90H,ft90A].some(v=>isNaN(v)||v==null))return null;
+  const pEtH=pred.home_et!=null?+pred.home_et:pred.homeEt!=null?+pred.homeEt:null;
+  const pEtA=pred.away_et!=null?+pred.away_et:pred.awayEt!=null?+pred.awayEt:null;
+  const pPenH=pred.home_pens!=null?+pred.home_pens:pred.homePens!=null?+pred.homePens:null;
+  const pPenA=pred.away_pens!=null?+pred.away_pens:pred.awayPens!=null?+pred.awayPens:null;
   let total=0;
   const r90=ft90H>ft90A?"H":ft90H<ft90A?"A":"D",p90=ph>pa?"H":ph<pa?"A":"D";
   if(ph===ft90H&&pa===ft90A)total+=PTS_EXACT;
   else if(p90===r90)total+=PTS_RESULT;
   if(res.wentToET||res.wentToPens){
     const aetH=res.homeGoals,aetA=res.awayGoals;
-    const pEtH=pred.home_et!=null?+pred.home_et:pred.homeEt!=null?+pred.homeEt:null;
-    const pEtA=pred.away_et!=null?+pred.away_et:pred.awayEt!=null?+pred.awayEt:null;
     if(pEtH!=null&&pEtA!=null&&aetH!=null&&aetA!=null){
       const rET=aetH>aetA?"H":aetH<aetA?"A":"D",pET=pEtH>pEtA?"H":pEtH<pEtA?"A":"D";
       if(pEtH===aetH&&pEtA===aetA)total+=PTS_EXACT;
       else if(pET===rET)total+=PTS_RESULT;
-    }else if(pEtH==null&&p90!=="D"){
-      // Predicted a 90' winner but game went to ET/Pens — award 5pts if overall winner is correct
-      const overallWinner=res.wentToPens?(res.penHome>res.penAway?"H":"A"):(aetH>aetA?"H":"A");
-      if(p90===overallWinner)total+=PTS_RESULT;
     }
   }
   if(res.wentToPens){
     const penH=res.penHome,penA=res.penAway;
-    const pPenH=pred.home_pens!=null?+pred.home_pens:pred.homePens!=null?+pred.homePens:null;
-    const pPenA=pred.away_pens!=null?+pred.away_pens:pred.awayPens!=null?+pred.awayPens:null;
     if(pPenH!=null&&pPenA!=null&&penH!=null&&penA!=null){
       const rPen=penH>penA?"H":"A",pPen=pPenH>pPenA?"H":"A";
       if(pPenH===penH&&pPenA===penA)total+=PTS_EXACT;
       else if(pPen===rPen)total+=PTS_RESULT;
     }
+  }
+  // Overall winner fallback: if no stage points earned, award 5pts for correct overall winner
+  if(total===0){
+    const actualWinner=res.wentToPens?(res.penHome>res.penAway?"H":"A"):res.wentToET?(res.homeGoals>res.awayGoals?"H":res.homeGoals<res.awayGoals?"A":null):(ft90H>ft90A?"H":ft90H<ft90A?"A":null);
+    let predictedWinner=null;
+    if(pPenH!=null&&pPenA!=null)predictedWinner=pPenH>pPenA?"H":"A";
+    else if(pEtH!=null&&pEtA!=null&&pEtH!==pEtA)predictedWinner=pEtH>pEtA?"H":"A";
+    else if(p90!=="D")predictedWinner=p90;
+    if(actualWinner&&predictedWinner&&predictedWinner===actualWinner)total=PTS_RESULT;
   }
   return total;
 }
@@ -702,7 +707,9 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId,all
       const hvPens=fix.isKnockout?val(fix.id,"homePens"):"";
       const avPens=fix.isKnockout?val(fix.id,"awayPens"):"";
       const show90DrawET=fix.isKnockout&&hv!==""&&av!==""&&String(hv)===String(av);
-      const showETDrawPen=show90DrawET&&hvEt!==""&&avEt!==""&&String(hvEt)===String(avEt);
+      const etHomeMin=hv!==""?parseInt(hv):0;const etAwayMin=av!==""?parseInt(av):0;
+      const etBelowMin=show90DrawET&&hvEt!==""&&avEt!==""&&(parseInt(hvEt)<etHomeMin||parseInt(avEt)<etAwayMin);
+      const showETDrawPen=show90DrawET&&hvEt!==""&&avEt!==""&&!etBelowMin&&String(hvEt)===String(avEt);
       const isNextUpcoming=!lk&&arr.slice(0,i).every(f=>locked(f.kickoffISO)||f.isLive||f.isDone);
       return(<div key={fix.id} ref={isNextUpcoming?nextFixRef:null} style={{...S.card,scrollMarginTop:"152px",...(isSaved?{borderColor:"#22c55e",boxShadow:"0 0 18px #22c55e2a"}:{}),...(fix.isLive?{borderColor:"#ef444440",boxShadow:"0 0 18px #ef44441a"}:{})}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,gap:8}}>
@@ -734,9 +741,9 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId,all
                 {show90DrawET&&(
                   <div style={{display:"flex",alignItems:"center",gap:4}}>
                     <span style={{fontSize:9,color:"#4b5563",width:24,textAlign:"right"}}>ET</span>
-                    <input type="number" min="0" max="20" value={hvEt} onChange={e=>setDrafts(p=>({...p,[fix.id]:{...p[fix.id],homeEt:e.target.value}}))} style={{width:40,height:40,background:"#111",border:"1px solid #1f1f1f",borderRadius:10,color:"#f9fafb",fontSize:18,fontWeight:700,textAlign:"center",outline:"none",WebkitAppearance:"none",opacity:lk?0.35:1,cursor:lk?"not-allowed":"text"}} disabled={lk} placeholder="–"/>
+                    <input type="number" min={etHomeMin} max="20" value={hvEt} onChange={e=>setDrafts(p=>({...p,[fix.id]:{...p[fix.id],homeEt:e.target.value}}))} style={{width:40,height:40,background:"#111",border:`1px solid ${etBelowMin&&hvEt!==""&&parseInt(hvEt)<etHomeMin?"#ef4444":"#1f1f1f"}`,borderRadius:10,color:"#f9fafb",fontSize:18,fontWeight:700,textAlign:"center",outline:"none",WebkitAppearance:"none",opacity:lk?0.35:1,cursor:lk?"not-allowed":"text"}} disabled={lk} placeholder="–"/>
                     <span style={{fontSize:16,fontWeight:700,color:"#374151"}}>:</span>
-                    <input type="number" min="0" max="20" value={avEt} onChange={e=>setDrafts(p=>({...p,[fix.id]:{...p[fix.id],awayEt:e.target.value}}))} style={{width:40,height:40,background:"#111",border:"1px solid #1f1f1f",borderRadius:10,color:"#f9fafb",fontSize:18,fontWeight:700,textAlign:"center",outline:"none",WebkitAppearance:"none",opacity:lk?0.35:1,cursor:lk?"not-allowed":"text"}} disabled={lk} placeholder="–"/>
+                    <input type="number" min={etAwayMin} max="20" value={avEt} onChange={e=>setDrafts(p=>({...p,[fix.id]:{...p[fix.id],awayEt:e.target.value}}))} style={{width:40,height:40,background:"#111",border:`1px solid ${etBelowMin&&avEt!==""&&parseInt(avEt)<etAwayMin?"#ef4444":"#1f1f1f"}`,borderRadius:10,color:"#f9fafb",fontSize:18,fontWeight:700,textAlign:"center",outline:"none",WebkitAppearance:"none",opacity:lk?0.35:1,cursor:lk?"not-allowed":"text"}} disabled={lk} placeholder="–"/>
                   </div>
                 )}
                 {showETDrawPen&&(
@@ -771,11 +778,11 @@ function PredTab({matchdays,selDay,setSelDay,predictions,live,onSave,savedId,all
           const isPenDraw=fix.isKnockout&&showETDrawPen&&hvPens!==""&&avPens!==""&&String(hvPens)===String(avPens);
           const needsET=fix.isKnockout&&show90DrawET&&(hvEt===""||avEt==="");
           const needsPen=fix.isKnockout&&showETDrawPen&&(hvPens===""||avPens==="");
-          const blockSave=isPenDraw||needsET||needsPen;
+          const blockSave=isPenDraw||needsET||needsPen||etBelowMin;
           const btnBg=lk?"#0f0f0f":blockSave?"#1a0a0a":isSaved||(!isDirty&&hasPred)?"linear-gradient(90deg,#22c55e,#16a34a)":`linear-gradient(90deg,${G},#f97316)`;
           const btnColor=lk?"#374151":blockSave?"#ef4444":isSaved||(!isDirty&&hasPred)?"#fff":"#000";
           const btnBorder=lk?"1px solid #1a1a1a":blockSave?"1px solid #ef444433":"none";
-          const btnLabel=lk?(fix.isLive?"🔴 Live — Locked":fix.isDone?"✓ Final Result":"🔒 Locked"):isPenDraw?"No draws in penalties":needsET?"Enter ET score (game drawn at 90')":needsPen?"Enter penalty score (ET drawn)":isSaved?"✓ Saved!":!isDirty&&hasPred?"✓ Saved":"Save Pick";
+          const btnLabel=lk?(fix.isLive?"🔴 Live — Locked":fix.isDone?"✓ Final Result":"🔒 Locked"):isPenDraw?"No draws in penalties":etBelowMin?`ET score can't be less than 90' score (${hv}–${av})`:needsET?"Enter ET score (game drawn at 90')":needsPen?"Enter penalty score (ET drawn)":isSaved?"✓ Saved!":!isDirty&&hasPred?"✓ Saved":"Save Pick";
           return(
             <button onClick={()=>onSave(fix.id,hv,av,show90DrawET?hvEt:null,show90DrawET?avEt:null,showETDrawPen?hvPens:null,showETDrawPen?avPens:null)} disabled={lk||blockSave||(!isDirty&&hasPred&&!isSaved)}
               style={{width:"100%",background:btnBg,border:btnBorder,borderRadius:10,color:btnColor,fontWeight:800,fontSize:13,padding:"11px",cursor:lk||blockSave||(!isDirty&&hasPred)?"default":"pointer",letterSpacing:0.5,transition:"all 0.3s",outline:"none"}}>
