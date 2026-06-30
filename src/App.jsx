@@ -1570,7 +1570,7 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
       }
     </div>}
     {view==="matches"&&<div>{matchdays.map(md=>(<div key={md.day}><div style={{fontSize:13,fontWeight:800,color:"#6b7280",letterSpacing:1,marginBottom:8,marginTop:16}}>{md.label.toUpperCase()}</div>{md.fixtures.map(fix=>{
-      const result=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals,wentToPens:fix.wentToPens||false,aetHome:fix.aetHome,aetAway:fix.aetAway}:null);
+      const result=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals,wentToET:fix.wentToET||false,wentToPens:fix.wentToPens||false,penHome:fix.penHome,penAway:fix.penAway}:null);
       const predsForMatch=allPreds.filter(p=>p.fixture_id===fix.id);
       const missingUsers=profiles.filter(p=>!predsForMatch.find(x=>x.user_id===p.id));
       const lockTime=new Date(new Date(fix.kickoffISO).getTime()-15*60000);
@@ -1593,7 +1593,7 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
             <div style={{fontSize:11,color:"#6b7280"}}>{predsForMatch.length}/{totalUsers} predictions · {missingUsers.length} missing</div>
           </div>
           <div style={{textAlign:"right",flexShrink:0}}>
-            {result!=null?<><div style={{fontSize:16,fontWeight:800,color:G}}>{result.homeGoals}–{result.awayGoals}</div>{result.wentToPens&&<div style={{fontSize:9,color:"#6b7280"}}>({result.aetHome}–{result.aetAway} AET)</div>}</>:<div style={{fontSize:11,color:"#374151"}}>No result yet</div>}
+            {result!=null?<><div style={{fontSize:16,fontWeight:800,color:G}}>{result.homeGoals}–{result.awayGoals}</div>{result.wentToPens&&result.penHome!=null&&<div style={{fontSize:9,color:"#6b7280"}}>Pens: {result.penHome}–{result.penAway}</div>}</>:<div style={{fontSize:11,color:"#374151"}}>No result yet</div>}
             <SPill status={fix.status} elapsed={fix.elapsed}/>
           </div>
         </div>
