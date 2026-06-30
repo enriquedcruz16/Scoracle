@@ -236,16 +236,16 @@ function pts(pred,res){
   if([ph,pa,ft90H,ft90A].some(v=>isNaN(v)||v==null))return null;
   let total=0;
   const r90=ft90H>ft90A?"H":ft90H<ft90A?"A":"D",p90=ph>pa?"H":ph<pa?"A":"D";
-  if(p90===r90)total+=PTS_RESULT;
   if(ph===ft90H&&pa===ft90A)total+=PTS_EXACT;
+  else if(p90===r90)total+=PTS_RESULT;
   if(res.wentToET||res.wentToPens){
     const aetH=res.homeGoals,aetA=res.awayGoals;
     const pEtH=pred.home_et!=null?+pred.home_et:pred.homeEt!=null?+pred.homeEt:null;
     const pEtA=pred.away_et!=null?+pred.away_et:pred.awayEt!=null?+pred.awayEt:null;
     if(pEtH!=null&&pEtA!=null&&aetH!=null&&aetA!=null){
       const rET=aetH>aetA?"H":aetH<aetA?"A":"D",pET=pEtH>pEtA?"H":pEtH<pEtA?"A":"D";
-      if(pET===rET)total+=PTS_RESULT;
       if(pEtH===aetH&&pEtA===aetA)total+=PTS_EXACT;
+      else if(pET===rET)total+=PTS_RESULT;
     }else if(pEtH==null&&p90!=="D"){
       // Predicted a 90' winner but game went to ET/Pens — award 5pts if overall winner is correct
       const overallWinner=res.wentToPens?(res.penHome>res.penAway?"H":"A"):(aetH>aetA?"H":"A");
@@ -258,8 +258,8 @@ function pts(pred,res){
     const pPenA=pred.away_pens!=null?+pred.away_pens:pred.awayPens!=null?+pred.awayPens:null;
     if(pPenH!=null&&pPenA!=null&&penH!=null&&penA!=null){
       const rPen=penH>penA?"H":"A",pPen=pPenH>pPenA?"H":"A";
-      if(pPen===rPen)total+=PTS_RESULT;
       if(pPenH===penH&&pPenA===penA)total+=PTS_EXACT;
+      else if(pPen===rPen)total+=PTS_RESULT;
     }
   }
   return total;
