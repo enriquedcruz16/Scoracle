@@ -246,6 +246,10 @@ function pts(pred,res){
       const rET=aetH>aetA?"H":aetH<aetA?"A":"D",pET=pEtH>pEtA?"H":pEtH<pEtA?"A":"D";
       if(pET===rET)total+=PTS_RESULT;
       if(pEtH===aetH&&pEtA===aetA)total+=PTS_EXACT;
+    }else if(pEtH==null&&p90!=="D"){
+      // Predicted a 90' winner but game went to ET/Pens — award 5pts if overall winner is correct
+      const overallWinner=res.wentToPens?(res.penHome>res.penAway?"H":"A"):(aetH>aetA?"H":"A");
+      if(p90===overallWinner)total+=PTS_RESULT;
     }
   }
   if(res.wentToPens){
