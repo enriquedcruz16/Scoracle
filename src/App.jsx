@@ -147,8 +147,8 @@ const KNOCKOUT_BRACKET = [
     {id:"k_r32_m87",mNum:87,group:"R32",home:"1K",away:"3rd-DEIJL",date:"Jul 4",time:"02:30",venue:"Arrowhead Stadium, Kansas City",kickoffISO:"2026-07-03T21:30:00-04:00",isKnockout:true},
   ]},
   {day:5,label:"Round of 16",dates:"Jul 4–7",fixtures:[
-    {id:"k_r16_m89",mNum:89,group:"R16",home:"W M74",away:"W M77",date:"Jul 4",time:"22:00",venue:"Lincoln Financial Field, Philadelphia",kickoffISO:"2026-07-04T17:00:00-04:00",isKnockout:true},
     {id:"k_r16_m90",mNum:90,group:"R16",home:"W M73",away:"W M75",date:"Jul 4",time:"18:00",venue:"NRG Stadium, Houston",kickoffISO:"2026-07-04T13:00:00-04:00",isKnockout:true},
+    {id:"k_r16_m89",mNum:89,group:"R16",home:"W M74",away:"W M77",date:"Jul 4",time:"22:00",venue:"Lincoln Financial Field, Philadelphia",kickoffISO:"2026-07-04T17:00:00-04:00",isKnockout:true},
     {id:"k_r16_m91",mNum:91,group:"R16",home:"W M76",away:"W M78",date:"Jul 5",time:"21:00",venue:"MetLife Stadium, New York",kickoffISO:"2026-07-05T16:00:00-04:00",isKnockout:true},
     {id:"k_r16_m92",mNum:92,group:"R16",home:"W M79",away:"W M80",date:"Jul 6",time:"01:00",venue:"Estadio Azteca, Mexico City",kickoffISO:"2026-07-05T20:00:00-04:00",isKnockout:true},
     {id:"k_r16_m93",mNum:93,group:"R16",home:"W M83",away:"W M84",date:"Jul 6",time:"20:00",venue:"AT&T Stadium, Dallas",kickoffISO:"2026-07-06T15:00:00-04:00",isKnockout:true},
