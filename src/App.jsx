@@ -1022,9 +1022,9 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
                 return(
                   <div key={u.id} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,width:"calc(16.666% - 4px)"}}>
                     <div style={{fontSize:7,color:u.id===currentUser.id?G:"#6b7280",fontWeight:u.id===currentUser.id?800:600,textAlign:"center",width:"100%",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.name.split(" ")[0]}</div>
-                    <div style={{fontSize:fix.isKnockout?8:9,fontWeight:800,borderRadius:5,textAlign:"center",width:"100%",background:bg,border,color,...(fix.isKnockout?{height:52,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"2px 1px"}:{padding:"3px 2px"})}}>
+                    <div style={{fontSize:fix.group!=="R32"&&fix.isKnockout?8:9,fontWeight:800,borderRadius:5,textAlign:"center",width:"100%",background:bg,border,color,...(fix.group!=="R32"&&fix.isKnockout?{height:52,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"2px 1px"}:{padding:"3px 2px"})}}>
                       {pred
-                        ?(fix.isKnockout&&pred.home_et!=null
+                        ?(fix.group!=="R32"&&fix.isKnockout&&pred.home_et!=null
                           ?<><span>{pred.home_goals}–{pred.away_goals}</span><span style={{display:"block",height:1,background:"currentColor",opacity:0.12,margin:"2px 4px",width:"calc(100% - 8px)"}}/><span>{pred.home_et}–{pred.away_et}</span>{pred.home_pens!=null&&<><span style={{display:"block",height:1,background:"currentColor",opacity:0.12,margin:"2px 4px",width:"calc(100% - 8px)"}}/><span>{pred.home_pens}–{pred.away_pens}</span></>}</>
                           :`${pred.home_goals??"-"}–${pred.away_goals??"-"}`)
                         :"–"}
