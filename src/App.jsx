@@ -506,7 +506,7 @@ export default function App(){
     var koRounds=[{id:"r16",group:"R32"},{id:"qf",group:"R16"},{id:"sf",group:"QF"},{id:"final",group:"SF"}];
     for(var i=0;i<koRounds.length;i++){
       var rnd=koRounds[i];var roundFix=fx.filter(function(f){return f.isKnockout&&f.group===rnd.group;});
-      var allDone=roundFix.length>0&&roundFix.every(function(f){return f.isDone;});
+      var allDone=roundFix.length>0&&roundFix.every(function(f){return f.isDone||(lv[f.id]!=null&&lv[f.id].homeGoals!=null);});
       if(allDone){var winners=roundFix.map(function(f){var r=lv[f.id]||(f.isDone?{homeGoals:f.homeGoals,awayGoals:f.awayGoals,wentToPens:f.wentToPens||false,penHome:f.penHome??null,penAway:f.penAway??null}:null);if(!r)return null;return(r.wentToPens&&r.penHome!=null&&r.penAway!=null)?(r.penHome>r.penAway?f.home:f.away):(r.homeGoals>r.awayGoals?f.home:f.away);}).filter(Boolean);
       if(winners.length>0){await supabase.from("bonus_answers").upsert({user_id:user.id,question_id:"actual_adv_"+rnd.id,answer:JSON.stringify(winners)},{onConflict:"user_id,question_id"});}}
     }
@@ -667,7 +667,7 @@ export default function App(){
         {tab==="stats"&&<StatsTab allFix={allFix} predictions={predictions} live={live} totalPts={totalPts} predCount={predCount} totalFix={totalFix} bonus={bonus} allBonusAnswers={allBonusAnswers} currentUser={user}/>}
         {tab==="rules"&&<RulesTab/>}
         {tab==="bracket"&&<BracketTab predictions={predictions} allFix={allFix} live={live}/>}
-        {tab==="admin"&&isAdmin&&<AdminTab profiles={profiles} allPreds={allPreds} allBonusAnswers={allBonusAnswers} allFix={allFix} live={live} matchdays={matchdays} apiIdMap={apiIdMap}/>}
+        {tab==="admin"&&isAdmin&&<AdminTab profiles={profiles} allPreds={allPreds} allBonusAnswers={allBonusAnswers} allFix={allFix} live={live} matchdays={matchdays} apiIdMap={apiIdMap} onRecalcBonus={()=>runBonusEngine(live,allFix)}/>}
       </main>
     </div>
   );
@@ -1542,13 +1542,14 @@ function AdminResultsSetter({allBonusAnswers,teams}){
   );
 }
 
-function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiIdMap}){
+function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiIdMap,onRecalcBonus}){
   const[view,setView]=useState("overview");
+  const[recalcState,setRecalcState]=useState("idle");
   const[expanded,setExpanded]=useState({});
   const totalFix=allFix.length,totalUsers=profiles.length,totalPreds=allPreds.length;
   const stats=profiles.map(p=>{const my=allPreds.filter(x=>x.user_id===p.id);let tp=0,exact=0;allFix.forEach(fix=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);if(!r)return;const pred=my.find(x=>x.fixture_id===fix.id);if(!pred)return;const sc=pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals},r);if(sc)tp+=sc;if(sc===PTS_EXACT)exact++;});return{...p,predCount:my.length,pts:tp,exact,missing:totalFix-my.length};}).sort((a,b)=>b.pts-a.pts||b.exact-a.exact||b.correct-a.correct||a.name.localeCompare(b.name));
   return(<div style={{padding:16}}>
-    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20}}><div style={S.pageTitle}>⚙️ Admin Dashboard</div><span style={{fontSize:9,fontWeight:800,color:"#000",background:G,borderRadius:4,padding:"2px 6px"}}>ADMIN</span></div>
+    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20}}><div style={S.pageTitle}>⚙️ Admin Dashboard</div><span style={{fontSize:9,fontWeight:800,color:"#000",background:G,borderRadius:4,padding:"2px 6px"}}>ADMIN</span><button onClick={async()=>{setRecalcState("loading");try{await onRecalcBonus();setRecalcState("done");}catch{setRecalcState("idle");}setTimeout(()=>setRecalcState("idle"),3000);}} disabled={recalcState==="loading"} style={{marginLeft:"auto",background:recalcState==="done"?"#052e16":"#0a0a0a",border:recalcState==="done"?"1px solid #22c55e":"1px solid #1a1a1a",color:recalcState==="done"?"#22c55e":"#f59e0b",borderRadius:20,padding:"6px 14px",fontSize:11,fontWeight:700,cursor:"pointer",opacity:recalcState==="loading"?0.5:1}}>{recalcState==="loading"?"Recalculating...":recalcState==="done"?"✓ Done":"Recalculate Bonus"}</button></div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:24}}>{[{label:"Players",value:totalUsers,icon:"👥",color:"#3b82f6"},{label:"Predictions",value:totalPreds,icon:"✍️",color:"#22c55e"},{label:"Avg Picks",value:totalUsers>0?(totalPreds/totalUsers).toFixed(1):0,icon:"📊",color:"#f59e0b"}].map(c=>(<div key={c.label} style={{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:12,textAlign:"center"}}><div style={{fontSize:20,marginBottom:4}}>{c.icon}</div><div style={{fontSize:22,fontWeight:800,color:c.color}}>{c.value}</div><div style={{fontSize:10,color:"#6b7280"}}>{c.label}</div></div>))}</div>
     <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>{[{id:"overview",label:"👥 Players"},{id:"missing",label:"⚠️ Missing"},{id:"matches",label:"⚽ Matches"},{id:"bonus",label:"⭐ Bonus"},{id:"noshows",label:"🚫 No-Shows"},{id:"bonusreview",label:"🔍 Bonus Review"},{id:"results",label:"🏅 Set Results"}].map(t=><button key={t.id} onClick={()=>setView(t.id)} style={{background:view===t.id?`${G}15`:"#0a0a0a",border:view===t.id?`1px solid ${G}`:"1px solid #1a1a1a",color:view===t.id?G:"#6b7280",borderRadius:20,padding:"6px 14px",fontSize:11,fontWeight:700,cursor:"pointer"}}>{t.label}</button>)}</div>
     {view==="overview"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>{stats.map((u,i)=>(<div key={u.id} style={{display:"flex",alignItems:"center",gap:12,background:"#080808",border:"1px solid #141414",borderRadius:12,padding:"12px 14px"}}><div style={{fontWeight:700,fontSize:13,color:"#6b7280",width:24}}>#{i+1}</div><div style={{flex:1}}><div style={{fontWeight:700,fontSize:14}}>{u.name}</div><div style={{fontSize:11,color:"#6b7280"}}>{u.predCount}/{totalFix} picks · {u.exact} perfect</div></div><div style={{textAlign:"right"}}><div style={{fontSize:18,fontWeight:800,color:G}}>{u.pts}<span style={{fontSize:11,color:"#6b7280"}}> pts</span></div>{u.missing>0&&<div style={{fontSize:10,color:"#ef4444"}}>{u.missing} missing</div>}</div></div>))}</div>}
