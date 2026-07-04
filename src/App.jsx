@@ -503,9 +503,18 @@ export default function App(){
       const allR32=[...r32Teams,...best3rd].filter(Boolean);
       if(allR32.length>0){await supabase.from("bonus_answers").upsert({user_id:user.id,question_id:"actual_adv_r32",answer:JSON.stringify(allR32)},{onConflict:"user_id,question_id"});}
     }
-    var koRounds=[{id:"r16",group:"R32"},{id:"qf",group:"R16"},{id:"sf",group:"QF"},{id:"final",group:"SF"}];
+    var PLACEHOLDER_RE=/^([12][A-L]|3rd-|W M|L M)/;
+    var koRounds=[{id:"r16",group:"R32",nextGroup:"R16"},{id:"qf",group:"R16",nextGroup:"QF"},{id:"sf",group:"QF",nextGroup:"SF"},{id:"final",group:"SF",nextGroup:"Final"}];
     for(var i=0;i<koRounds.length;i++){
-      var rnd=koRounds[i];var roundFix=fx.filter(function(f){return f.isKnockout&&f.group===rnd.group;});
+      var rnd=koRounds[i];
+      // Prefer reading advancers directly from the next-round fixtures when team names are resolved
+      var nextFix=fx.filter(function(f){return f.isKnockout&&f.group===rnd.nextGroup;});
+      var resolvedTeams=[];nextFix.forEach(function(f){if(f.home&&!PLACEHOLDER_RE.test(f.home))resolvedTeams.push(f.home);if(f.away&&!PLACEHOLDER_RE.test(f.away))resolvedTeams.push(f.away);});
+      if(resolvedTeams.length>0&&resolvedTeams.length===nextFix.length*2){
+        await supabase.from("bonus_answers").upsert({user_id:user.id,question_id:"actual_adv_"+rnd.id,answer:JSON.stringify(resolvedTeams)},{onConflict:"user_id,question_id"});continue;
+      }
+      // Fallback: derive from match results
+      var roundFix=fx.filter(function(f){return f.isKnockout&&f.group===rnd.group;});
       var allDone=roundFix.length>0&&roundFix.every(function(f){return f.isDone||(lv[f.id]!=null&&lv[f.id].homeGoals!=null);});
       if(allDone){var winners=roundFix.map(function(f){var r=lv[f.id]||(f.isDone?{homeGoals:f.homeGoals,awayGoals:f.awayGoals,wentToPens:f.wentToPens||false,penHome:f.penHome??null,penAway:f.penAway??null}:null);if(!r)return null;return(r.wentToPens&&r.penHome!=null&&r.penAway!=null)?(r.penHome>r.penAway?f.home:f.away):(r.homeGoals>r.awayGoals?f.home:f.away);}).filter(Boolean);
       if(winners.length>0){await supabase.from("bonus_answers").upsert({user_id:user.id,question_id:"actual_adv_"+rnd.id,answer:JSON.stringify(winners)},{onConflict:"user_id,question_id"});}}
