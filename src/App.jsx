@@ -507,7 +507,7 @@ export default function App(){
     for(var i=0;i<koRounds.length;i++){
       var rnd=koRounds[i];var roundFix=fx.filter(function(f){return f.isKnockout&&f.group===rnd.group;});
       var allDone=roundFix.length>0&&roundFix.every(function(f){return f.isDone;});
-      if(allDone){var winners=roundFix.map(function(f){var r=lv[f.id]||(f.isDone?{homeGoals:f.homeGoals,awayGoals:f.awayGoals}:null);if(!r)return null;return r.homeGoals>=r.awayGoals?f.home:f.away;}).filter(Boolean);
+      if(allDone){var winners=roundFix.map(function(f){var r=lv[f.id]||(f.isDone?{homeGoals:f.homeGoals,awayGoals:f.awayGoals,wentToPens:f.wentToPens||false,penHome:f.penHome??null,penAway:f.penAway??null}:null);if(!r)return null;return(r.wentToPens&&r.penHome!=null&&r.penAway!=null)?(r.penHome>r.penAway?f.home:f.away):(r.homeGoals>r.awayGoals?f.home:f.away);}).filter(Boolean);
       if(winners.length>0){await supabase.from("bonus_answers").upsert({user_id:user.id,question_id:"actual_adv_"+rnd.id,answer:JSON.stringify(winners)},{onConflict:"user_id,question_id"});}}
     }
     // Refresh allBonusAnswers so calcBonusPoints sees the newly written actual_adv_* rows
