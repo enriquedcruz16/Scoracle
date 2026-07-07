@@ -158,8 +158,8 @@ const KNOCKOUT_BRACKET = [
   ]},
   {day:6,label:"Quarter-Finals",dates:"Jul 9–12",fixtures:[
     {id:"k_qf_m97",mNum:97,group:"QF",home:"W M89",away:"W M90",date:"Jul 9",time:"21:00",venue:"Gillette Stadium, Boston",kickoffISO:"2026-07-09T16:00:00-04:00",isKnockout:true},
-    {id:"k_qf_m98",mNum:98,group:"QF",home:"W M91",away:"W M92",date:"Jul 10",time:"20:00",venue:"SoFi Stadium, Los Angeles",kickoffISO:"2026-07-10T15:00:00-04:00",isKnockout:true},
-    {id:"k_qf_m99",mNum:99,group:"QF",home:"W M93",away:"W M94",date:"Jul 11",time:"22:00",venue:"Hard Rock Stadium, Miami",kickoffISO:"2026-07-11T17:00:00-04:00",isKnockout:true},
+    {id:"k_qf_m98",mNum:98,group:"QF",home:"W M93",away:"W M94",date:"Jul 10",time:"20:00",venue:"SoFi Stadium, Los Angeles",kickoffISO:"2026-07-10T15:00:00-04:00",isKnockout:true},
+    {id:"k_qf_m99",mNum:99,group:"QF",home:"W M91",away:"W M92",date:"Jul 11",time:"22:00",venue:"Hard Rock Stadium, Miami",kickoffISO:"2026-07-11T17:00:00-04:00",isKnockout:true},
     {id:"k_qf_m100",mNum:100,group:"QF",home:"W M95",away:"W M96",date:"Jul 12",time:"02:00",venue:"Arrowhead Stadium, Kansas City",kickoffISO:"2026-07-11T21:00:00-04:00",isKnockout:true},
   ]},
   {day:7,label:"Semi-Finals",dates:"Jul 14–15",fixtures:[
