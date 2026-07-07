@@ -1001,8 +1001,9 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
           <>
             {/* Stats bar first */}
             {result!=null&&(()=>{
-              const ex=userTotals.filter(u=>{const p=findPred(u.preds,fix);const s=p?pts({homeGoals:p.home_goals,awayGoals:p.away_goals,home_et:p.home_et,away_et:p.away_et,home_pens:p.home_pens,away_pens:p.away_pens},result):null;return s!=null&&s>=PTS_EXACT;}).length;
-              const res=userTotals.filter(u=>{const p=findPred(u.preds,fix);const s=p?pts({homeGoals:p.home_goals,awayGoals:p.away_goals,home_et:p.home_et,away_et:p.away_et,home_pens:p.home_pens,away_pens:p.away_pens},result):null;return s!=null&&s>0&&s<PTS_EXACT;}).length;
+              const maxPts=result.wentToPens?PTS_EXACT*3:result.wentToET?PTS_EXACT*2:PTS_EXACT;
+              const ex=userTotals.filter(u=>{const p=findPred(u.preds,fix);const s=p?pts({homeGoals:p.home_goals,awayGoals:p.away_goals,home_et:p.home_et,away_et:p.away_et,home_pens:p.home_pens,away_pens:p.away_pens},result):null;return s!=null&&s===maxPts;}).length;
+              const res=userTotals.filter(u=>{const p=findPred(u.preds,fix);const s=p?pts({homeGoals:p.home_goals,awayGoals:p.away_goals,home_et:p.home_et,away_et:p.away_et,home_pens:p.home_pens,away_pens:p.away_pens},result):null;return s!=null&&s>0&&s<maxPts;}).length;
               const wrong=userTotals.filter(u=>{const p=findPred(u.preds,fix);const s=p?pts({homeGoals:p.home_goals,awayGoals:p.away_goals,home_et:p.home_et,away_et:p.away_et,home_pens:p.home_pens,away_pens:p.away_pens},result):null;return s!=null&&s===0;}).length;
               const none=userTotals.filter(u=>!findPred(u.preds,fix)).length;
               return(
@@ -1021,9 +1022,10 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
               {userTotals.map(u=>{
                 const pred=findPred(u.preds,fix);
                 const sc=pred&&result?pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals,home_et:pred.home_et,away_et:pred.away_et,home_pens:pred.home_pens,away_pens:pred.away_pens},result):null;
-                const bg=sc!=null&&sc>=PTS_EXACT?"rgba(34,197,94,0.1)":sc!=null&&sc>0?"rgba(245,158,11,0.1)":sc===0?"rgba(239,68,68,0.1)":"#111";
-                const border=`1px solid ${sc!=null&&sc>=PTS_EXACT?"rgba(34,197,94,0.3)":sc!=null&&sc>0?"rgba(245,158,11,0.3)":sc===0?"rgba(239,68,68,0.3)":"#1a1a1a"}`;
-                const color=sc!=null&&sc>=PTS_EXACT?"#22c55e":sc!=null&&sc>0?"#f59e0b":sc===0?"#ef4444":"#374151";
+                const maxPts=result?(result.wentToPens?PTS_EXACT*3:result.wentToET?PTS_EXACT*2:PTS_EXACT):PTS_EXACT;
+                const bg=sc!=null&&sc===maxPts?"rgba(34,197,94,0.1)":sc!=null&&sc>0?"rgba(245,158,11,0.1)":sc===0?"rgba(239,68,68,0.1)":"#111";
+                const border=`1px solid ${sc!=null&&sc===maxPts?"rgba(34,197,94,0.3)":sc!=null&&sc>0?"rgba(245,158,11,0.3)":sc===0?"rgba(239,68,68,0.3)":"#1a1a1a"}`;
+                const color=sc!=null&&sc===maxPts?"#22c55e":sc!=null&&sc>0?"#f59e0b":sc===0?"#ef4444":"#374151";
                 return(
                   <div key={u.id} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,width:"calc(16.666% - 4px)"}}>
                     <div style={{fontSize:7,color:u.id===currentUser.id?G:"#6b7280",fontWeight:u.id===currentUser.id?800:600,textAlign:"center",width:"100%",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.name.split(" ")[0]}</div>
