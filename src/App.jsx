@@ -956,7 +956,8 @@ function RankTab({allFix,live,allPreds,profiles,currentUser,allBonusAnswers}){
       const pred=findPred(u.preds,fix);
       if(!pred)return"n";
       const sc=pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals,home_et:pred.home_et,away_et:pred.away_et,home_pens:pred.home_pens,away_pens:pred.away_pens},r);
-      return sc===null?"n":sc>=PTS_EXACT?"p":sc>0?"r":"w";
+      const maxPts=r?(r.wentToPens?PTS_EXACT*3:r.wentToET?PTS_EXACT*2:PTS_EXACT):PTS_EXACT;
+      return sc===null?"n":sc===maxPts?"p":sc>0?"r":"w";
     });
   }
 
