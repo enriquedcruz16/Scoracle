@@ -481,12 +481,8 @@ export default function App(){
       setPredictions(p);
     });supabase.from("bonus_answers").select("*").eq("user_id",user.id).then(({data})=>{if(!data)return;const a={};data.forEach(x=>{a[x.question_id]=x.answer;});setBonus(a);const champ=data.find(x=>x.question_id==="champion");if(champ)setChampion(champ.answer);});loadAll();},[user]);
   async function loadAll(){
-    const{data:pr}=await supabase.from("profiles").select("id,name");
-    // Fetch all predictions in batches to bypass 1000 row limit
-    let allAp=[],apOffset=0,apDone=false;
-    while(!apDone){const{data:batch}=await supabase.from("predictions").select("*").range(apOffset,apOffset+999);if(!batch||batch.length===0){apDone=true;}else{allAp=[...allAp,...batch];if(batch.length<1000)apDone=true;else apOffset+=1000;}}
-    let allAb=[],abOffset=0,abDone=false;
-    while(!abDone){const{data:batch}=await supabase.from("bonus_answers").select("*").range(abOffset,abOffset+999);if(!batch||batch.length===0){abDone=true;}else{allAb=[...allAb,...batch];if(batch.length<1000)abDone=true;else abOffset+=1000;}}
+    async function fetchBatched(table){let all=[],offset=0;while(true){const{data:batch}=await supabase.from(table).select("*").range(offset,offset+999);if(!batch||batch.length===0)break;all=[...all,...batch];if(batch.length<1000)break;offset+=1000;}return all;}
+    const[{data:pr},allAp,allAb]=await Promise.all([supabase.from("profiles").select("id,name"),fetchBatched("predictions"),fetchBatched("bonus_answers")]);
     setProfiles(pr||[]);setAllPreds(allAp);setAllBonusAnswers(allAb);
   }
   async function runBonusEngine(currentLive,currentAllFix){
@@ -1837,12 +1833,12 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
                 const myP=allPreds.filter(function(p){return p.user_id===pr.id;});
                 let tp=0,exact=0,correct=0;
                 allFix.forEach(function(fix){
-                  const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);
+                  const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals,ftHome:fix.ftHome,ftAway:fix.ftAway,wentToET:fix.wentToET||false,wentToPens:fix.wentToPens||false,penHome:fix.penHome??null,penAway:fix.penAway??null,isKnockout:fix.isKnockout||false}:null);
                   const staticId=HOME_AWAY_TO_STATIC_ID[(fix.home+"|"+fix.away).toLowerCase()];
                   const pred=myP.find(function(x){return x.fixture_id===fix.id;})||(staticId&&myP.find(function(x){return x.fixture_id===staticId;}));
                   if(!r||!pred)return;
-                  const sc=pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals},r);
-                  if(sc===PTS_EXACT){tp+=sc;exact++;}else if(sc===PTS_RESULT){tp+=sc;correct++;}
+                  const sc=pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals,home_et:pred.home_et,away_et:pred.away_et,home_pens:pred.home_pens,away_pens:pred.away_pens},r);
+                  if(sc!=null&&sc>=PTS_EXACT){tp+=sc;exact++;}else if(sc!=null&&sc>0){tp+=sc;correct++;}
                 });
                 const ub=(allBonusAnswers||[]).filter(function(b){return b.user_id===pr.id;});
                 const adminBonus=(allBonusAnswers||[]).filter(function(b){return b.user_id===ADMIN_ID;});
