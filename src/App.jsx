@@ -541,7 +541,7 @@ export default function App(){
         penHome:reversed?af.penAway:af.penHome,penAway:reversed?af.penHome:af.penAway,
       };})};});
     // Always use static knockout bracket for structure. Enrich with API data matched by resolved team-name pair.
-    const knockoutFix=parsed.filter(f=>f.rn>3);
+    const knockoutFix=parsed.filter(f=>!/^[A-L]$/.test(f.group));
     const apiKOByPair={};knockoutFix.forEach(f=>{apiKOByPair[(f.home+"|"+f.away).toLowerCase()]=f;});
     // Compute group standings from enriched data so we can resolve 1X/2X placeholder slots
     const fxDone=enriched.flatMap(function(md){return md.fixtures;}).map(function(f){return f.isDone||f.homeGoals!=null?{...f,isDone:true}:f;});
