@@ -1523,32 +1523,66 @@ function RulesTab(){
 function AdminResultsSetter({allBonusAnswers,teams}){
   const adminBonus=(allBonusAnswers||[]).filter(function(b){return b.user_id===ADMIN_ID;});
   const getResult=function(k){return(adminBonus.find(function(b){return b.question_id===k;})||{}).answer||"";};
+  // Champion
+  const[champSel,setChampSel]=useState(getResult("champion_result")||"");
+  const[champSaving,setChampSaving]=useState(false);
+  const[champSaved,setChampSaved]=useState(false);
+  async function saveChamp(){if(!champSel)return;setChampSaving(true);await supabase.from("bonus_answers").upsert({user_id:ADMIN_ID,question_id:"champion_result",answer:champSel},{onConflict:"user_id,question_id"});setChampSaving(false);setChampSaved(true);setTimeout(function(){setChampSaved(false);},2000);}
+  // Top scorer
+  const[bootSel,setBootSel]=useState(getResult("topscorer_result")||"");
+  const[bootSaving,setBootSaving]=useState(false);
+  const[bootSaved,setBootSaved]=useState(false);
+  async function saveBoots(){if(!bootSel.trim())return;setBootSaving(true);await supabase.from("bonus_answers").upsert({user_id:ADMIN_ID,question_id:"topscorer_result",answer:bootSel.trim()},{onConflict:"user_id,question_id"});setBootSaving(false);setBootSaved(true);setTimeout(function(){setBootSaved(false);},2000);}
+  // Most group goals
   const goalsRaw=getResult("mostgoals_result");
   function parseGoals(raw){try{const a=JSON.parse(raw);return Array.isArray(a)?a:(raw?[raw]:[]);}catch{return raw?[raw]:[];}}
   const[goalsSel,setGoalsSel]=useState(function(){return parseGoals(goalsRaw);});
   const[saving,setSaving]=useState(false);
   const[saved,setSaved]=useState(false);
-  async function saveGoals(){
-    setSaving(true);
-    await supabase.from("bonus_answers").upsert({user_id:ADMIN_ID,question_id:"mostgoals_result",answer:JSON.stringify(goalsSel)},{onConflict:"user_id,question_id"});
-    setSaving(false);setSaved(true);setTimeout(function(){setSaved(false);},2000);
-  }
+  async function saveGoals(){setSaving(true);await supabase.from("bonus_answers").upsert({user_id:ADMIN_ID,question_id:"mostgoals_result",answer:JSON.stringify(goalsSel)},{onConflict:"user_id,question_id"});setSaving(false);setSaved(true);setTimeout(function(){setSaved(false);},2000);}
   return(
-    <div style={{background:"#080808",border:"1px solid #1f1f1f",borderRadius:14,padding:"14px",marginBottom:14}}>
-      <div style={{fontSize:11,fontWeight:800,color:G,letterSpacing:1,marginBottom:10}}>SET MOST GROUP GOALS RESULT</div>
-      <div style={{fontSize:10,color:"#6b7280",marginBottom:8}}>Select all teams tied for most group stage goals — all pickers of any selected team receive +{PTS_BONUS} pts</div>
-      <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}>
-        {teams.map(function(t){const sel=goalsSel.includes(t);return(
-          <button key={t} onClick={function(){setGoalsSel(function(s){return sel?s.filter(function(x){return x!==t;}):[...s,t];});}}
-            style={{display:"flex",alignItems:"center",gap:4,background:sel?"#052e16":"#111",border:"1px solid "+(sel?"#22c55e44":"#1f1f1f"),borderRadius:8,padding:"4px 8px",cursor:"pointer",outline:"none"}}>
-            <span style={{fontSize:13}}>{FLAGS[t]||"🏳"}</span>
-            <span style={{fontSize:10,fontWeight:600,color:sel?"#22c55e":"#9ca3af"}}>{t}</span>
-          </button>
-        );})}
+    <div>
+      <div style={{background:"#080808",border:"1px solid #1f1f1f",borderRadius:14,padding:"14px",marginBottom:14}}>
+        <div style={{fontSize:11,fontWeight:800,color:G,letterSpacing:1,marginBottom:4}}>SET WORLD CUP CHAMPION</div>
+        <div style={{fontSize:10,color:"#6b7280",marginBottom:10}}>Worth {PTS_WINNER} pts — select the tournament winner</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(80px,1fr))",gap:6,marginBottom:10}}>
+          {teams.map(function(t){const sel=champSel===t;return(
+            <button key={t} onClick={function(){setChampSel(t);}}
+              style={{background:sel?"rgba(245,158,11,0.12)":"#111",border:sel?"1px solid #f59e0b":"1px solid #1f1f1f",borderRadius:8,color:sel?"#f59e0b":"#9ca3af",padding:"8px 4px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,outline:"none"}}>
+              <span style={{fontSize:16}}>{FLAGS[t]||"🏳"}</span>
+              <span style={{fontSize:9,fontWeight:600,textAlign:"center",lineHeight:1.2}}>{t}</span>
+            </button>
+          );})}
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <div style={{flex:1,fontSize:10,color:champSel?"#f9fafb":"#374151"}}>{champSel?(FLAGS[champSel]||"")+" "+champSel:"No team selected"}</div>
+          <button onClick={saveChamp} disabled={champSaving||!champSel} style={{background:champSaved?"#22c55e":G,border:"none",borderRadius:8,color:"#000",fontSize:11,fontWeight:800,padding:"8px 16px",cursor:"pointer",outline:"none",opacity:!champSel?0.4:1}}>{champSaving?"Saving…":champSaved?"Saved ✓":"Save"}</button>
+        </div>
       </div>
-      <div style={{display:"flex",alignItems:"center",gap:8}}>
-        <div style={{flex:1,fontSize:10,color:goalsSel.length?"#f9fafb":"#374151"}}>{goalsSel.length?"Selected: "+goalsSel.join(", "):"No teams selected"}</div>
-        <button onClick={saveGoals} disabled={saving} style={{background:saved?"#22c55e":G,border:"none",borderRadius:8,color:"#000",fontSize:11,fontWeight:800,padding:"8px 16px",cursor:"pointer",outline:"none"}}>{saving?"Saving…":saved?"Saved ✓":"Save"}</button>
+      <div style={{background:"#080808",border:"1px solid #1f1f1f",borderRadius:14,padding:"14px",marginBottom:14}}>
+        <div style={{fontSize:11,fontWeight:800,color:G,letterSpacing:1,marginBottom:4}}>SET GOLDEN BOOT WINNER</div>
+        <div style={{fontSize:10,color:"#6b7280",marginBottom:8}}>Worth {PTS_BONUS} pts — enter the player's name exactly as submitted</div>
+        <div style={{display:"flex",gap:8}}>
+          <input value={bootSel} onChange={function(e){setBootSel(e.target.value);}} placeholder="e.g. Kylian Mbappe" style={{flex:1,background:"#0f0f0f",border:"1px solid #1f1f1f",borderRadius:8,color:"#f9fafb",fontSize:13,padding:"8px 12px",outline:"none"}}/>
+          <button onClick={saveBoots} disabled={bootSaving||!bootSel.trim()} style={{background:bootSaved?"#22c55e":G,border:"none",borderRadius:8,color:"#000",fontSize:11,fontWeight:800,padding:"8px 16px",cursor:"pointer",outline:"none",opacity:!bootSel.trim()?0.4:1}}>{bootSaving?"Saving…":bootSaved?"Saved ✓":"Save"}</button>
+        </div>
+      </div>
+      <div style={{background:"#080808",border:"1px solid #1f1f1f",borderRadius:14,padding:"14px",marginBottom:14}}>
+        <div style={{fontSize:11,fontWeight:800,color:G,letterSpacing:1,marginBottom:4}}>SET MOST GROUP GOALS RESULT</div>
+        <div style={{fontSize:10,color:"#6b7280",marginBottom:8}}>Select all teams tied for most group stage goals — all pickers of any selected team receive +{PTS_BONUS} pts</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}>
+          {teams.map(function(t){const sel=goalsSel.includes(t);return(
+            <button key={t} onClick={function(){setGoalsSel(function(s){return sel?s.filter(function(x){return x!==t;}):[...s,t];});}}
+              style={{display:"flex",alignItems:"center",gap:4,background:sel?"#052e16":"#111",border:"1px solid "+(sel?"#22c55e44":"#1f1f1f"),borderRadius:8,padding:"4px 8px",cursor:"pointer",outline:"none"}}>
+              <span style={{fontSize:13}}>{FLAGS[t]||"🏳"}</span>
+              <span style={{fontSize:10,fontWeight:600,color:sel?"#22c55e":"#9ca3af"}}>{t}</span>
+            </button>
+          );})}
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <div style={{flex:1,fontSize:10,color:goalsSel.length?"#f9fafb":"#374151"}}>{goalsSel.length?"Selected: "+goalsSel.join(", "):"No teams selected"}</div>
+          <button onClick={saveGoals} disabled={saving} style={{background:saved?"#22c55e":G,border:"none",borderRadius:8,color:"#000",fontSize:11,fontWeight:800,padding:"8px 16px",cursor:"pointer",outline:"none"}}>{saving?"Saving…":saved?"Saved ✓":"Save"}</button>
+        </div>
       </div>
     </div>
   );
