@@ -1732,14 +1732,18 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
         function saveLeaderboardImage(){
           var card=document.getElementById("leaderboardRevealCard");
           if(!card||typeof html2canvas==="undefined"){alert("Image generation not available");return;}
-          card.style.left="0";card.style.top="0";card.style.position="absolute";card.style.zIndex="-1";
-          html2canvas(card,{backgroundColor:"#0d0d0d",scale:2,useCORS:true}).then(function(canvas){
-            card.style.left="-9999px";card.style.position="fixed";card.style.zIndex="auto";
-            var link=document.createElement("a");
-            link.download="scoracle-leaderboard.png";
-            link.href=canvas.toDataURL("image/png");
-            link.click();
-          }).catch(function(){alert("Could not generate image.");});
+          // Keep position:fixed (viewport-relative) so parent overflow:hidden can't clip it;
+          // move on-screen and above other content, then wait one frame for the browser to paint.
+          card.style.left="0";card.style.top="0";card.style.zIndex="9999";
+          setTimeout(function(){
+            html2canvas(card,{backgroundColor:"#0d0d0d",scale:2,useCORS:true,logging:false}).then(function(canvas){
+              card.style.left="-9999px";card.style.zIndex="auto";
+              var link=document.createElement("a");
+              link.download="scoracle-leaderboard.png";
+              link.href=canvas.toDataURL("image/png");
+              document.body.appendChild(link);link.click();document.body.removeChild(link);
+            }).catch(function(){card.style.left="-9999px";card.style.zIndex="auto";alert("Could not generate image.");});
+          },100);
         }
         return(
           <div style={{marginBottom:16}}>
