@@ -1592,6 +1592,8 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
   const[view,setView]=useState("overview");
   const[recalcState,setRecalcState]=useState("idle");
   const[expanded,setExpanded]=useState({});
+  const[previewImg,setPreviewImg]=useState(null);const[previewName,setPreviewName]=useState("scoracle.png");
+  function captureImage(cardId,filename){var card=document.getElementById(cardId);if(!card||typeof html2canvas==="undefined"){alert("Image generation not available");return;}card.style.left="0";card.style.top="0";card.style.zIndex="9999";setTimeout(function(){html2canvas(card,{backgroundColor:"#0d0d0d",scale:2,useCORS:true,logging:false}).then(function(canvas){card.style.left="-9999px";card.style.zIndex="auto";setPreviewName(filename);setPreviewImg(canvas.toDataURL("image/png"));}).catch(function(){card.style.left="-9999px";card.style.zIndex="auto";alert("Could not generate image.");});},100);}
   const totalFix=allFix.length,totalUsers=profiles.length,totalPreds=allPreds.length;
   const stats=profiles.map(p=>{const my=allPreds.filter(x=>x.user_id===p.id);let tp=0,exact=0;allFix.forEach(fix=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);if(!r)return;const pred=my.find(x=>x.fixture_id===fix.id);if(!pred)return;const sc=pts({homeGoals:pred.home_goals,awayGoals:pred.away_goals},r);if(sc)tp+=sc;if(sc===PTS_EXACT)exact++;});return{...p,predCount:my.length,pts:tp,exact,missing:totalFix-my.length};}).sort((a,b)=>b.pts-a.pts||b.exact-a.exact||b.correct-a.correct||a.name.localeCompare(b.name));
   return(<div style={{padding:16}}>
@@ -1700,51 +1702,14 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
           lines.push("Get picks in before midnight! scoracle.live");
           navigator.clipboard.writeText(lines.join("\n"));
         }
-        function saveAdminRevealImage(){
-          var card=document.getElementById("bonusRevealCard2");
-          if(!card||typeof html2canvas==="undefined"){alert("Image generation not available");return;}
-          card.style.left="0";card.style.top="0";card.style.position="absolute";card.style.zIndex="-1";
-          html2canvas(card,{backgroundColor:"#0d0d0d",scale:2,useCORS:true}).then(function(canvas){
-            card.style.left="-9999px";card.style.position="fixed";card.style.zIndex="auto";
-            var link=document.createElement("a");
-            link.download="scoracle-bonus-picks-reveal.png";
-            link.href=canvas.toDataURL("image/png");
-            link.click();
-          }).catch(function(){alert("Could not generate image.");});
-        }
-        function saveImage(){
-          var card=document.getElementById("bonusStatusCard");
-          if(!card||typeof html2canvas==="undefined"){alert("Image generation not available");return;}
-          card.style.left="0";card.style.top="0";card.style.position="absolute";card.style.zIndex="-1";
-          html2canvas(card,{backgroundColor:"#0d0d0d",scale:2,useCORS:true}).then(function(canvas){
-            card.style.left="-9999px";card.style.position="fixed";card.style.zIndex="auto";
-            var link=document.createElement("a");
-            link.download="scoracle-bonus-status.png";
-            link.href=canvas.toDataURL("image/png");
-            link.click();
-          }).catch(function(){alert("Could not generate image — try copying the status instead.");});
-        }
+        function saveAdminRevealImage(){captureImage("bonusRevealCard2","scoracle-bonus-picks-reveal.png");}
+        function saveImage(){captureImage("bonusStatusCard","scoracle-bonus-status.png");}
         function copyReminder(){
           const incomplete=sorted.filter(p=>!getStatus(p).complete).map(p=>p.name);
           const msg="Scoracle reminder - bonus questions close at midnight June 11! Still waiting on: "+incomplete.join(", ")+". Get picks in at scoracle.live";
           navigator.clipboard.writeText(msg);
         }
-        function saveLeaderboardImage(){
-          var card=document.getElementById("leaderboardRevealCard");
-          if(!card||typeof html2canvas==="undefined"){alert("Image generation not available");return;}
-          // Keep position:fixed (viewport-relative) so parent overflow:hidden can't clip it;
-          // move on-screen and above other content, then wait one frame for the browser to paint.
-          card.style.left="0";card.style.top="0";card.style.zIndex="9999";
-          setTimeout(function(){
-            html2canvas(card,{backgroundColor:"#0d0d0d",scale:2,useCORS:true,logging:false}).then(function(canvas){
-              card.style.left="-9999px";card.style.zIndex="auto";
-              var link=document.createElement("a");
-              link.download="scoracle-leaderboard.png";
-              link.href=canvas.toDataURL("image/png");
-              document.body.appendChild(link);link.click();document.body.removeChild(link);
-            }).catch(function(){card.style.left="-9999px";card.style.zIndex="auto";alert("Could not generate image.");});
-          },100);
-        }
+        function saveLeaderboardImage(){captureImage("leaderboardRevealCard","scoracle-leaderboard.png");}
         return(
           <div style={{marginBottom:16}}>
             <div style={{display:"flex",gap:8,marginBottom:8}}>
@@ -2033,7 +1998,7 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
     {view==="noshows"&&(()=>{
       const completedFix=allFix.filter(fix=>{const r=live[fix.id]||(fix.isDone?{homeGoals:fix.homeGoals,awayGoals:fix.awayGoals}:null);return r!=null;});
       const noShowStats=[...profiles].map(p=>{const submittedIds=allPreds.filter(x=>x.user_id===p.id).map(x=>x.fixture_id);const missed=completedFix.filter(f=>{const apiId=(apiIdMap||{})[(f.home+"|"+f.away).toLowerCase()];return!submittedIds.includes(f.id)&&(!apiId||!submittedIds.includes(apiId));});return{...p,missedCount:missed.length,missedGames:missed};}).sort((a,b)=>b.missedCount-a.missedCount||a.name.localeCompare(b.name));
-      function saveNoShowsImage(){var card=document.getElementById("noShowsCard");if(!card||typeof html2canvas==="undefined"){alert("Image generation not available");return;}card.style.left="0";card.style.top="0";card.style.position="absolute";card.style.zIndex="-1";html2canvas(card,{backgroundColor:"#0d0d0d",scale:2,useCORS:true}).then(function(canvas){card.style.left="-9999px";card.style.position="fixed";card.style.zIndex="auto";var link=document.createElement("a");link.download="scoracle-no-shows.png";link.href=canvas.toDataURL("image/png");link.click();}).catch(function(){alert("Could not generate image.");});}
+      function saveNoShowsImage(){captureImage("noShowsCard","scoracle-no-shows.png");}
       return(<div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
           <div style={{fontSize:12,color:"#6b7280"}}>{completedFix.length} games completed</div>
@@ -2118,6 +2083,14 @@ function AdminTab({profiles,allPreds,allBonusAnswers,allFix,live,matchdays,apiId
         </div>);
       })}
     </div>}
+    {previewImg&&(<div onClick={function(){setPreviewImg(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.93)",zIndex:10000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,padding:20}}>
+      <img src={previewImg} onClick={function(e){e.stopPropagation();}} style={{maxWidth:"90vw",maxHeight:"70vh",borderRadius:12,objectFit:"contain",boxShadow:"0 0 40px rgba(0,0,0,0.8)"}}/>
+      <div onClick={function(e){e.stopPropagation();}} style={{display:"flex",gap:10}}>
+        <a href={previewImg} download={previewName} style={{background:"linear-gradient(90deg,#f59e0b,#f97316)",borderRadius:12,color:"#000",fontWeight:800,fontSize:13,padding:"12px 24px",cursor:"pointer",textDecoration:"none",display:"inline-block"}}>⬇ Download</a>
+        <button onClick={function(){setPreviewImg(null);}} style={{background:"#0a0a0a",border:"1px solid #333",borderRadius:12,color:"#9ca3af",fontWeight:700,fontSize:13,padding:"12px 24px",cursor:"pointer",outline:"none"}}>Close</button>
+      </div>
+      <div style={{fontSize:11,color:"#4b5563",textAlign:"center"}}>On iOS: long press the image above to save · Tap outside to close</div>
+    </div>)}
   </div>);
 }
 
