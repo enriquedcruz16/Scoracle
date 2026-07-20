@@ -1,0 +1,17 @@
+export function RulesTab() {
+  const G = "#f59e0b"; // rules tab always gold
+  return (<div style={{padding:16}}>
+    <div style={{fontSize:20,fontWeight:800,marginBottom:16,letterSpacing:0.3}}>📖 How to Play</div>
+    <div style={{background:"#0a0a0a",border:"1px solid #1a1a1a",borderRadius:14,padding:16,fontSize:13,color:"#9ca3af",lineHeight:1.7,marginBottom:20}}>Welcome to <strong style={{color:G}}>Scoracle</strong> — the official prediction game for FIFA World Cup 2026. Predict scores, rack up points, and climb the leaderboard!</div>
+    {[{title:"🎯 How Predictions Work",body:["Predict the final score for every match.","Predictions lock 15 minutes before kick-off.","For knockouts going to penalties, enter the total score including all goals."]},{title:"🔒 Deadlines",body:["Match predictions lock 15 minutes before each kick-off.","All bonus questions must be submitted before June 11, 2026."]}].map(s=>(<div key={s.title}><div style={{fontSize:14,fontWeight:800,color:G,letterSpacing:1,marginTop:24,marginBottom:12,textTransform:"uppercase"}}>{s.title}</div><div style={{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:16,marginBottom:12}}>{s.body.map((b,i)=><p key={i} style={{fontSize:13,color:"#9ca3af",lineHeight:1.7,marginBottom:8}}>{b}</p>)}</div></div>))}
+    <div style={{fontSize:14,fontWeight:800,color:G,letterSpacing:1,marginTop:24,marginBottom:12,textTransform:"uppercase"}}>⚡ Scoring System</div>
+    <div style={{background:"#080808",border:`1px solid ${G}22`,borderRadius:14,padding:16,marginBottom:12}}>
+      <div style={{fontSize:12,fontWeight:700,color:"#6b7280",marginBottom:12}}>Example: Mexico vs South Africa — Final score <span style={{color:G}}>2–1</span></div>
+      {[{pred:"2 – 1",p:15,label:"Exact score + correct result",color:"#22c55e"},{pred:"1 – 0",p:5,label:"Correct result, wrong score",color:"#f59e0b"},{pred:"1 – 2",p:0,label:"Wrong result",color:"#ef4444"},{pred:"1 – 1",p:0,label:"Wrong result (draw predicted)",color:"#ef4444"}].map(e=>(<div key={e.pred} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid #111"}}><div style={{fontSize:18,fontWeight:800,color:"#f9fafb",width:60,textAlign:"center",flexShrink:0}}>{e.pred}</div><div style={{flex:1,fontSize:13,fontWeight:600,color:e.color}}>{e.label}</div><div style={{fontSize:20,fontWeight:800,color:e.color,flexShrink:0,width:36,textAlign:"right"}}>+{e.p}</div></div>))}
+    </div>
+    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+      {[{pts:50,label:"Tournament Winner",desc:"Correctly predict the World Cup champion",color:"#f59e0b"},{pts:10,label:"Advancement Picks",desc:"Each team correctly picked per round (R32, R16, QF, SF, Final)",color:"#a855f7"},{pts:10,label:"Golden Boot",desc:"Correctly predict the tournament top scorer",color:"#22c55e"},{pts:10,label:"Most Group Stage Goals",desc:"Which team scores the most goals in the group stage",color:"#06b6d4"}].map(r=>(<div key={r.label} style={{display:"flex",alignItems:"flex-start",gap:14,background:"#080808",border:"1px solid #141414",borderRadius:12,padding:16}}><div style={{fontSize:22,fontWeight:800,color:r.color,width:40,flexShrink:0,textAlign:"center"}}>+{r.pts}</div><div><div style={{fontWeight:700,fontSize:14,marginBottom:4}}>{r.label}</div><div style={{fontSize:12,color:"#6b7280"}}>{r.desc}</div></div></div>))}
+    </div>
+    <div style={{background:"#080808",border:"1px solid #141414",borderRadius:14,padding:16,marginTop:16,textAlign:"center",fontSize:16}}>Good luck everyone! ⚽🏆</div>
+  </div>);
+}
